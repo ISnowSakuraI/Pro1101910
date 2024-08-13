@@ -6,26 +6,49 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
+  Alert,
 } from "react-native";
-import { auth } from "../firebase/Firebase";
+import { auth, db } from "../firebase/Firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import logo from "../assets/R.png";
 
 export default function Login({ navigation }) {
-  const [email, setEmail] = React.useState("");
+  const [input, setInput] = React.useState("");
   const [password, setPassword] = React.useState("");
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("โปรดใส่อีเมลและรหัสผ่าน");
-      return;
-    }
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      if (!input || !password) {
+        Alert.alert("โปรดใส่อีเมล/ชื่อผู้ใช้ และรหัสผ่าน");
+        return;
+      }
+
+      let emailToLogin = input;
+
+      // Check if input is not an email, assume it's a username
+      if (!input.includes("@")) {
+        // Query Firestore to find the email associated with this username
+        const q = query(collection(db, "Users"), where("username", "==", input));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          Alert.alert("Error", "ไม่พบชื่อผู้ใช้ในระบบ");
+          return;
+        }
+
+        // Assuming username is unique, get the email from the first result
+        const userDoc = querySnapshot.docs[0];
+        emailToLogin = userDoc.data().email;
+      }
+
+      await signInWithEmailAndPassword(auth, emailToLogin, password);
+
       Alert.alert("Success", "เข้าสู่ระบบแล้ว");
-      navigation.navigate("Home");
+      navigation.navigate("Main");
     } catch (error) {
-      Alert.alert("Error", "โปรดใส่อีเมลและรหัสผ่านให้ถูกต้อง");
+      console.error(error);
+      Alert.alert("Error", "โปรดใส่อีเมล/ชื่อผู้ใช้ และรหัสผ่านให้ถูกต้อง");
     }
   };
 
@@ -36,8 +59,8 @@ export default function Login({ navigation }) {
         style={styles.input}
         placeholder="Email / UserName"
         placeholderTextColor="#aaa"
-        value={email}
-        onChange={(e) => setEmail(e.nativeEvent.text)}
+        value={input}
+        onChange={(e) => setInput(e.nativeEvent.text)}
       />
       <TextInput
         style={styles.input}
