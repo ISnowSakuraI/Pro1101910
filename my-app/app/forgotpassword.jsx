@@ -13,6 +13,8 @@ import { sendPasswordResetEmail } from "firebase/auth";
 
 export default function ForgotPassword({ navigation }) {
   const [email, setEmail] = React.useState("");
+  const [requestSent, setRequestSent] = React.useState(false);
+
 
   const handleResetPassword = async () => {
     if (!email) {
@@ -22,11 +24,16 @@ export default function ForgotPassword({ navigation }) {
     try {
       await sendPasswordResetEmail(auth, email);
       Alert.alert("Success", "อีเมลรีเซ็ตรหัสผ่านถูกส่งไปที่อีเมลของคุณแล้ว");
-      navigation.navigate("Login");
+      setRequestSent(true);
     } catch (error) {
       Alert.alert("Error", "เกิดข้อผิดพลาดในการส่งอีเมลรีเซ็ตรหัสผ่าน");
       console.error(error);
     }
+  };
+
+  const handleResendRequest = () => {
+    setRequestSent(false);
+    Alert.alert("Info", "คุณสามารถส่งคำขอเปลี่ยนรหัสผ่านอีกครั้ง");
   };
 
   return (
@@ -38,10 +45,26 @@ export default function ForgotPassword({ navigation }) {
         placeholderTextColor="#aaa"
         value={email}
         onChange={(e) => setEmail(e.nativeEvent.text)}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
       />
-      <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleResetPassword}
+        activeOpacity={0.8}
+      >
         <Text style={styles.buttonText}>Reset Password</Text>
       </TouchableOpacity>
+      {requestSent && (
+        <TouchableOpacity
+          style={styles.resendButton}
+          onPress={handleResendRequest}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.resendButtonText}>Send Request Again</Text>
+        </TouchableOpacity>
+      )}
       <TouchableOpacity onPress={() => navigation.navigate("Login")}>
         <Text style={styles.loginText}>Back to login!</Text>
       </TouchableOpacity>
@@ -87,7 +110,10 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   title: {
-    color: "#888",
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 20,
   },
   loginText: {
     color: "#888",
