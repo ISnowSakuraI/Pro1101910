@@ -14,17 +14,19 @@ export default function Main() {
         name="Home"
         component={Home}
         options={{
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <AntDesign name="home" color={color} size={size} />
           ),
         }}
       />
       <Tab.Screen
-        name="Setting"
+        name="bells"
         component={Setting}
         options={{
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <AntDesign name="setting" color={color} size={size} />
+            <AntDesign name="bells" color={color} size={size} />
           ),
         }}
       />
@@ -32,6 +34,7 @@ export default function Main() {
         name="Profile"
         component={Profile}
         options={{
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <AntDesign name="user" color={color} size={size} />
           ),
