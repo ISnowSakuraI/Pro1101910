@@ -11,7 +11,7 @@ import {
 import { auth, db } from "../firebase/Firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import logo from "../assets/R.png";
+import logo from "../assets/images/150.png";
 
 export default function Login({ navigation }) {
   const [input, setInput] = React.useState("");

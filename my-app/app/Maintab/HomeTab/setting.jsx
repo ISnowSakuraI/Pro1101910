@@ -11,7 +11,7 @@ import {
 import { Stack } from "expo-router";
 import { useState, useEffect } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../../firebase/Firebase";
+import { auth } from "../../../firebase/Firebase";
 
 export default function Setting({ navigation }) {
   const [user, setUser] = useState(null);

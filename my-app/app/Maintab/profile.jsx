@@ -125,7 +125,7 @@ export default function Profile({ navigation }) {
             <Text style={styles.infoText}>{userData.email || "N/A"}</Text>
           </View>
 
-          <View style={styles.inputGroup3}>
+          <View style={styles.inputGroup}>
             <Text style={styles.label}>เพศ</Text>
             <Menu
               visible={menuVisible}
@@ -225,8 +225,10 @@ const styles = StyleSheet.create({
   profileImage: {
     width: 150,
     height: 150,
-    borderRadius: 75,
+    borderColor: 'black',
+    borderRadius: 50,
     marginBottom: 20,
+    borderWidth: 0.25,
   },
   infoContainer: {
     width: "80%",
@@ -253,10 +255,6 @@ const styles = StyleSheet.create({
   },
   inputGroup2: {
     width: "50%",
-    marginBottom: 15,
-  },
-  inputGroup3: {
-    width: "80%",
     marginBottom: 15,
   },
   dropdownButton: {

@@ -11,7 +11,7 @@ import {
 import { auth, db } from "../firebase/Firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { setDoc, doc } from "firebase/firestore";
-import logo from "../assets/R.png";
+import logo from "../assets/images/150.png";
 
 export default function Register({ navigation }) {
   const [email, setEmail] = React.useState("");

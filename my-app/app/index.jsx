@@ -2,7 +2,7 @@ import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import Login from "./login";
 import Register from "./register";
-import Main from "./hometabs/main";
+import Main from "./Maintab/mainindex";
 import ForgotPassword from "./forgotpassword";
 
 const Stack = createStackNavigator();
