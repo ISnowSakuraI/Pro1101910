@@ -46,6 +46,8 @@ export default function Login({ navigation }) {
 
       //Alert.alert("Success", "เข้าสู่ระบบแล้ว");
       navigation.navigate("Main");
+      setInput ("");
+      setPassword ("");
     } catch (error) {
       console.error(error);
       Alert.alert("Error", "โปรดใส่อีเมล/ชื่อผู้ใช้ และรหัสผ่านให้ถูกต้อง");

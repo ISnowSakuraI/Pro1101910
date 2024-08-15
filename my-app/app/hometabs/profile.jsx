@@ -16,7 +16,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Menu, Button, Provider } from 'react-native-paper';
+import { Menu, Button, Provider } from "react-native-paper";
 
 export default function Profile({ navigation }) {
   const [user, setUser] = useState(null);
@@ -33,7 +33,7 @@ export default function Profile({ navigation }) {
         if (userDoc.exists()) {
           const data = userDoc.data();
           setUserData(data);
-          setImage(data.photoURL || null); // Set the image URL from Firestore
+          setImage(data.photoURL || null);
         }
       }
     });
@@ -51,32 +51,29 @@ export default function Profile({ navigation }) {
     });
 
     if (!result.canceled) {
-      setImage(result.uri); // Set the local URI of the selected image
+      setImage(result.assets[0].uri);
     }
   };
 
   const handleSaveProfile = async () => {
     if (!user) return;
 
-    let photoURL = image;
-    if (image && !image.startsWith("https://")) {
-      try {
-        const response = await fetch(image);
-        const blob = await response.blob();
-        const storageRef = ref(storage, `profilePictures/${user.uid}`);
-        await uploadBytes(storageRef, blob);
-        photoURL = await getDownloadURL(storageRef); // Get the download URL
-      } catch (error) {
-        console.error("Error uploading image: ", error);
-        Alert.alert("Error", "Failed to upload image. Please try again.");
-        return;
-      }
+    let photoURL = null;
+    try {
+      const response = await fetch(image);
+      const blob = await response.blob();
+      const storageRef = ref(storage, `profilePictures/${user.uid}`);
+      await uploadBytes(storageRef, blob);
+      photoURL = await getDownloadURL(storageRef);
+    } catch (error) {
+      console.error("Error uploading image: ", error);
+      Alert.alert("Error", "Failed to upload image. Please try again.");
     }
 
     try {
       await setDoc(doc(db, "Users", user.uid), {
         ...userData,
-        photoURL: photoURL || "", // Ensure photoURL is not undefined
+        photoURL: photoURL || "",
       });
 
       await updateProfile(user, { photoURL });
@@ -115,7 +112,7 @@ export default function Profile({ navigation }) {
             <Image
               style={styles.profileImage}
               source={{
-                uri: image || "https://via.placeholder.com/100", // Display the image
+                uri: image || "https://via.placeholder.com/150",
               }}
             />
           </TouchableOpacity>
@@ -134,13 +131,29 @@ export default function Profile({ navigation }) {
               visible={menuVisible}
               onDismiss={() => setMenuVisible(false)}
               anchor={
-                <Button onPress={() => setMenuVisible(true)} mode="outlined" style={styles.dropdownButton}>
+                <Button
+                  onPress={() => setMenuVisible(true)}
+                  mode="outlined"
+                  style={styles.dropdownButton}
+                >
                   {userData.gender || "เลือกเพศ"}
                 </Button>
               }
             >
-              <Menu.Item onPress={() => { setUserData({ ...userData, gender: "ชาย" }); setMenuVisible(false); }} title="ชาย" />
-              <Menu.Item onPress={() => { setUserData({ ...userData, gender: "หญิง" }); setMenuVisible(false); }} title="หญิง" />
+              <Menu.Item
+                onPress={() => {
+                  setUserData({ ...userData, gender: "ชาย" });
+                  setMenuVisible(false);
+                }}
+                title="ชาย"
+              />
+              <Menu.Item
+                onPress={() => {
+                  setUserData({ ...userData, gender: "หญิง" });
+                  setMenuVisible(false);
+                }}
+                title="หญิง"
+              />
             </Menu>
           </View>
 
@@ -170,7 +183,9 @@ export default function Profile({ navigation }) {
                 style={styles.smallInput}
                 placeholder="น้ำหนัก"
                 value={userData.weight || ""}
-                onChangeText={(text) => setUserData({ ...userData, weight: text })}
+                onChangeText={(text) =>
+                  setUserData({ ...userData, weight: text })
+                }
                 keyboardType="numeric"
               />
             </View>
@@ -180,7 +195,9 @@ export default function Profile({ navigation }) {
                 style={styles.smallInput}
                 placeholder="ส่วนสูง"
                 value={userData.height || ""}
-                onChangeText={(text) => setUserData({ ...userData, height: text })}
+                onChangeText={(text) =>
+                  setUserData({ ...userData, height: text })
+                }
                 keyboardType="numeric"
               />
             </View>
