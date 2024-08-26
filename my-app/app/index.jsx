@@ -2,7 +2,7 @@ import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import Login from "./login";
 import Register from "./register";
-import Main from "./Maintab/mainindex";
+import Mainindex from "./Maintab/mainindex";
 import ForgotPassword from "./forgotpassword";
 
 const Stack = createStackNavigator();
@@ -25,8 +25,8 @@ export default function Index() {
         }}
       />
       <Stack.Screen
-        name="Main"
-        component={Main}
+        name="Mainindex"
+        component={Mainindex}
         options={{
           headerShown: false,
         }}

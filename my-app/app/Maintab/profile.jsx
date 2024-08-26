@@ -81,7 +81,6 @@ export default function Profile({ navigation }) {
       Alert.alert("Success", "Profile updated successfully!");
     } catch (error) {
       console.error("Error updating profile: ", error);
-      Alert.alert("Error", "Failed to update profile. Please try again.");
     }
   };
 

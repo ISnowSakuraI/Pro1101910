@@ -30,30 +30,30 @@ export default function Home({ navigation }) {
       <View style={styles.grid}>
         <CategoryItem
           image={require("../../assets/images/150.png")}
-          label="Text"
-          onPress={() => navigation.navigate("HealthyFood")}
+          label="ตารางออกกำลังกาย"
+          onPress={() => navigation.navigate("Schedule")}
         />
         <CategoryItem
           image={require("../../assets/images/150.png")}
-          label="Text"
+          label="ติดตามการออกกำลังกาย"
           onPress={() => navigation.navigate("ExerciseTracking")}
         />
         <CategoryItem
           image={require("../../assets/images/150.png")}
-          label="Text"
+          label="การวัดค่าต่างๆ"
           onPress={() => navigation.navigate("Measurements")}
         />
       </View>
 
-      <Text style={styles.header}>Text</Text>
+      <Text style={styles.header}>เคล็ดลับ</Text>
       <View style={styles.tips}>
         <TipItem
           image={require("../../assets/images/150.png")}
-          label="Text"
+          label="5 ทริคเด็ด ออกกำลังกาย 'ด้วยตัวเอง' ให้ได้ผล"
         />
         <TipItem
           image={require("../../assets/images/150.png")}
-          label="Text"
+          label="5 วิธีลดน้ำหนัก ฉบับคนมีเวลาน้อย"
         />
       </View>
     </ScrollView>

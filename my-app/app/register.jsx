@@ -35,6 +35,7 @@ export default function Register({ navigation }) {
       const uid = cred.user.uid;
 
       await setDoc(doc(db, "Users", uid), {
+        email: email,
         username: username,
         uid: uid,
       });
