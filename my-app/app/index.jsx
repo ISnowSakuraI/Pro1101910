@@ -1,9 +1,9 @@
 import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
-import Login from "./login";
-import Register from "./register";
-import Mainindex from "./Maintab/mainindex";
-import ForgotPassword from "./forgotpassword";
+import Login from "./Login";
+import Register from "./Register";
+import MainIndex from "./Maintab/MainIndex";
+import ForgotPassword from "./ForgotPassword";
 
 const Stack = createStackNavigator();
 
@@ -25,8 +25,8 @@ export default function Index() {
         }}
       />
       <Stack.Screen
-        name="Mainindex"
-        component={Mainindex}
+        name="MainIndex"
+        component={MainIndex}
         options={{
           headerShown: false,
         }}

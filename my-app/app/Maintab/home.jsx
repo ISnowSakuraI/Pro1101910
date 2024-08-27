@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Text,
   View,
@@ -7,16 +7,18 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { useState, useEffect } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../../firebase/Firebase";
+import { auth, db } from "../../firebase/Firebase";
+import { collection, getDocs } from "firebase/firestore";
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 export default function Home({ navigation }) {
   const [user, setUser] = useState(null);
+  const [articles, setArticles] = useState([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      console.log("Auth", currentUser);
       setUser(currentUser);
     });
     return () => {
@@ -24,37 +26,51 @@ export default function Home({ navigation }) {
     };
   }, []);
 
+  const fetchArticles = async () => {
+    const querySnapshot = await getDocs(collection(db, "articles"));
+    const articles = querySnapshot.docs.map((doc) => ({
+      ...doc.data(),
+      id: doc.id,
+    }));
+    setArticles(articles.slice(0, 4)); // Get the latest 4 articles
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchArticles();
+    }, [])
+  );
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.header}>หมวดหมู่</Text>
       <View style={styles.grid}>
         <CategoryItem
           image={require("../../assets/images/150.png")}
-          label="ตารางออกกำลังกาย"
+          label="จัดตารางออกกำลังกาย"
           onPress={() => navigation.navigate("Schedule")}
         />
         <CategoryItem
           image={require("../../assets/images/150.png")}
-          label="ติดตามการออกกำลังกาย"
-          onPress={() => navigation.navigate("ExerciseTracking")}
+          label="บทความ"
+          onPress={() => navigation.navigate("ArticleList")}
         />
         <CategoryItem
           image={require("../../assets/images/150.png")}
-          label="การวัดค่าต่างๆ"
+          label="8888"
           onPress={() => navigation.navigate("Measurements")}
         />
       </View>
 
-      <Text style={styles.header}>เคล็ดลับ</Text>
-      <View style={styles.tips}>
-        <TipItem
-          image={require("../../assets/images/150.png")}
-          label="5 ทริคเด็ด ออกกำลังกาย 'ด้วยตัวเอง' ให้ได้ผล"
-        />
-        <TipItem
-          image={require("../../assets/images/150.png")}
-          label="5 วิธีลดน้ำหนัก ฉบับคนมีเวลาน้อย"
-        />
+      <Text style={styles.header}>บทความที่น่าสนใจ</Text>
+      <View style={styles.articles}>
+        {articles.map((article) => (
+          <ArticleItem
+            key={article.id}
+            article={article}
+            onPress={() => navigation.navigate("ArticleDetail", { articleId: article.id })}
+          />
+        ))}
       </View>
     </ScrollView>
   );
@@ -69,12 +85,21 @@ function CategoryItem({ image, label, onPress }) {
   );
 }
 
-function TipItem({ image, label }) {
+function ArticleItem({ article, onPress }) {
   return (
-    <View style={styles.tipItem}>
-      <Image source={image} style={styles.tipImage} />
-      <Text style={styles.tipLabel}>{label}</Text>
-    </View>
+    <TouchableOpacity style={styles.articleItem} onPress={onPress}>
+      <View style={styles.imageContainer}>
+        {article.images.slice(0, 2).map((img, index) => (
+          <Image key={index} source={{ uri: img }} style={styles.articleImage} />
+        ))}
+        {article.images.length > 2 && (
+          <View style={styles.moreImagesOverlay}>
+            <Text style={styles.moreImagesText}>+{article.images.length - 2}</Text>
+          </View>
+        )}
+      </View>
+      <Text style={styles.articleTitle}>{article.title}</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -85,9 +110,10 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
     marginVertical: 10,
+    color: "#333",
   },
   grid: {
     flexDirection: "row",
@@ -98,6 +124,14 @@ const styles = StyleSheet.create({
     width: "30%",
     alignItems: "center",
     marginVertical: 10,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   icon: {
     width: 75,
@@ -106,25 +140,52 @@ const styles = StyleSheet.create({
   },
   label: {
     textAlign: "center",
-    fontSize: 18,
+    fontSize: 16,
+    color: "#555",
   },
-  tips: {
+  articles: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
   },
-  tipItem: {
+  articleItem: {
     width: "48%",
-    alignItems: "center",
     marginVertical: 10,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
-  tipImage: {
-    width: "100%",
+  imageContainer: {
+    flexDirection: "row",
+    position: "relative",
+  },
+  articleImage: {
+    width: "48%",
     height: 100,
     borderRadius: 8,
+    marginRight: 5,
   },
-  tipLabel: {
+  moreImagesOverlay: {
+    position: "absolute",
+    right: 5,
+    bottom: 5,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 5,
+    padding: 5,
+  },
+  moreImagesText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  articleTitle: {
     textAlign: "center",
     fontSize: 16,
     marginTop: 5,
+    color: "#333",
   },
 });

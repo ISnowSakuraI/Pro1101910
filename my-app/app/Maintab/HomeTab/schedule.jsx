@@ -14,7 +14,7 @@ import { Calendar } from "react-native-calendars";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { db, auth } from "../../../firebase/Firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import Icon from 'react-native-vector-icons/AntDesign';
+import Icon from "react-native-vector-icons/AntDesign";
 
 export default function Schedule({ navigation }) {
   const [selectedDate, setSelectedDate] = useState("");
@@ -65,14 +65,20 @@ export default function Schedule({ navigation }) {
     }
     const newSchedule = {
       id: editingId || Date.now().toString(),
-      startTime: startTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      startTime: startTime.toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }),
       duration,
       exercise: newExercise,
     };
     const updatedSchedule = {
       ...scheduleData,
       [selectedDate]: [
-        ...(scheduleData[selectedDate] || []).filter((item) => item.id !== editingId),
+        ...(scheduleData[selectedDate] || []).filter(
+          (item) => item.id !== editingId
+        ),
         newSchedule,
       ],
     };
@@ -97,7 +103,9 @@ export default function Schedule({ navigation }) {
   const deleteSchedule = (id) => {
     const updatedSchedule = {
       ...scheduleData,
-      [selectedDate]: scheduleData[selectedDate].filter((item) => item.id !== id),
+      [selectedDate]: scheduleData[selectedDate].filter(
+        (item) => item.id !== id
+      ),
     };
     setScheduleData(updatedSchedule);
     if (user) {
@@ -107,19 +115,23 @@ export default function Schedule({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('mainindex')}>
-        <Icon name="left" size={24} color="white" />
-      </TouchableOpacity>
       <Calendar
         onDayPress={handleDayPress}
         markedDates={{
-          [selectedDate]: { selected: true, marked: true, selectedColor: "blue" },
+          [selectedDate]: {
+            selected: true,
+            marked: true,
+            selectedColor: "blue",
+          },
         }}
       />
       <Button title="เพิ่มตาราง" onPress={() => setModalVisible(true)} />
       <FlatList
         data={(scheduleData[selectedDate] || []).sort((a, b) => {
-          return new Date(`1970-01-01T${a.startTime}`) - new Date(`1970-01-01T${b.startTime}`);
+          return (
+            new Date(`1970-01-01T${a.startTime}`) -
+            new Date(`1970-01-01T${b.startTime}`)
+          );
         })}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
@@ -130,10 +142,16 @@ export default function Schedule({ navigation }) {
               <Text style={styles.cell}>{item.exercise}</Text>
             </View>
             <View style={styles.actions}>
-              <TouchableOpacity style={styles.editButton} onPress={() => editSchedule(item)}>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => editSchedule(item)}
+              >
                 <Text style={styles.buttonText}>แก้ไข</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.deleteButton} onPress={() => deleteSchedule(item.id)}>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => deleteSchedule(item.id)}
+              >
                 <Text style={styles.buttonText}>ลบ</Text>
               </TouchableOpacity>
             </View>
@@ -152,7 +170,11 @@ export default function Schedule({ navigation }) {
             <TextInput
               style={styles.input}
               placeholder="เวลาเริ่มต้น"
-              value={startTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}
+              value={startTime.toLocaleTimeString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+              })}
               editable={false}
             />
           </TouchableOpacity>
@@ -180,10 +202,16 @@ export default function Schedule({ navigation }) {
             value={newExercise}
             onChangeText={setNewExercise}
           />
-          <TouchableOpacity style={styles.saveButton} onPress={addOrUpdateSchedule}>
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={addOrUpdateSchedule}
+          >
             <Text style={styles.buttonText}>บันทึก</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => setModalVisible(false)}
+          >
             <Text style={styles.buttonText}>ยกเลิก</Text>
           </TouchableOpacity>
         </View>
@@ -197,15 +225,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: "#f5f5f5",
-  },
-  backButton: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    zIndex: 1,
-    backgroundColor: "#2196F3",
-    padding: 10,
-    borderRadius: 5,
   },
   modalView: {
     margin: 20,

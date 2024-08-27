@@ -45,7 +45,7 @@ export default function Login({ navigation }) {
       await signInWithEmailAndPassword(auth, emailToLogin, password);
 
       //Alert.alert("Success", "เข้าสู่ระบบแล้ว");
-      navigation.navigate("Mainindex");
+      navigation.navigate("MainIndex");
       setInput ("");
       setPassword ("");
     } catch (error) {

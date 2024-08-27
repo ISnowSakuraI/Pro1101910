@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Text,
   View,
@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { useState, useEffect } from "react";
 import { onAuthStateChanged, updateProfile, signOut } from "firebase/auth";
 import { auth, db, storage } from "../../firebase/Firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -17,6 +16,7 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Menu, Button, Provider } from "react-native-paper";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function Profile({ navigation }) {
   const [user, setUser] = useState(null);
@@ -25,22 +25,26 @@ export default function Profile({ navigation }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        const userDoc = await getDoc(doc(db, "Users", currentUser.uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          setUserData(data);
-          setImage(data.photoURL || null);
-        }
+  const fetchUserData = async (currentUser) => {
+    if (currentUser) {
+      setUser(currentUser);
+      const userDoc = await getDoc(doc(db, "Users", currentUser.uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        setUserData(data);
+        setImage(data.photoURL || null);
       }
-    });
-    return () => {
-      unsubscribe();
-    };
-  }, []);
+    }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const unsubscribe = onAuthStateChanged(auth, fetchUserData);
+      return () => {
+        unsubscribe();
+      };
+    }, [])
+  );
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -218,20 +222,28 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f0f0f0",
     padding: 20,
   },
   profileImage: {
     width: 150,
     height: 150,
-    borderColor: 'black',
-    borderRadius: 50,
+    borderRadius: 75,
     marginBottom: 20,
-    borderWidth: 0.25,
+    borderWidth: 2,
+    borderColor: "#ff7f50",
   },
   infoContainer: {
-    width: "80%",
-    marginBottom: 10,
+    width: "90%",
+    marginBottom: 15,
+    backgroundColor: "#fff",
+    padding: 10,
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   label: {
     fontSize: 14,
@@ -242,23 +254,21 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 16,
     color: "#555",
-    backgroundColor: "#fff",
-    padding: 10,
-    borderRadius: 8,
-    borderColor: "#ddd",
-    borderWidth: 1,
   },
   inputGroup: {
-    width: "80%",
+    width: "90%",
     marginBottom: 15,
   },
   inputGroup2: {
-    width: "50%",
+    width: "45%",
     marginBottom: 15,
   },
   dropdownButton: {
     width: "100%",
     justifyContent: "center",
+    borderColor: "#ddd",
+    borderWidth: 1,
+    borderRadius: 8,
   },
   input: {
     width: "100%",
@@ -273,7 +283,7 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: "80%",
+    width: "90%",
     marginBottom: 15,
   },
   smallInput: {
@@ -286,13 +296,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   button: {
-    width: "80%",
+    width: "90%",
     height: 50,
     backgroundColor: "#ff7f50",
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   buttonText: {
     color: "#fff",
