@@ -11,6 +11,7 @@ import {
 import { auth, db } from "../firebase/Firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { setDoc, doc } from "firebase/firestore";
+import Icon from "react-native-vector-icons/MaterialIcons";
 import logo from "../assets/images/150.png";
 
 export default function Register({ navigation }) {
@@ -18,6 +19,8 @@ export default function Register({ navigation }) {
   const [username, setUsername] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
 
   const handleSubmit = async () => {
     if (!email || !username || !password || !confirmPassword) {
@@ -65,27 +68,38 @@ export default function Register({ navigation }) {
         value={username}
         onChange={(e) => setUsername(e.nativeEvent.text)}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#aaa"
-        secureTextEntry
-        value={password}
-        onChange={(e) => setPassword(e.nativeEvent.text)}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm Password"
-        placeholderTextColor="#aaa"
-        secureTextEntry
-        value={confirmPassword}
-        onChange={(e) => setConfirmPassword(e.nativeEvent.text)}
-      />
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Password"
+          placeholderTextColor="#aaa"
+          secureTextEntry={!showPassword}
+          value={password}
+          onChange={(e) => setPassword(e.nativeEvent.text)}
+        />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <Icon name={showPassword ? "visibility" : "visibility-off"} size={24} color="#aaa" />
+        </TouchableOpacity>
+      </View>
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Confirm Password"
+          placeholderTextColor="#aaa"
+          secureTextEntry={!showConfirmPassword}
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.nativeEvent.text)}
+        />
+        <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+          <Icon name={showConfirmPassword ? "visibility" : "visibility-off"} size={24} color="#aaa" />
+        </TouchableOpacity>
+      </View>
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+        <Icon name="person-add" size={20} color="white" />
         <Text style={styles.buttonText}>Register</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-        <Text style={styles.loginText}>Already have an account? Login</Text>
+        <Text style={styles.loginText}>Already have an account? <Text style={styles.loginLink}>Login</Text></Text>
       </TouchableOpacity>
     </View>
   );
@@ -105,6 +119,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   input: {
+    fontFamily: 'NotoSansThai-Regular',
     width: "100%",
     height: 50,
     backgroundColor: "#fff",
@@ -114,21 +129,43 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderWidth: 1,
   },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    height: 50,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+    borderColor: "#ddd",
+    borderWidth: 1,
+  },
+  passwordInput: {
+    fontFamily: 'NotoSansThai-Regular',
+    flex: 1,
+  },
   button: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     width: "100%",
     height: 50,
     backgroundColor: "#ff7f50",
     borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
     marginBottom: 15,
   },
   buttonText: {
     color: "#fff",
     fontSize: 18,
-    fontWeight: "bold",
+    fontFamily: 'NotoSansThai-Regular',
+    marginLeft: 5,
   },
   loginText: {
     color: "#888",
+  },
+  loginLink: {
+    color: "#ff7f50",
+    fontFamily: 'NotoSansThai-Regular',
   },
 });

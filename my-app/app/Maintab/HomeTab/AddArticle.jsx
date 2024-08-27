@@ -1,14 +1,23 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, Image, ScrollView } from 'react-native';
-import { db, auth, storage } from '../../../firebase/Firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import * as ImagePicker from 'expo-image-picker';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+} from "react-native";
+import { db, auth, storage } from "../../../firebase/Firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import * as ImagePicker from "expo-image-picker";
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 export default function AddArticle({ navigation }) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [images, setImages] = useState([]);
   const [titleHeight, setTitleHeight] = useState(40);
   const [descriptionHeight, setDescriptionHeight] = useState(40);
@@ -21,7 +30,7 @@ export default function AddArticle({ navigation }) {
     });
 
     if (!result.canceled) {
-      setImages(result.assets.map(asset => asset.uri));
+      setImages(result.assets.map((asset) => asset.uri));
     }
   };
 
@@ -39,35 +48,39 @@ export default function AddArticle({ navigation }) {
         const imageUrl = await getDownloadURL(storageRef);
         imageUrls.push(imageUrl);
       } catch (error) {
-        console.error('Error uploading image: ', error);
-        Alert.alert('Error', 'Failed to upload image. Please try again.');
+        console.error("Error uploading image: ", error);
+        Alert.alert("Error", "Failed to upload image. Please try again.");
         return;
       }
     }
 
     try {
-      await addDoc(collection(db, 'articles'), {
+      await addDoc(collection(db, "articles"), {
         title,
         description,
         images: imageUrls,
         userId: user.uid,
-        createdAt: serverTimestamp(), // Add timestamp here
+        createdAt: serverTimestamp(),
       });
-      Alert.alert('Success', 'Article added successfully!');
+      Alert.alert("Success", "Article added successfully!");
       navigation.goBack();
     } catch (error) {
-      console.error('Error adding article: ', error);
-      Alert.alert('Error', 'Failed to add article. Please try again.');
+      console.error("Error adding article: ", error);
+      Alert.alert("Error", "Failed to add article. Please try again.");
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+    <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
         <Icon name="arrow-back" size={24} color="black" />
       </TouchableOpacity>
       <Text style={styles.header}>Add New Article</Text>
       <TouchableOpacity onPress={pickImages} style={styles.addImageButton}>
+        <Icon name="add-photo-alternate" size={24} color="white" />
         <Text style={styles.addImageText}>Add Images</Text>
       </TouchableOpacity>
       <View style={styles.imageContainer}>
@@ -81,7 +94,9 @@ export default function AddArticle({ navigation }) {
         value={title}
         onChangeText={setTitle}
         multiline
-        onContentSizeChange={(e) => setTitleHeight(e.nativeEvent.contentSize.height)}
+        onContentSizeChange={(e) =>
+          setTitleHeight(e.nativeEvent.contentSize.height)
+        }
       />
       <TextInput
         style={[styles.textArea, { height: descriptionHeight }]}
@@ -89,10 +104,14 @@ export default function AddArticle({ navigation }) {
         value={description}
         onChangeText={setDescription}
         multiline
-        onContentSizeChange={(e) => setDescriptionHeight(e.nativeEvent.contentSize.height)}
+        onContentSizeChange={(e) =>
+          setDescriptionHeight(e.nativeEvent.contentSize.height)
+        }
       />
-      <Button title="Save" onPress={handleAddArticle} />
-    </ScrollView>
+      <TouchableOpacity style={styles.saveButton} onPress={handleAddArticle}>
+        <Text style={styles.saveButtonText}>SAVE</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -100,26 +119,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: "#f9f9f9",
   },
   header: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'NotoSansThai-Regular',
     marginBottom: 20,
+    color: "#333",
   },
   addImageButton: {
-    backgroundColor: '#2196F3',
+    flexDirection: "row",
+    backgroundColor: "#2196F3",
     padding: 10,
     borderRadius: 5,
-    alignItems: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 10,
   },
   addImageText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontFamily: 'NotoSansThai-Regular',
+    marginLeft: 5,
   },
   imageContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     marginBottom: 10,
   },
   image: {
@@ -130,24 +154,41 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   input: {
-    height: 40,
-    borderColor: '#ccc',
+    fontFamily: 'NotoSansThai-Regular',
+    minHeight: 50,
+    maxHeight: 100,
+    borderColor: "#ccc",
     borderWidth: 1,
     marginBottom: 10,
     paddingHorizontal: 10,
     borderRadius: 5,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
+    backgroundColor: "#fff",
   },
   textArea: {
-    height: 40,
-    borderColor: '#ccc',
+    fontFamily: 'NotoSansThai-Regular',
+    minHeight: 60,
+    maxHeight: 160,
+    borderColor: "#ccc",
     borderWidth: 1,
     marginBottom: 10,
     paddingHorizontal: 10,
     borderRadius: 5,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
+    backgroundColor: "#fff",
   },
   backButton: {
     marginBottom: 10,
+  },
+  saveButton: {
+    backgroundColor: "#ff7f50",
+    padding: 15,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  saveButtonText: {
+    color: "white",
+    fontFamily: 'NotoSansThai-Regular',
+    fontSize: 16,
   },
 });

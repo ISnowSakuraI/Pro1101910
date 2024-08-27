@@ -7,13 +7,15 @@ import {
   StyleSheet,
   Image,
   Alert,
+  TextInput,
 } from "react-native";
 import { db, auth } from "../../../firebase/Firebase";
-import { collection, query, where, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { collection, query, where, getDocs, deleteDoc, doc, orderBy } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
 
 export default function ManageMyArticles({ navigation }) {
   const [myArticles, setMyArticles] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const fetchMyArticles = async () => {
@@ -21,7 +23,8 @@ export default function ManageMyArticles({ navigation }) {
       if (user) {
         const q = query(
           collection(db, "articles"),
-          where("userId", "==", user.uid)
+          where("userId", "==", user.uid),
+          orderBy("createdAt", "desc")
         );
         const querySnapshot = await getDocs(q);
         const articles = querySnapshot.docs.map((doc) => ({
@@ -46,6 +49,10 @@ export default function ManageMyArticles({ navigation }) {
     }
   };
 
+  const filteredArticles = myArticles.filter(article =>
+    article.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <View style={styles.container}>
       <TouchableOpacity
@@ -55,8 +62,14 @@ export default function ManageMyArticles({ navigation }) {
         <Icon name="arrow-back" size={24} color="black" />
       </TouchableOpacity>
       <Text style={styles.header}>จัดการบทความของฉัน</Text>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="ค้นหาบทความ..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
       <FlatList
-        data={myArticles}
+        data={filteredArticles}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.card}>
@@ -103,14 +116,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: "#f9f9f9",
   },
   backButton: {
     marginBottom: 10,
   },
   header: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontFamily: 'NotoSansThai-Regular',
     marginBottom: 20,
+    color: "#333",
+  },
+  searchInput: {
+    fontFamily: 'NotoSansThai-Regular',
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 20,
+    backgroundColor: "#fff",
   },
   card: {
     marginBottom: 10,
@@ -146,14 +171,15 @@ const styles = StyleSheet.create({
   },
   moreImagesText: {
     color: "white",
-    fontWeight: "bold",
+    fontFamily: 'NotoSansThai-Regular',
   },
   title: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: 'NotoSansThai-Regular',
     marginVertical: 10,
   },
   description: {
+    fontFamily: 'NotoSansThai-Regular',
     fontSize: 14,
     color: "#555",
   },
@@ -183,6 +209,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     marginLeft: 5,
-    fontWeight: "bold",
+    fontFamily: 'NotoSansThai-Regular',
   },
 });

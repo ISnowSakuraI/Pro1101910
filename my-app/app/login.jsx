@@ -11,11 +11,13 @@ import {
 import { auth, db } from "../firebase/Firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
+import Icon from "react-native-vector-icons/MaterialIcons";
 import logo from "../assets/images/150.png";
 
 export default function Login({ navigation }) {
   const [input, setInput] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [showPassword, setShowPassword] = React.useState(false);
 
   const handleLogin = async () => {
     try {
@@ -26,9 +28,7 @@ export default function Login({ navigation }) {
 
       let emailToLogin = input;
 
-      // Check if input is not an email, assume it's a username
       if (!input.includes("@")) {
-        // Query Firestore to find the email associated with this username
         const q = query(collection(db, "Users"), where("username", "==", input));
         const querySnapshot = await getDocs(q);
 
@@ -37,17 +37,14 @@ export default function Login({ navigation }) {
           return;
         }
 
-        // Assuming username is unique, get the email from the first result
         const userDoc = querySnapshot.docs[0];
         emailToLogin = userDoc.data().email;
       }
 
       await signInWithEmailAndPassword(auth, emailToLogin, password);
-
-      //Alert.alert("Success", "เข้าสู่ระบบแล้ว");
       navigation.navigate("MainIndex");
-      setInput ("");
-      setPassword ("");
+      setInput("");
+      setPassword("");
     } catch (error) {
       console.error(error);
       Alert.alert("Error", "โปรดใส่อีเมล/ชื่อผู้ใช้ และรหัสผ่านให้ถูกต้อง");
@@ -64,22 +61,31 @@ export default function Login({ navigation }) {
         value={input}
         onChange={(e) => setInput(e.nativeEvent.text)}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#aaa"
-        secureTextEntry
-        value={password}
-        onChange={(e) => setPassword(e.nativeEvent.text)}
-      />
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Password"
+          placeholderTextColor="#aaa"
+          secureTextEntry={!showPassword}
+          value={password}
+          onChange={(e) => setPassword(e.nativeEvent.text)}
+        />
+        <TouchableOpacity
+          style={styles.eyeIcon}
+          onPress={() => setShowPassword(!showPassword)}
+        >
+          <Icon name={showPassword ? "visibility" : "visibility-off"} size={24} color="#aaa" />
+        </TouchableOpacity>
+      </View>
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <Icon name="login" size={20} color="white" />
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate("ForgotPassword")}>
         <Text style={styles.forgotText}>Forgot Password?</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate("Register")}>
-        <Text style={styles.registerText}>Don't have an account? Register</Text>
+        <Text style={styles.registerText}>Don't have an account? <Text style={styles.registerHighlight}>Register</Text></Text>
       </TouchableOpacity>
     </View>
   );
@@ -108,19 +114,40 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderWidth: 1,
   },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 15,
+  },
+  passwordInput: {
+    flex: 1,
+    height: 50,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    borderColor: "#ddd",
+    borderWidth: 1,
+  },
+  eyeIcon: {
+    position: "absolute",
+    right: 15,
+  },
   button: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     width: "100%",
     height: 50,
     backgroundColor: "#ff7f50",
     borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
     marginBottom: 15,
   },
   buttonText: {
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+    marginLeft: 5,
   },
   forgotText: {
     color: "#ff7f50",
@@ -128,5 +155,9 @@ const styles = StyleSheet.create({
   },
   registerText: {
     color: "#888",
+  },
+  registerHighlight: {
+    color: "#ff7f50",
+    fontWeight: "bold",
   },
 });

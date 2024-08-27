@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   RefreshControl,
+  TextInput,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useFocusEffect } from "@react-navigation/native";
@@ -16,6 +17,7 @@ import { collection, getDocs, query, orderBy } from "firebase/firestore";
 export default function ArticleList({ navigation }) {
   const [articles, setArticles] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchArticles = async () => {
     const q = query(collection(db, "articles"), orderBy("createdAt", "desc"));
@@ -39,6 +41,15 @@ export default function ArticleList({ navigation }) {
     setRefreshing(false);
   };
 
+  const filteredArticles = articles.filter(article =>
+    article.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const formatDate = (timestamp) => {
+    const date = timestamp.toDate(); // Convert Firestore Timestamp to Date
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}`;
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.toolbar}>
@@ -57,9 +68,15 @@ export default function ArticleList({ navigation }) {
           <Text style={styles.toolbarButtonText}>จัดการบทความของฉัน</Text>
         </TouchableOpacity>
       </View>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="ค้นหาบทความ..."
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
       <Text style={styles.header}>บทความสุขภาพและอาหาร</Text>
       <FlatList
-        data={articles}
+        data={filteredArticles}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity
@@ -89,6 +106,7 @@ export default function ArticleList({ navigation }) {
               <Text style={styles.description} numberOfLines={3}>
                 {item.description}
               </Text>
+              <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
             </View>
           </TouchableOpacity>
         )}
@@ -122,11 +140,21 @@ const styles = StyleSheet.create({
   toolbarButtonText: {
     color: "white",
     marginLeft: 5,
-    fontWeight: "bold",
+    fontFamily: 'NotoSansThai-Regular',
+  },
+  searchInput: {
+    fontFamily: 'NotoSansThai-Regular',
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 20,
+    backgroundColor: "#fff",
   },
   header: {
+    fontFamily: 'NotoSansThai-Regular',
     fontSize: 24,
-    fontWeight: "bold",
     marginBottom: 20,
     textAlign: "center",
   },
@@ -164,15 +192,22 @@ const styles = StyleSheet.create({
   },
   moreImagesText: {
     color: "white",
-    fontWeight: "bold",
+    fontFamily: 'NotoSansThai-Regular',
   },
   title: {
+    fontFamily: 'NotoSansThai-Regular',
     fontSize: 16,
-    fontWeight: "bold",
     marginVertical: 10,
   },
   description: {
+    fontFamily: 'NotoSansThai-Regular',
     fontSize: 14,
     color: "#555",
+  },
+  date: {
+    fontFamily: 'NotoSansThai-Regular',
+    fontSize: 12,
+    color: "#777",
+    marginTop: 5,
   },
 });

@@ -4,17 +4,16 @@ import {
   View,
   TextInput,
   StyleSheet,
-  Button,
   Alert,
   TouchableOpacity,
 } from "react-native";
 import { auth } from "../firebase/Firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 export default function ForgotPassword({ navigation }) {
   const [email, setEmail] = React.useState("");
   const [requestSent, setRequestSent] = React.useState(false);
-
 
   const handleResetPassword = async () => {
     if (!email) {
@@ -54,6 +53,7 @@ export default function ForgotPassword({ navigation }) {
         onPress={handleResetPassword}
         activeOpacity={0.8}
       >
+        <Icon name="email" size={20} color="white" />
         <Text style={styles.buttonText}>Reset Password</Text>
       </TouchableOpacity>
       {requestSent && (
@@ -80,12 +80,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
     padding: 20,
   },
-  logo: {
-    width: 150,
-    height: 150,
-    marginBottom: 30,
-  },
   input: {
+    fontFamily: 'NotoSansThai-Regular',
     width: "100%",
     height: 50,
     backgroundColor: "#fff",
@@ -96,26 +92,35 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   button: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     width: "100%",
     height: 50,
     backgroundColor: "#ff7f50",
     borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
     marginBottom: 15,
   },
   buttonText: {
     color: "#fff",
     fontSize: 18,
-    fontWeight: "bold",
+    fontFamily: 'NotoSansThai-Regular',
+    marginLeft: 5,
   },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontFamily: 'NotoSansThai-Regular',
     color: "#333",
     marginBottom: 20,
   },
   loginText: {
     color: "#888",
+  },
+  resendButton: {
+    marginTop: 10,
+  },
+  resendButtonText: {
+    color: "#ff7f50",
+    fontFamily: 'NotoSansThai-Regular',
   },
 });

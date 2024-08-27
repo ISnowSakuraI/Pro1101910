@@ -4,16 +4,16 @@ import {
   Text,
   StyleSheet,
   TextInput,
-  Button,
-  Modal,
-  FlatList,
   TouchableOpacity,
   Alert,
+  Modal,
+  FlatList,
 } from "react-native";
 import { Calendar } from "react-native-calendars";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { db, auth } from "../../../firebase/Firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import * as Notifications from "expo-notifications";
 import Icon from "react-native-vector-icons/AntDesign";
 
 export default function Schedule({ navigation }) {
@@ -32,6 +32,7 @@ export default function Schedule({ navigation }) {
     if (user) {
       loadSchedule(user.uid);
     }
+    Notifications.requestPermissionsAsync();
   }, [user]);
 
   const loadSchedule = async (uid) => {
@@ -56,6 +57,17 @@ export default function Schedule({ navigation }) {
 
   const handleDayPress = (day) => {
     setSelectedDate(day.dateString);
+  };
+
+  const scheduleNotification = async (exercise, time) => {
+    const trigger = new Date(time);
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Time to Exercise!",
+        body: `It's time for your ${exercise} session.`,
+      },
+      trigger,
+    });
   };
 
   const addOrUpdateSchedule = () => {
@@ -90,6 +102,11 @@ export default function Schedule({ navigation }) {
     setNewExercise("");
     setDuration("");
     setEditingId(null);
+
+    const notificationTime = new Date(selectedDate);
+    const [hours, minutes] = newSchedule.startTime.split(":");
+    notificationTime.setHours(hours, minutes);
+    scheduleNotification(newExercise, notificationTime);
   };
 
   const editSchedule = (item) => {
@@ -125,7 +142,13 @@ export default function Schedule({ navigation }) {
           },
         }}
       />
-      <Button title="เพิ่มตาราง" onPress={() => setModalVisible(true)} />
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => setModalVisible(true)}
+      >
+        <Icon name="pluscircle" size={24} color="white" />
+        <Text style={styles.addButtonText}>เพิ่มตาราง</Text>
+      </TouchableOpacity>
       <FlatList
         data={(scheduleData[selectedDate] || []).sort((a, b) => {
           return (
@@ -146,13 +169,13 @@ export default function Schedule({ navigation }) {
                 style={styles.editButton}
                 onPress={() => editSchedule(item)}
               >
-                <Text style={styles.buttonText}>แก้ไข</Text>
+                <Icon name="edit" size={20} color="white" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.deleteButton}
                 onPress={() => deleteSchedule(item.id)}
               >
-                <Text style={styles.buttonText}>ลบ</Text>
+                <Icon name="delete" size={20} color="white" />
               </TouchableOpacity>
             </View>
           </View>
@@ -226,34 +249,19 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#f5f5f5",
   },
-  modalView: {
-    margin: 20,
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 35,
+  addButton: {
+    flexDirection: "row",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalText: {
-    marginBottom: 15,
-    textAlign: "center",
-    fontSize: 18,
-  },
-  input: {
-    height: 40,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    marginBottom: 10,
-    paddingHorizontal: 10,
+    justifyContent: "center",
+    backgroundColor: "#4CAF50",
+    padding: 10,
     borderRadius: 5,
-    width: "80%",
+    marginVertical: 10,
+  },
+  addButtonText: {
+    color: "white",
+    fontFamily: 'NotoSansThai-Regular',
+    marginLeft: 5,
   },
   row: {
     flexDirection: "row",
@@ -273,11 +281,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cell: {
+    fontFamily: 'NotoSansThai-Regular',
     textAlign: "center",
     fontSize: 14,
   },
   editButton: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#2196F3",
     padding: 5,
     borderRadius: 5,
     marginHorizontal: 5,
@@ -287,6 +296,37 @@ const styles = StyleSheet.create({
     padding: 5,
     borderRadius: 5,
     marginHorizontal: 5,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalText: {
+    fontFamily: 'NotoSansThai-Regular',
+    marginBottom: 15,
+    textAlign: "center",
+    fontSize: 18,
+  },
+  input: {
+    fontFamily: 'NotoSansThai-Regular',
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    width: "80%",
   },
   saveButton: {
     backgroundColor: "#4CAF50",
@@ -306,6 +346,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "white",
-    fontWeight: "bold",
+    fontFamily: 'NotoSansThai-Regular',
   },
 });

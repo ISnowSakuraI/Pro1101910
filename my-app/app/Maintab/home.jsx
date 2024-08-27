@@ -45,7 +45,7 @@ export default function Home({ navigation }) {
     <ScrollView style={styles.container}>
       <Text style={styles.header}>หมวดหมู่</Text>
       <View style={styles.grid}>
-        <CategoryItem
+        <CategoryItem 
           image={require("../../assets/images/150.png")}
           label="จัดตารางออกกำลังกาย"
           onPress={() => navigation.navigate("Schedule")}
@@ -57,8 +57,13 @@ export default function Home({ navigation }) {
         />
         <CategoryItem
           image={require("../../assets/images/150.png")}
-          label="8888"
-          onPress={() => navigation.navigate("Measurements")}
+          label="ExerciseTracker"
+          onPress={() => navigation.navigate("ExerciseTracker")}
+        />
+        <CategoryItem
+          image={require("../../assets/images/150.png")}
+          label="UserStatistics"
+          onPress={() => navigation.navigate("UserStatistics")}
         />
       </View>
 
@@ -86,6 +91,11 @@ function CategoryItem({ image, label, onPress }) {
 }
 
 function ArticleItem({ article, onPress }) {
+  const formatDate = (timestamp) => {
+    const date = timestamp.toDate(); // Convert Firestore Timestamp to Date
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}`;
+  };
+
   return (
     <TouchableOpacity style={styles.articleItem} onPress={onPress}>
       <View style={styles.imageContainer}>
@@ -98,7 +108,8 @@ function ArticleItem({ article, onPress }) {
           </View>
         )}
       </View>
-      <Text style={styles.articleTitle}>{article.title}</Text>
+      <Text style={styles.articleTitle} numberOfLines={2}>{article.title}</Text>
+      <Text style={styles.articleDate}>{formatDate(article.createdAt)}</Text>
     </TouchableOpacity>
   );
 }
@@ -110,8 +121,8 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
+    fontFamily: 'NotoSansThai-bold',
     fontSize: 24,
-    fontWeight: "bold",
     marginVertical: 10,
     color: "#333",
   },
@@ -139,6 +150,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   label: {
+    fontFamily: 'NotoSansThai-Regular',
     textAlign: "center",
     fontSize: 16,
     color: "#555",
@@ -179,13 +191,21 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   moreImagesText: {
+    fontFamily: 'NotoSansThai-bold',
     color: "white",
-    fontWeight: "bold",
   },
   articleTitle: {
+    fontFamily: 'NotoSansThai-Regular',
     textAlign: "center",
     fontSize: 16,
     marginTop: 5,
     color: "#333",
+  },
+  articleDate: {
+    fontFamily: 'NotoSansThai-Regular',
+    textAlign: "center",
+    fontSize: 14,
+    color: "#777",
+    marginTop: 5,
   },
 });
