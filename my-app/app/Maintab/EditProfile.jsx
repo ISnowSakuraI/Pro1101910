@@ -8,6 +8,7 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { onAuthStateChanged, updateProfile, signOut } from "firebase/auth";
 import { auth, db, storage } from "../../firebase/Firebase";
@@ -25,6 +26,7 @@ export default function EditProfile({ navigation }) {
   const [image, setImage] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const fetchUserData = async (currentUser) => {
     if (currentUser) {
@@ -63,6 +65,7 @@ export default function EditProfile({ navigation }) {
   const handleSaveProfile = async () => {
     if (!user) return;
 
+    setLoading(true);
     let photoURL = null;
     try {
       const response = await fetch(image);
@@ -87,6 +90,8 @@ export default function EditProfile({ navigation }) {
       navigation.goBack();
     } catch (error) {
       console.error("Error updating profile: ", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -138,11 +143,11 @@ export default function EditProfile({ navigation }) {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>เพศ</Text>
-            <Menu 
+            <Menu
               visible={menuVisible}
               onDismiss={() => setMenuVisible(false)}
               anchor={
-                <Button 
+                <Button
                   onPress={() => setMenuVisible(true)}
                   mode="outlined"
                   style={styles.dropdownButton}
@@ -216,7 +221,11 @@ export default function EditProfile({ navigation }) {
             </View>
           </View>
           <TouchableOpacity style={styles.button} onPress={handleSaveProfile}>
-            <Text style={styles.buttonText}>บันทึกโปรไฟล์</Text>
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>บันทึกโปรไฟล์</Text>
+            )}
           </TouchableOpacity>
           <TouchableOpacity onPress={handleLogout}>
             <Text style={styles.backText}>ออกจากระบบ</Text>
@@ -257,22 +266,22 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     color: "#333",
     marginBottom: 5,
   },
   infoText: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     fontSize: 16,
     color: "#555",
   },
   inputGroup: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     width: "90%",
     marginBottom: 15,
   },
   inputGroup2: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     width: "45%",
     marginBottom: 15,
   },
@@ -284,7 +293,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   input: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     width: "100%",
     height: 40,
     backgroundColor: "#fff",
@@ -326,12 +335,12 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontSize: 18,
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
   },
   backText: {
     color: "#ff7f50",
     fontSize: 16,
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     marginBottom: 15,
   },
   backButton: {

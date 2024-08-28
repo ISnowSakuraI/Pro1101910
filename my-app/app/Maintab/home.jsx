@@ -46,23 +46,23 @@ export default function Home({ navigation }) {
       <Text style={styles.header}>หมวดหมู่</Text>
       <View style={styles.grid}>
         <CategoryItem 
-          image={require("../../assets/images/150.png")}
+          icon="calendar-today"
           label="จัดตารางออกกำลังกาย"
           onPress={() => navigation.navigate("Schedule")}
         />
         <CategoryItem
-          image={require("../../assets/images/150.png")}
+          icon="article"
           label="บทความ"
           onPress={() => navigation.navigate("ArticleList")}
         />
         <CategoryItem
-          image={require("../../assets/images/150.png")}
-          label="ExerciseTracker"
+          icon="fitness-center"
+          label="ติดตามการวิ่ง"
           onPress={() => navigation.navigate("ExerciseTracker")}
         />
         <CategoryItem
-          image={require("../../assets/images/150.png")}
-          label="UserStatistics"
+          icon="bar-chart"
+          label="สถิติ"
           onPress={() => navigation.navigate("UserStatistics")}
         />
       </View>
@@ -81,10 +81,10 @@ export default function Home({ navigation }) {
   );
 }
 
-function CategoryItem({ image, label, onPress }) {
+function CategoryItem({ icon, label, onPress }) {
   return (
     <TouchableOpacity style={styles.item} onPress={onPress}>
-      <Image source={image} style={styles.icon} />
+      <Icon name={icon} size={40} color="#ff7f50" style={styles.icon} />
       <Text style={styles.label}>{label}</Text>
     </TouchableOpacity>
   );
@@ -99,9 +99,13 @@ function ArticleItem({ article, onPress }) {
   return (
     <TouchableOpacity style={styles.articleItem} onPress={onPress}>
       <View style={styles.imageContainer}>
-        {article.images.slice(0, 2).map((img, index) => (
-          <Image key={index} source={{ uri: img }} style={styles.articleImage} />
-        ))}
+        {article.images.length === 1 ? (
+          <Image source={{ uri: article.images[0] }} style={styles.fullArticleImage} />
+        ) : (
+          article.images.slice(0, 2).map((img, index) => (
+            <Image key={index} source={{ uri: img }} style={styles.articleImage} />
+          ))
+        )}
         {article.images.length > 2 && (
           <View style={styles.moreImagesOverlay}>
             <Text style={styles.moreImagesText}>+{article.images.length - 2}</Text>
@@ -119,9 +123,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
     padding: 20,
+    paddingBottom: 40,
   },
   header: {
-    fontFamily: 'NotoSansThai-bold',
+    fontFamily: 'NotoSansThai-Regular',
     fontSize: 24,
     marginVertical: 10,
     color: "#333",
@@ -145,8 +150,6 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   icon: {
-    width: 75,
-    height: 75,
     marginBottom: 5,
   },
   label: {
@@ -182,6 +185,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginRight: 5,
   },
+  fullArticleImage: {
+    width: "100%",
+    height: 100,
+    borderRadius: 8,
+  },
   moreImagesOverlay: {
     position: "absolute",
     right: 5,
@@ -191,7 +199,7 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   moreImagesText: {
-    fontFamily: 'NotoSansThai-bold',
+    fontFamily: 'NotoSansThai-Regular',
     color: "white",
   },
   articleTitle: {
