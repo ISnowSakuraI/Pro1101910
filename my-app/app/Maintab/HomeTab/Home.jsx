@@ -9,13 +9,18 @@ import {
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../../firebase/Firebase";
+import { auth, db } from "../../../firebase/Firebase";
 import { collection, getDocs } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import { useTheme } from "../../ThemeContext";
+import { useLanguage } from "../../LanguageContext";
+import { useNavigation } from "@react-navigation/native";
 
 export default function Home({ navigation }) {
   const [user, setUser] = useState(null);
   const [articles, setArticles] = useState([]);
+  const { isDarkTheme } = useTheme();
+  const { isThaiLanguage } = useLanguage();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -42,38 +47,49 @@ export default function Home({ navigation }) {
   );
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>หมวดหมู่</Text>
+    <ScrollView
+      style={[
+        styles.container,
+        { backgroundColor: isDarkTheme ? "#222" : "#f5f5f5" },
+      ]}
+    >
+      <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
+        {isThaiLanguage ? "หมวดหมู่" : "Categories"}
+      </Text>
       <View style={styles.grid}>
-        <CategoryItem 
+        <CategoryItem
           icon="calendar-today"
-          label="จัดตารางออกกำลังกาย"
+          label={isThaiLanguage ? "จัดตารางออกกำลังกาย" : "Schedule"}
           onPress={() => navigation.navigate("Schedule")}
         />
         <CategoryItem
           icon="article"
-          label="บทความ"
-          onPress={() => navigation.navigate("ArticleList")}
+          label={isThaiLanguage ? "บทความ" : "Articles"}
+          onPress={() => navigation.navigate("ArticleStack")}
         />
         <CategoryItem
           icon="fitness-center"
-          label="ติดตามการวิ่ง"
+          label={isThaiLanguage ? "ติดตามการวิ่ง" : "Track Run"}
           onPress={() => navigation.navigate("ExerciseTracker")}
         />
         <CategoryItem
           icon="bar-chart"
-          label="สถิติ"
+          label={isThaiLanguage ? "สถิติ" : "Statistics"}
           onPress={() => navigation.navigate("UserStatistics")}
         />
       </View>
 
-      <Text style={styles.header}>บทความที่น่าสนใจ</Text>
+      <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
+        {isThaiLanguage ? "บทความที่น่าสนใจ" : "Interesting Articles"}
+      </Text>
       <View style={styles.articles}>
         {articles.map((article) => (
           <ArticleItem
             key={article.id}
             article={article}
-            onPress={() => navigation.navigate("ArticleDetail", { articleId: article.id })}
+            onPress={() =>
+              navigation.navigate("ArticleDetail", { articleId: article.id })
+            }
           />
         ))}
       </View>
@@ -82,38 +98,77 @@ export default function Home({ navigation }) {
 }
 
 function CategoryItem({ icon, label, onPress }) {
+  const { isDarkTheme } = useTheme();
   return (
-    <TouchableOpacity style={styles.item} onPress={onPress}>
-      <Icon name={icon} size={40} color="#ff7f50" style={styles.icon} />
-      <Text style={styles.label}>{label}</Text>
+    <TouchableOpacity
+      style={[styles.item, { backgroundColor: isDarkTheme ? "#444" : "#fff" }]}
+      onPress={onPress}
+    >
+      <Icon
+        name={icon}
+        size={40}
+        color={isDarkTheme ? "#ff7f50" : "#ff7f50"}
+        style={styles.icon}
+      />
+      <Text style={[styles.label, { color: isDarkTheme ? "#fff" : "#555" }]}>
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 }
 
-function ArticleItem({ article, onPress }) {
+function ArticleItem({ article }) {
+  const { isDarkTheme } = useTheme();
+  const navigation = useNavigation(); // Use the hook to get navigation
+
   const formatDate = (timestamp) => {
     const date = timestamp.toDate(); // Convert Firestore Timestamp to Date
-    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}`;
+    return `${date.getDate()}/${
+      date.getMonth() + 1
+    }/${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}`;
   };
 
   return (
-    <TouchableOpacity style={styles.articleItem} onPress={onPress}>
+    <TouchableOpacity
+      style={[
+        styles.articleItem,
+        { backgroundColor: isDarkTheme ? "#444" : "#fff" },
+      ]}
+      onPress={() =>
+        navigation.navigate("ArticleDetail", { articleId: article.id })
+      }
+    >
       <View style={styles.imageContainer}>
         {article.images.length === 1 ? (
-          <Image source={{ uri: article.images[0] }} style={styles.fullArticleImage} />
+          <Image
+            source={{ uri: article.images[0] }}
+            style={styles.fullArticleImage}
+          />
         ) : (
-          article.images.slice(0, 2).map((img, index) => (
-            <Image key={index} source={{ uri: img }} style={styles.articleImage} />
-          ))
+          article.images
+            .slice(0, 2)
+            .map((img, index) => (
+              <Image
+                key={index}
+                source={{ uri: img }}
+                style={styles.articleImage}
+              />
+            ))
         )}
         {article.images.length > 2 && (
           <View style={styles.moreImagesOverlay}>
-            <Text style={styles.moreImagesText}>+{article.images.length - 2}</Text>
+            <Text style={styles.moreImagesText}>
+              +{article.images.length - 2}
+            </Text>
           </View>
         )}
       </View>
-      <Text style={styles.articleTitle} numberOfLines={2}>{article.title}</Text>
-      <Text style={styles.articleDate}>{formatDate(article.createdAt)}</Text>
+      <Text
+        style={[styles.articleTitle, { color: isDarkTheme ? "#fff" : "#333" }]}
+        numberOfLines={2}
+      >
+        {article.title}
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -121,15 +176,14 @@ function ArticleItem({ article, onPress }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
     padding: 20,
     paddingBottom: 40,
   },
   header: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     fontSize: 24,
     marginVertical: 10,
-    color: "#333",
+    textAlign: "left",
   },
   grid: {
     flexDirection: "row",
@@ -140,7 +194,6 @@ const styles = StyleSheet.create({
     width: "30%",
     alignItems: "center",
     marginVertical: 10,
-    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 10,
     shadowColor: "#000",
@@ -153,10 +206,9 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   label: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     textAlign: "center",
     fontSize: 16,
-    color: "#555",
   },
   articles: {
     flexDirection: "row",
@@ -166,7 +218,6 @@ const styles = StyleSheet.create({
   articleItem: {
     width: "48%",
     marginVertical: 10,
-    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 10,
     shadowColor: "#000",
@@ -199,21 +250,19 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   moreImagesText: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     color: "white",
   },
   articleTitle: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     textAlign: "center",
     fontSize: 16,
     marginTop: 5,
-    color: "#333",
   },
   articleDate: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     textAlign: "center",
     fontSize: 14,
-    color: "#777",
     marginTop: 5,
   },
 });

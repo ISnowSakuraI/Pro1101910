@@ -9,11 +9,13 @@ import {
   Image,
   ScrollView,
 } from "react-native";
-import { db, auth, storage } from "../../../firebase/Firebase";
+import { db, auth, storage } from "../../../../firebase/Firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import { useTheme } from "../../../ThemeContext";
+import { useLanguage } from "../../../LanguageContext";
 
 export default function AddArticle({ navigation }) {
   const [title, setTitle] = useState("");
@@ -21,6 +23,8 @@ export default function AddArticle({ navigation }) {
   const [images, setImages] = useState([]);
   const [titleHeight, setTitleHeight] = useState(40);
   const [descriptionHeight, setDescriptionHeight] = useState(40);
+  const { isDarkTheme } = useTheme();
+  const { isThaiLanguage } = useLanguage();
 
   const pickImages = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -71,17 +75,21 @@ export default function AddArticle({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: isDarkTheme ? "#333" : "#f9f9f9" }]}>
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}
       >
-        <Icon name="arrow-back" size={24} color="black" />
+        <Icon name="arrow-back" size={24} color={isDarkTheme ? "#fff" : "#000"} />
       </TouchableOpacity>
-      <Text style={styles.header}>Add New Article</Text>
+      <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
+        {isThaiLanguage ? "เพิ่มบทความใหม่" : "Add New Article"}
+      </Text>
       <TouchableOpacity onPress={pickImages} style={styles.addImageButton}>
         <Icon name="add-photo-alternate" size={24} color="white" />
-        <Text style={styles.addImageText}>Add Images</Text>
+        <Text style={styles.addImageText}>
+          {isThaiLanguage ? "เพิ่มรูปภาพ" : "Add Images"}
+        </Text>
       </TouchableOpacity>
       <View style={styles.imageContainer}>
         {images.map((img, index) => (
@@ -89,8 +97,9 @@ export default function AddArticle({ navigation }) {
         ))}
       </View>
       <TextInput
-        style={[styles.input, { height: titleHeight }]}
-        placeholder="หัวข้อ"
+        style={[styles.input, { height: titleHeight, backgroundColor: isDarkTheme ? "#444" : "#fff", color: isDarkTheme ? "#fff" : "#000" }]}
+        placeholder={isThaiLanguage ? "หัวข้อ" : "Title"}
+        placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={title}
         onChangeText={setTitle}
         multiline
@@ -99,8 +108,9 @@ export default function AddArticle({ navigation }) {
         }
       />
       <TextInput
-        style={[styles.textArea, { height: descriptionHeight }]}
-        placeholder="คำอธิบาย"
+        style={[styles.textArea, { height: descriptionHeight, backgroundColor: isDarkTheme ? "#444" : "#fff", color: isDarkTheme ? "#fff" : "#000" }]}
+        placeholder={isThaiLanguage ? "คำอธิบาย" : "Description"}
+        placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={description}
         onChangeText={setDescription}
         multiline
@@ -109,7 +119,9 @@ export default function AddArticle({ navigation }) {
         }
       />
       <TouchableOpacity style={styles.saveButton} onPress={handleAddArticle}>
-        <Text style={styles.saveButtonText}>SAVE</Text>
+        <Text style={styles.saveButtonText}>
+          {isThaiLanguage ? "บันทึก" : "SAVE"}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -119,13 +131,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#f9f9f9",
   },
   header: {
     fontSize: 24,
     fontFamily: 'NotoSansThai-Regular',
     marginBottom: 20,
-    color: "#333",
+    textAlign: "center",
   },
   addImageButton: {
     flexDirection: "row",
@@ -163,7 +174,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 5,
     textAlignVertical: "top",
-    backgroundColor: "#fff",
   },
   textArea: {
     fontFamily: 'NotoSansThai-Regular',
@@ -175,7 +185,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 5,
     textAlignVertical: "top",
-    backgroundColor: "#fff",
   },
   backButton: {
     marginBottom: 10,

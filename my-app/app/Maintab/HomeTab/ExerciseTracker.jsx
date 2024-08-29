@@ -6,6 +6,9 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db, auth } from "../../../firebase/Firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { useTheme } from "../../ThemeContext";
+import { useLanguage } from "../../LanguageContext";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function ExerciseTracker({ navigation }) {
   const [location, setLocation] = useState(null);
@@ -17,6 +20,8 @@ export default function ExerciseTracker({ navigation }) {
   const mapRef = useRef(null);
   const startTimeRef = useRef(null);
   const locationSubscription = useRef(null);
+  const { isDarkTheme } = useTheme();
+  const { isThaiLanguage } = useLanguage();
 
   useEffect(() => {
     (async () => {
@@ -28,12 +33,25 @@ export default function ExerciseTracker({ navigation }) {
     })();
   }, []);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      // Reset state when the screen is focused
+      setLocation(null);
+      setRoute([]);
+      setDistance(0);
+      setTime(0);
+      setCalories(0);
+      setTracking(false);
+    }, [])
+  );
+
   const startTracking = async () => {
-    setTracking(true);
     startTimeRef.current = new Date();
+    setTracking(true);
     setRoute([]);
     setDistance(0);
     setCalories(0);
+
 
     if (locationSubscription.current) {
       locationSubscription.current.remove();
@@ -130,39 +148,53 @@ export default function ExerciseTracker({ navigation }) {
   };
 
   return (
-    <FlatList
-      data={[]}
-      ListHeaderComponent={
-        <>
-          <Text style={styles.header}>Exercise Tracker</Text>
-          <View style={styles.statsContainer}>
-            <Text style={styles.statText}>Distance: {distance.toFixed(2)} Km</Text>
-            <Text style={styles.statText}>Time: {time} min</Text>
-            <Text style={styles.statText}>Calories: {calories.toFixed(0)} cal</Text>
-          </View>
-          <MapView ref={mapRef} style={styles.map}>
-            <Polyline coordinates={route} strokeWidth={5} strokeColor="green" />
-            {location && (
-              <Marker coordinate={location}>
-                <Icon name="person-pin-circle" size={40} color="red" />
-              </Marker>
-            )}
-          </MapView>
-          <TouchableOpacity style={styles.locateButton} onPress={() => centerMap(location)}>
-            <Icon name="my-location" size={24} color="white" />
-            <Text style={styles.locateButtonText}>Locate Me</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.startButton}
-            onPress={tracking ? stopTracking : startTracking}
-          >
-            <Icon name={tracking ? "stop" : "play-arrow"} size={24} color="white" />
-            <Text style={styles.startButtonText}>{tracking ? "Stop" : "Start"}</Text>
-          </TouchableOpacity>
-        </>
-      }
-      keyExtractor={(item, index) => index.toString()}
-    />
+    <View style={{ backgroundColor: isDarkTheme ? "#333" : "#fff" }}>
+      <FlatList
+        data={[]}
+        ListHeaderComponent={
+          <>
+            <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#000" }]}>
+              {isThaiLanguage ? "ตัวติดตามการออกกำลังกาย" : "Exercise Tracker"}
+            </Text>
+            <View style={[styles.statsContainer, { backgroundColor: isDarkTheme ? "#333" : "#fff" }]}>
+              <Text style={[styles.statText, { color: isDarkTheme ? "#fff" : "#000" }]}>
+                {isThaiLanguage ? "ระยะทาง" : "Distance"}: {distance.toFixed(2)} Km
+              </Text>
+              <Text style={[styles.statText, { color: isDarkTheme ? "#fff" : "#000" }]}>
+                {isThaiLanguage ? "เวลา" : "Time"}: {time} min
+              </Text>
+              <Text style={[styles.statText, { color: isDarkTheme ? "#fff" : "#000" }]}>
+                {isThaiLanguage ? "แคลอรี่" : "Calories"}: {calories.toFixed(0)} cal
+              </Text>
+            </View>
+            <MapView ref={mapRef} style={styles.map}>
+              <Polyline coordinates={route} strokeWidth={5} strokeColor="green" />
+              {location && (
+                <Marker coordinate={location}>
+                  <Icon name="person-pin-circle" size={40} color="red" />
+                </Marker>
+              )}
+            </MapView>
+            <TouchableOpacity style={styles.locateButton} onPress={() => centerMap(location)}>
+              <Icon name="my-location" size={24} color="white" />
+              <Text style={styles.locateButtonText}>
+                {isThaiLanguage ? "ค้นหาฉัน" : "Locate Me"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.startButton}
+              onPress={tracking ? stopTracking : startTracking}
+            >
+              <Icon name={tracking ? "stop" : "play-arrow"} size={24} color="white" />
+              <Text style={styles.startButtonText}>
+                {tracking ? (isThaiLanguage ? "หยุด" : "Stop") : (isThaiLanguage ? "เริ่ม" : "Start")}
+              </Text>
+            </TouchableOpacity>
+          </>
+        }
+        keyExtractor={(item, index) => index.toString()}
+      />
+    </View>
   );
 }
 
@@ -170,19 +202,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 10,
-    backgroundColor: "#4CAF50",
-    borderRadius: 5,
-    margin: 10,
-  },
-  backButtonText: {
-    color: "white",
-    fontWeight: "bold",
-    marginLeft: 5,
   },
   header: {
     fontSize: 24,
@@ -192,7 +211,6 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     padding: 20,
-    backgroundColor: "#fff",
     borderRadius: 10,
     margin: 10,
   },

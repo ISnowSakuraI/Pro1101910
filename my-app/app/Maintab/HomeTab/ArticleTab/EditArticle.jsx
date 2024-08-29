@@ -11,7 +11,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import { db, storage, auth } from "../../../firebase/Firebase";
+import { db, storage, auth } from "../../../../firebase/Firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import {
   ref,
@@ -21,6 +21,8 @@ import {
 } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import { useTheme } from "../../../ThemeContext";
+import { useLanguage } from "../../../LanguageContext";
 
 export default function EditArticle({ route, navigation }) {
   const { articleId } = route.params;
@@ -30,6 +32,8 @@ export default function EditArticle({ route, navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const { isDarkTheme } = useTheme();
+  const { isThaiLanguage } = useLanguage();
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -103,11 +107,11 @@ export default function EditArticle({ route, navigation }) {
         description,
         images: imageUrls,
       });
-      Alert.alert("Success", "Article updated successfully!");
+      Alert.alert(isThaiLanguage ? "สำเร็จ" : "Success", isThaiLanguage ? "อัปเดตบทความเรียบร้อยแล้ว!" : "Article updated successfully!");
       navigation.goBack();
     } catch (error) {
       console.error("Error updating article: ", error);
-      Alert.alert("Error", "Failed to update article. Please try again.");
+      Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถอัปเดตบทความได้ กรุณาลองใหม่อีกครั้ง." : "Failed to update article. Please try again.");
     } finally {
       setUploading(false);
     }
@@ -119,11 +123,15 @@ export default function EditArticle({ route, navigation }) {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>Edit Article</Text>
+    <ScrollView style={[styles.container, { backgroundColor: isDarkTheme ? "#333" : "#f9f9f9" }]}>
+      <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
+        {isThaiLanguage ? "แก้ไขบทความ" : "Edit Article"}
+      </Text>
       <TouchableOpacity onPress={pickImage} style={styles.addImageButton}>
         <Icon name="add-photo-alternate" size={24} color="white" />
-        <Text style={styles.addImageText}>Add Images</Text>
+        <Text style={styles.addImageText}>
+          {isThaiLanguage ? "เพิ่มรูปภาพ" : "Add Images"}
+        </Text>
       </TouchableOpacity>
       <View style={styles.imageContainer}>
         {images.map((img, index) => (
@@ -141,17 +149,19 @@ export default function EditArticle({ route, navigation }) {
         ))}
       </View>
       <TextInput
-        style={styles.titleInput}
+        style={[styles.titleInput, { backgroundColor: isDarkTheme ? "#444" : "#fff", color: isDarkTheme ? "#fff" : "#000" }]}
         value={title}
         onChangeText={setTitle}
-        placeholder="Article Title"
+        placeholder={isThaiLanguage ? "หัวข้อบทความ" : "Article Title"}
+        placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         multiline
       />
       <TextInput
-        style={styles.descriptionInput}
+        style={[styles.descriptionInput, { backgroundColor: isDarkTheme ? "#444" : "#fff", color: isDarkTheme ? "#fff" : "#000" }]}
         value={description}
         onChangeText={setDescription}
-        placeholder="Description"
+        placeholder={isThaiLanguage ? "คำอธิบาย" : "Description"}
+        placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         multiline
       />
       <TouchableOpacity
@@ -162,7 +172,9 @@ export default function EditArticle({ route, navigation }) {
         {uploading ? (
           <ActivityIndicator size="small" color="#fff" />
         ) : (
-          <Text style={styles.saveButtonText}>SAVE</Text>
+          <Text style={styles.saveButtonText}>
+            {isThaiLanguage ? "บันทึก" : "SAVE"}
+          </Text>
         )}
       </TouchableOpacity>
 
@@ -187,14 +199,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#f9f9f9",
   },
   header: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontFamily: "NotoSansThai-Regular",
     marginBottom: 20,
     textAlign: "center",
-    color: "#333",
   },
   titleInput: {
     minHeight: 60,
@@ -205,8 +215,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 5,
     fontSize: 18,
+    fontFamily: "NotoSansThai-Regular",
     textAlignVertical: "top",
-    backgroundColor: "#fff",
   },
   descriptionInput: {
     minHeight: 100,
@@ -217,8 +227,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 5,
     fontSize: 16,
+    fontFamily: "NotoSansThai-Regular",
     textAlignVertical: "top",
-    backgroundColor: "#fff",
   },
   imageContainer: {
     flexDirection: "row",
@@ -254,7 +264,7 @@ const styles = StyleSheet.create({
   },
   addImageText: {
     color: "white",
-    fontWeight: "bold",
+    fontFamily: "NotoSansThai-Regular",
     marginLeft: 5,
   },
   saveButton: {
@@ -265,7 +275,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: "white",
-    fontWeight: "bold",
+    fontFamily: "NotoSansThai-Regular",
     fontSize: 16,
   },
   modalContainer: {

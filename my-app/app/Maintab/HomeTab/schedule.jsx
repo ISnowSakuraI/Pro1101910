@@ -15,6 +15,8 @@ import { db, auth } from "../../../firebase/Firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import * as Notifications from "expo-notifications";
 import Icon from "react-native-vector-icons/AntDesign";
+import { useTheme } from "../../ThemeContext";
+import { useLanguage } from "../../LanguageContext";
 
 export default function Schedule({ navigation }) {
   const [selectedDate, setSelectedDate] = useState("");
@@ -25,6 +27,8 @@ export default function Schedule({ navigation }) {
   const [showStartTimePicker, setShowStartTimePicker] = useState(false);
   const [scheduleData, setScheduleData] = useState({});
   const [editingId, setEditingId] = useState(null);
+  const { isDarkTheme } = useTheme();
+  const { isThaiLanguage } = useLanguage();
 
   const user = auth.currentUser;
 
@@ -63,8 +67,8 @@ export default function Schedule({ navigation }) {
     const trigger = new Date(time);
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "Time to Exercise!",
-        body: `It's time for your ${exercise} session.`,
+        title: isThaiLanguage ? "ถึงเวลาออกกำลังกาย!" : "Time to Exercise!",
+        body: isThaiLanguage ? `ถึงเวลา ${exercise} ของคุณแล้ว.` : `It's time for your ${exercise} session.`,
       },
       trigger,
     });
@@ -72,7 +76,7 @@ export default function Schedule({ navigation }) {
 
   const addOrUpdateSchedule = () => {
     if (newExercise.trim() === "" || duration.trim() === "") {
-      Alert.alert("Error", "กรุณาใส่ข้อมูลให้ครบถ้วน");
+      Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "กรุณาใส่ข้อมูลให้ครบถ้วน" : "Please fill in all fields");
       return;
     }
     const newSchedule = {
@@ -131,7 +135,7 @@ export default function Schedule({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: isDarkTheme ? "#333" : "#f5f5f5" }]}>
       <Calendar
         onDayPress={handleDayPress}
         markedDates={{
@@ -141,13 +145,24 @@ export default function Schedule({ navigation }) {
             selectedColor: "blue",
           },
         }}
+        theme={{
+          calendarBackground: isDarkTheme ? "#333" : "#fff",
+          textSectionTitleColor: isDarkTheme ? "#fff" : "#000",
+          dayTextColor: isDarkTheme ? "#fff" : "#000",
+          todayTextColor: "red",
+          selectedDayTextColor: "#fff",
+          monthTextColor: isDarkTheme ? "#fff" : "#000",
+          arrowColor: isDarkTheme ? "#fff" : "#000",
+        }}
       />
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => setModalVisible(true)}
       >
         <Icon name="pluscircle" size={24} color="white" />
-        <Text style={styles.addButtonText}>เพิ่มตาราง</Text>
+        <Text style={styles.addButtonText}>
+          {isThaiLanguage ? "เพิ่มตาราง" : "Add Schedule"}
+        </Text>
       </TouchableOpacity>
       <FlatList
         data={(scheduleData[selectedDate] || []).sort((a, b) => {
@@ -160,9 +175,9 @@ export default function Schedule({ navigation }) {
         renderItem={({ item }) => (
           <View style={styles.row}>
             <View style={styles.info}>
-              <Text style={styles.cell}>{item.startTime}</Text>
-              <Text style={styles.cell}>{item.duration} นาที</Text>
-              <Text style={styles.cell}>{item.exercise}</Text>
+              <Text style={[styles.cell, { color: isDarkTheme ? "#fff" : "#000" }]}>{item.startTime}</Text>
+              <Text style={[styles.cell, { color: isDarkTheme ? "#fff" : "#000" }]}>{item.duration} {isThaiLanguage ? "นาที" : "minutes"}</Text>
+              <Text style={[styles.cell, { color: isDarkTheme ? "#fff" : "#000" }]}>{item.exercise}</Text>
             </View>
             <View style={styles.actions}>
               <TouchableOpacity
@@ -187,12 +202,15 @@ export default function Schedule({ navigation }) {
         transparent={true}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalView}>
-          <Text style={styles.modalText}>แก้ไขตารางสำหรับ {selectedDate}</Text>
+        <View style={[styles.modalView, { backgroundColor: isDarkTheme ? "#444" : "#fff" }]}>
+          <Text style={[styles.modalText, { color: isDarkTheme ? "#fff" : "#000" }]}>
+            {isThaiLanguage ? "แก้ไขตารางสำหรับ" : "Edit Schedule for"} {selectedDate}
+          </Text>
           <TouchableOpacity onPress={() => setShowStartTimePicker(true)}>
             <TextInput
-              style={styles.input}
-              placeholder="เวลาเริ่มต้น"
+              style={[styles.input, { color: isDarkTheme ? "#fff" : "#000", backgroundColor: isDarkTheme ? "#555" : "#fff" }]}
+              placeholder={isThaiLanguage ? "เวลาเริ่มต้น" : "Start Time"}
+              placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
               value={startTime.toLocaleTimeString("en-GB", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -213,15 +231,17 @@ export default function Schedule({ navigation }) {
             />
           )}
           <TextInput
-            style={styles.input}
-            placeholder="ระยะเวลา (นาที)"
+            style={[styles.input, { color: isDarkTheme ? "#fff" : "#000", backgroundColor: isDarkTheme ? "#555" : "#fff" }]}
+            placeholder={isThaiLanguage ? "ระยะเวลา (นาที)" : "Duration (minutes)"}
+            placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
             value={duration}
             onChangeText={setDuration}
             keyboardType="numeric"
           />
           <TextInput
-            style={styles.input}
-            placeholder="การออกกำลังกาย"
+            style={[styles.input, { color: isDarkTheme ? "#fff" : "#000", backgroundColor: isDarkTheme ? "#555" : "#fff" }]}
+            placeholder={isThaiLanguage ? "การออกกำลังกาย" : "Exercise"}
+            placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
             value={newExercise}
             onChangeText={setNewExercise}
           />
@@ -229,13 +249,17 @@ export default function Schedule({ navigation }) {
             style={styles.saveButton}
             onPress={addOrUpdateSchedule}
           >
-            <Text style={styles.buttonText}>บันทึก</Text>
+            <Text style={styles.buttonText}>
+              {isThaiLanguage ? "บันทึก" : "Save"}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.cancelButton}
             onPress={() => setModalVisible(false)}
           >
-            <Text style={styles.buttonText}>ยกเลิก</Text>
+            <Text style={styles.buttonText}>
+              {isThaiLanguage ? "ยกเลิก" : "Cancel"}
+            </Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -247,7 +271,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#f5f5f5",
   },
   addButton: {
     flexDirection: "row",
@@ -260,7 +283,7 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     color: "white",
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     marginLeft: 5,
   },
   row: {
@@ -281,7 +304,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cell: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     textAlign: "center",
     fontSize: 14,
   },
@@ -299,7 +322,6 @@ const styles = StyleSheet.create({
   },
   modalView: {
     margin: 20,
-    backgroundColor: "white",
     borderRadius: 20,
     padding: 35,
     alignItems: "center",
@@ -313,13 +335,13 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   modalText: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     marginBottom: 15,
     textAlign: "center",
     fontSize: 18,
   },
   input: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     height: 40,
     borderColor: "#ccc",
     borderWidth: 1,
@@ -346,6 +368,6 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "white",
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
   },
 });
