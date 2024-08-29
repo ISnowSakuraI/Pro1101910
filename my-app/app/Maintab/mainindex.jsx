@@ -223,6 +223,11 @@ function ProfileStack() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
+        name="EditArticle"
+        component={EditArticle}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="Settings"
         component={Settings}
         options={{ headerShown: false }}

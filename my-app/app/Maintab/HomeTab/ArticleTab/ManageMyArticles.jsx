@@ -8,6 +8,7 @@ import {
   Image,
   Alert,
   TextInput,
+  Animated,
 } from "react-native";
 import { db, auth } from "../../../../firebase/Firebase";
 import { collection, query, where, getDocs, deleteDoc, doc, orderBy } from "firebase/firestore";
@@ -104,6 +105,7 @@ export default function ManageMyArticles({ navigation }) {
               <TouchableOpacity
                 style={styles.editButton}
                 onPress={() => navigation.navigate("EditArticle", { articleId: item.id })}
+                activeOpacity={0.7}
               >
                 <Icon name="edit" size={20} color="white" />
                 <Text style={styles.buttonText}>{isThaiLanguage ? "แก้ไข" : "Edit"}</Text>
@@ -111,6 +113,7 @@ export default function ManageMyArticles({ navigation }) {
               <TouchableOpacity
                 style={styles.deleteButton}
                 onPress={() => handleDeleteArticle(item.id)}
+                activeOpacity={0.7}
               >
                 <Icon name="delete" size={20} color="white" />
                 <Text style={styles.buttonText}>{isThaiLanguage ? "ลบ" : "Delete"}</Text>

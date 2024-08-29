@@ -23,6 +23,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import IconAntDesign from "react-native-vector-icons/AntDesign";
 import { LineChart } from "react-native-chart-kit";
 import { useTheme } from "../../ThemeContext";
 import { useLanguage } from "../../LanguageContext";
@@ -150,7 +151,7 @@ export default function Profile({ navigation }) {
         >
           <Icon
             name="settings"
-            size={24}
+            size={28}
             color={isDarkTheme ? "#fff" : "#333"}
           />
         </TouchableOpacity>
@@ -234,6 +235,17 @@ export default function Profile({ navigation }) {
             </Text>
           </TouchableOpacity>
         </View>
+        <View style={styles.graphContainer}>
+          <IconAntDesign name="linechart" size={24} color={isDarkTheme ? "#fff" : "#333"} />
+          <Text
+            style={[
+              styles.graphTitle,
+              { color: isDarkTheme ? "#fff" : "#333" },
+            ]}
+          >
+            {isThaiLanguage ? "แคลอรี่ที่เผาผลาญตามเวลา" : "Calories Burned Over Time"}
+          </Text>
+        </View>
         {dailyData.length > 0 ? (
           <LineChart
             data={{
@@ -268,7 +280,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    padding: 29,
   },
   settingsIcon: {
     position: "absolute",
@@ -371,6 +383,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
+  },
+  graphContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 10,
+  },
+  graphTitle: {
+    fontSize: 18,
+    fontFamily: "NotoSansThai-Regular",
+    marginLeft: 10,
   },
   chart: {
     marginVertical: 8,

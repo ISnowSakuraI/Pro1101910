@@ -5,6 +5,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { LineChart } from "react-native-chart-kit";
 import { useTheme } from "../../ThemeContext";
 import { useLanguage } from "../../LanguageContext";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 
 export default function UserStatistics() {
   const [dailyData, setDailyData] = useState([]);
@@ -78,6 +79,12 @@ export default function UserStatistics() {
       </Text>
       {dailyData.length > 0 ? (
         <>
+          <View style={styles.graphContainer}>
+            <Icon name="run" size={24} color={isDarkTheme ? "#fff" : "#333"} />
+            <Text style={[styles.graphTitle, { color: isDarkTheme ? "#fff" : "#333" }]}>
+              {isThaiLanguage ? "ระยะทางตามเวลา" : "Distance Over Time"}
+            </Text>
+          </View>
           <LineChart
             data={{
               labels: dailyData.map((data) => data.date),
@@ -96,6 +103,12 @@ export default function UserStatistics() {
             chartConfig={chartConfig}
             style={styles.chart}
           />
+          <View style={styles.graphContainer}>
+            <Icon name="fire" size={24} color={isDarkTheme ? "#fff" : "#333"} />
+            <Text style={[styles.graphTitle, { color: isDarkTheme ? "#fff" : "#333" }]}>
+              {isThaiLanguage ? "แคลอรี่ที่เผาผลาญตามเวลา" : "Calories Burned Over Time"}
+            </Text>
+          </View>
           <LineChart
             data={{
               labels: dailyData.map((data) => data.date),
@@ -136,9 +149,25 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     fontFamily: "NotoSansThai-Regular",
   },
+  graphContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 10,
+  },
+  graphTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginLeft: 10,
+    fontFamily: "NotoSansThai-Regular",
+  },
   chart: {
     marginVertical: 8,
     borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   noDataText: {
     textAlign: "center",

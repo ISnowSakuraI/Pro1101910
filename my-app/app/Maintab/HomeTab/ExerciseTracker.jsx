@@ -52,7 +52,6 @@ export default function ExerciseTracker({ navigation }) {
     setDistance(0);
     setCalories(0);
 
-
     if (locationSubscription.current) {
       locationSubscription.current.remove();
     }
@@ -148,7 +147,7 @@ export default function ExerciseTracker({ navigation }) {
   };
 
   return (
-    <View style={{ backgroundColor: isDarkTheme ? "#333" : "#fff" }}>
+    <View style={{ backgroundColor: isDarkTheme ? "#1e1e1e" : "#f5f5f5", flex: 1 }}>
       <FlatList
         data={[]}
         ListHeaderComponent={
@@ -156,7 +155,7 @@ export default function ExerciseTracker({ navigation }) {
             <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#000" }]}>
               {isThaiLanguage ? "ตัวติดตามการออกกำลังกาย" : "Exercise Tracker"}
             </Text>
-            <View style={[styles.statsContainer, { backgroundColor: isDarkTheme ? "#333" : "#fff" }]}>
+            <View style={[styles.statsContainer, { backgroundColor: isDarkTheme ? "#2c2c2c" : "#fff" }]}>
               <Text style={[styles.statText, { color: isDarkTheme ? "#fff" : "#000" }]}>
                 {isThaiLanguage ? "ระยะทาง" : "Distance"}: {distance.toFixed(2)} Km
               </Text>
@@ -199,20 +198,21 @@ export default function ExerciseTracker({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
   header: {
-    fontSize: 24,
+    fontSize: 26,
     fontFamily: 'NotoSansThai-Regular',
     textAlign: "center",
-    marginVertical: 10,
+    marginVertical: 15,
   },
   statsContainer: {
     padding: 20,
     borderRadius: 10,
     margin: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   statText: {
     fontFamily: 'NotoSansThai-Regular',
@@ -228,28 +228,40 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    padding: 10,
+    padding: 12,
     backgroundColor: "#2196F3",
-    borderRadius: 5,
+    borderRadius: 8,
     margin: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   locateButtonText: {
     color: "white",
     fontFamily: 'NotoSansThai-Regular',
     marginLeft: 5,
+    fontSize: 16,
   },
   startButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    padding: 10,
+    padding: 12,
     backgroundColor: "#FF5722",
-    borderRadius: 5,
+    borderRadius: 8,
     margin: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   startButtonText: {
     color: "white",
     fontFamily: 'NotoSansThai-Regular',
     marginLeft: 5,
+    fontSize: 16,
   },
 });

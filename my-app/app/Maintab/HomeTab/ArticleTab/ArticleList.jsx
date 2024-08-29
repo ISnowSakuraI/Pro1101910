@@ -104,6 +104,9 @@ export default function ArticleList({ navigation }) {
         await setDoc(favoriteDocRef, { userId: user.uid, articleId });
         setFavorites([...favorites, articleId]);
       }
+      // Refresh articles and favorites after toggling
+      await fetchArticles();
+      await fetchFavorites();
     }
   };
 
@@ -208,13 +211,14 @@ export default function ArticleList({ navigation }) {
                 {item.description}
               </Text>
               <View style={styles.likesContainer}>
+                <Icon name="favorite" size={16} color="red" />
                 <Text
                   style={[
-                    styles.likeCount,
+                    styles.likesText,
                     { color: isDarkTheme ? "#aaa" : "#555" },
                   ]}
                 >
-                  {item.likeCount} {isThaiLanguage ? "คนถูกใจ" : "Likes"}
+                  {item.likesCount} {isThaiLanguage ? "คนถูกใจ" : "Likes"}
                 </Text>
               </View>
               <TouchableOpacity

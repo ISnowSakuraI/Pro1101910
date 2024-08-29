@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Text,
   View,
@@ -127,7 +127,7 @@ export default function EditProfile({ navigation }) {
         >
           <Icon
             name="arrow-back"
-            size={24}
+            size={28}
             color={isDarkTheme ? "#fff" : "#000"}
           />
         </TouchableOpacity>
@@ -222,7 +222,8 @@ export default function EditProfile({ navigation }) {
                         { color: isDarkTheme ? "#fff" : "#333" },
                       ]}
                     >
-                      {userData.gender || (isThaiLanguage ? "เลือกเพศ" : "Select Gender")}
+                      {userData.gender ||
+                        (isThaiLanguage ? "เลือกเพศ" : "Select Gender")}
                     </Text>
                   </Button>
                 }
@@ -230,7 +231,10 @@ export default function EditProfile({ navigation }) {
                 <Menu.Item
                   style={styles.menuItem}
                   onPress={() => {
-                    setUserData({ ...userData, gender: isThaiLanguage ? "ชาย" : "Male" });
+                    setUserData({
+                      ...userData,
+                      gender: isThaiLanguage ? "ชาย" : "Male",
+                    });
                     setMenuVisible(false);
                   }}
                   title={isThaiLanguage ? "ชาย" : "Male"}
@@ -238,7 +242,10 @@ export default function EditProfile({ navigation }) {
                 <Menu.Item
                   style={styles.menuItem}
                   onPress={() => {
-                    setUserData({ ...userData, gender: isThaiLanguage ? "หญิง" : "Female" });
+                    setUserData({
+                      ...userData,
+                      gender: isThaiLanguage ? "หญิง" : "Female",
+                    });
                     setMenuVisible(false);
                   }}
                   title={isThaiLanguage ? "หญิง" : "Female"}
@@ -261,7 +268,9 @@ export default function EditProfile({ navigation }) {
                       color: isDarkTheme ? "#fff" : "#000",
                     },
                   ]}
-                  placeholder={isThaiLanguage ? "วันเกิด (YYYY-MM-DD)" : "Birthday (YYYY-MM-DD)"}
+                  placeholder={
+                    isThaiLanguage ? "วันเกิด (YYYY-MM-DD)" : "Birthday (YYYY-MM-DD)"
+                  }
                   placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
                   value={userData.birthday || ""}
                   editable={false}
@@ -356,7 +365,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    padding: 50,
   },
   imageWrapper: {
     position: "relative",
