@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useState } from "react";
 import {
   Text,
   View,
@@ -17,12 +17,12 @@ import { useTheme } from "../../ThemeContext";
 import { useLanguage } from "../../LanguageContext";
 
 export default function Register({ navigation }) {
-  const [email, setEmail] = React.useState("");
-  const [username, setUsername] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [confirmPassword, setConfirmPassword] = React.useState("");
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
@@ -203,12 +203,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderColor: "#ddd",
     borderWidth: 1,
-    backgroundColor: "#555",
   },
   passwordInput: {
     fontFamily: "NotoSansThai-Regular",
     flex: 1,
     height: "100%",
+    
   },
   button: {
     flexDirection: "row",
