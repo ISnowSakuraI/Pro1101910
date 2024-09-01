@@ -10,7 +10,7 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../../../firebase/Firebase";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useTheme } from "../../ThemeContext";
 import { useLanguage } from "../../LanguageContext";
@@ -18,13 +18,20 @@ import { useNavigation } from "@react-navigation/native";
 
 export default function Home({ navigation }) {
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [articles, setArticles] = useState([]);
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        const userDoc = await getDoc(doc(db, "Users", currentUser.uid));
+        if (userDoc.exists() && userDoc.data().role === "admin") {
+          setIsAdmin(true);
+        }
+      }
     });
     return () => {
       unsubscribe();
@@ -77,6 +84,13 @@ export default function Home({ navigation }) {
           label={isThaiLanguage ? "สถิติ" : "Statistics"}
           onPress={() => navigation.navigate("UserStatistics")}
         />
+        {isAdmin && (
+          <CategoryItem
+            icon="manage-accounts"
+            label={isThaiLanguage ? "จัดการบทความ" : "Manage Articles"}
+            onPress={() => navigation.navigate("ManageArticles")}
+          />
+        )}
       </View>
 
       <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>

@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   RefreshControl,
   TextInput,
+  Alert,
+  Modal,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useFocusEffect } from "@react-navigation/native";
@@ -26,11 +28,21 @@ import {
 import { useTheme } from "../../../ThemeContext";
 import { useLanguage } from "../../../LanguageContext";
 
+const predefinedReasons = [
+  { id: 1, text: "Inappropriate content" },
+  { id: 2, text: "Spam" },
+  { id: 3, text: "False information" },
+];
+
 export default function ArticleList({ navigation }) {
   const [articles, setArticles] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState([]);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [selectedArticleId, setSelectedArticleId] = useState(null);
+  const [selectedReason, setSelectedReason] = useState("");
+  const [customReason, setCustomReason] = useState("");
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
@@ -107,6 +119,28 @@ export default function ArticleList({ navigation }) {
       // Refresh articles and favorites after toggling
       await fetchArticles();
       await fetchFavorites();
+    }
+  };
+
+  const openReportModal = (articleId) => {
+    setSelectedArticleId(articleId);
+    setReportModalVisible(true);
+  };
+
+  const submitReport = async () => {
+    const user = auth.currentUser;
+    if (user && selectedArticleId) {
+      const reason = selectedReason || customReason;
+      if (!reason) {
+        Alert.alert(isThaiLanguage ? "กรุณาเลือกหรือใส่เหตุผล" : "Please select or enter a reason");
+        return;
+      }
+      const reportDocRef = doc(db, "reports", `${user.uid}_${selectedArticleId}`);
+      await setDoc(reportDocRef, { userId: user.uid, articleId: selectedArticleId, reason });
+      Alert.alert(isThaiLanguage ? "รายงานสำเร็จ" : "Report Successful", isThaiLanguage ? "บทความนี้ถูกรีพอร์ตแล้ว" : "This article has been reported.");
+      setReportModalVisible(false);
+      setSelectedReason("");
+      setCustomReason("");
     }
   };
 
@@ -221,18 +255,28 @@ export default function ArticleList({ navigation }) {
                   {item.likesCount} {isThaiLanguage ? "คนถูกใจ" : "Likes"}
                 </Text>
               </View>
-              <TouchableOpacity
-                onPress={() => toggleFavorite(item.id)}
-                style={styles.favoriteButton}
-              >
-                <Icon
-                  name={
-                    favorites.includes(item.id) ? "favorite" : "favorite-border"
-                  }
-                  size={24}
-                  color={favorites.includes(item.id) ? "red" : "gray"}
-                />
-              </TouchableOpacity>
+              <View style={styles.actionButtons}>
+                <TouchableOpacity
+                  onPress={() => toggleFavorite(item.id)}
+                  style={styles.favoriteButton}
+                >
+                  <Icon
+                    name={
+                      favorites.includes(item.id)
+                        ? "favorite"
+                        : "favorite-border"
+                    }
+                    size={24}
+                    color={favorites.includes(item.id) ? "red" : "gray"}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => openReportModal(item.id)}
+                  style={styles.reportButton}
+                >
+                  <Icon name="report" size={24} color="orange" />
+                </TouchableOpacity>
+              </View>
             </View>
           </TouchableOpacity>
         )}
@@ -241,6 +285,55 @@ export default function ArticleList({ navigation }) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       />
+      <Modal
+        visible={reportModalVisible}
+        transparent={true}
+        animationType="slide"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
+              {isThaiLanguage ? "เลือกเหตุผลในการรายงาน" : "Select Report Reason"}
+            </Text>
+            {predefinedReasons.map((reason) => (
+              <TouchableOpacity
+                key={reason.id}
+                style={styles.reasonButton}
+                onPress={() => setSelectedReason(reason.text)}
+              >
+                <Text style={styles.reasonText}>{reason.text}</Text>
+                {selectedReason === reason.text && (
+                  <Icon name="check" size={20} color="green" />
+                )}
+              </TouchableOpacity>
+            ))}
+            <TextInput
+              style={styles.customReasonInput}
+              placeholder={isThaiLanguage ? "หรือใส่เหตุผลของคุณเอง..." : "Or enter your own reason..."}
+              value={customReason}
+              onChangeText={setCustomReason}
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={submitReport}
+              >
+                <Text style={styles.submitButtonText}>
+                  {isThaiLanguage ? "ส่ง" : "Submit"}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setReportModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>
+                  {isThaiLanguage ? "ยกเลิก" : "Cancel"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -340,9 +433,87 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: 5,
   },
+  actionButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
   favoriteButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
+    flex: 1,
+    alignItems: "center",
+  },
+  reportButton: {
+    flex: 1,
+    alignItems: "center",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 20,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontFamily: "NotoSansThai-Regular",
+    marginBottom: 20,
+  },
+  reasonButton: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  reasonText: {
+    fontSize: 16,
+    fontFamily: "NotoSansThai-Regular",
+  },
+  customReasonInput: {
+    width: "100%",
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  submitButton: {
+    backgroundColor: "#4CAF50",
+    padding: 10,
+    borderRadius: 5,
+    flex: 1,
+    alignItems: "center",
+    marginRight: 5,
+  },
+  submitButtonText: {
+    color: "white",
+    fontFamily: "NotoSansThai-Regular",
+  },
+  cancelButton: {
+    backgroundColor: "#f44336",
+    padding: 10,
+    borderRadius: 5,
+    flex: 1,
+    alignItems: "center",
+    marginLeft: 5,
+  },
+  cancelButtonText: {
+    color: "white",
+    fontFamily: "NotoSansThai-Regular",
   },
 });

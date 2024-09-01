@@ -59,7 +59,7 @@ export default function Register({ navigation }) {
         isThaiLanguage ? "สำเร็จ" : "Success",
         isThaiLanguage ? "สร้างบัญชีเสร็จสิ้น" : "Account created successfully"
       );
-      navigation.navigate("Login");
+      navigation.navigate("LoginScreen")
     } catch (error) {
       console.error(error);
       Alert.alert(

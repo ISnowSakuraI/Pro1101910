@@ -12,6 +12,8 @@ import Home from "./HomeTab/Home";
 import Schedule from "./HomeTab/Schedule";
 import ExerciseTracker from "./HomeTab/ExerciseTracker";
 import UserStatistics from "./HomeTab/UserStatistics";
+import ManageArticles from "./HomeTab/AdminTab/ManageArticles";
+import ReportedArticles from "./HomeTab/AdminTab/ReportedArticles";
 import ArticleList from "./HomeTab/ArticleTab/ArticleList";
 import AddArticle from "./HomeTab/ArticleTab/AddArticle";
 import ManageMyArticles from "./HomeTab/ArticleTab/ManageMyArticles";
@@ -120,6 +122,27 @@ function MainTabs() {
   );
 }
 
+function AdminStack() {
+  return (
+    <Stack.Navigator initialRouteName="ManageArticles">
+      <Stack.Screen
+        name="ManageArticles"
+        component={ManageArticles}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ReportedArticles"
+        component={ReportedArticles}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ArticleDetail"
+        component={ArticleDetail}
+        options={{ headerShown: false }}
+      />
+    </Stack.Navigator>
+  );
+}
 function ArticleStack() {
   return (
     <Stack.Navigator initialRouteName="MainArticleList">
@@ -188,6 +211,21 @@ function HomeStack() {
       <Stack.Screen
         name="ArticleDetail"
         component={ArticleDetail}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AdminStack"
+        component={AdminStack}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ManageArticles"
+        component={ManageArticles}
+        options={{ headerShown: false }}
+      />
+       <Stack.Screen
+        name="ReportedArticles"
+        component={ReportedArticles}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>
