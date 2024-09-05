@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Image, Alert } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Image, Alert, RefreshControl } from "react-native";
 import { db } from "../../../../firebase/Firebase";
 import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -9,6 +9,7 @@ import { useLanguage } from "../../../LanguageContext";
 export default function ReportedArticles({ navigation }) {
   const [reportedArticles, setReportedArticles] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
@@ -37,6 +38,9 @@ export default function ReportedArticles({ navigation }) {
         reportCount: reportDetails[article.id]?.count || 0,
         reportReasons: reportDetails[article.id]?.reasons.join(", ") || "",
       })).filter(article => reportDetails[article.id]);
+
+      // Sort articles by report count in descending order
+      reportedList.sort((a, b) => b.reportCount - a.reportCount);
 
       setReportedArticles(reportedList);
     } catch (error) {
@@ -71,6 +75,11 @@ export default function ReportedArticles({ navigation }) {
     }
   };
 
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchReportedArticles().then(() => setRefreshing(false));
+  }, [fetchReportedArticles]);
+
   const filteredArticles = reportedArticles.filter(
     (article) =>
       (article.title?.toLowerCase() || "").includes(
@@ -86,7 +95,7 @@ export default function ReportedArticles({ navigation }) {
         { backgroundColor: isDarkTheme ? "#333" : "#f9f9f9" },
       ]}
     >
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
         <Icon name="arrow-back" size={24} color={isDarkTheme ? "#fff" : "#000"} />
       </TouchableOpacity>
       <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
@@ -108,6 +117,9 @@ export default function ReportedArticles({ navigation }) {
       <FlatList
         data={filteredArticles}
         keyExtractor={(item) => item.id}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         renderItem={({ item }) => (
           <View
             style={[
@@ -142,6 +154,7 @@ export default function ReportedArticles({ navigation }) {
                 styles.reason,
                 { color: isDarkTheme ? "#aaa" : "#666" },
               ]}
+              numberOfLines={3}
             >
               {isThaiLanguage ? "เหตุผล: " : "Reason: "}
               {item.reportReasons || "N/A"}

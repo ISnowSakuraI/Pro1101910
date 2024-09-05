@@ -1,5 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from "react-native";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+} from "react-native";
 import MapView, { Polyline, Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -17,6 +23,7 @@ export default function ExerciseTracker({ navigation }) {
   const [time, setTime] = useState(0);
   const [calories, setCalories] = useState(0);
   const [tracking, setTracking] = useState(false);
+  const [mode, setMode] = useState("walking");
   const mapRef = useRef(null);
   const startTimeRef = useRef(null);
   const locationSubscription = useRef(null);
@@ -34,23 +41,24 @@ export default function ExerciseTracker({ navigation }) {
   }, []);
 
   useFocusEffect(
-    React.useCallback(() => {
-      // Reset state when the screen is focused
-      setLocation(null);
-      setRoute([]);
-      setDistance(0);
-      setTime(0);
-      setCalories(0);
-      setTracking(false);
+    useCallback(() => {
+      resetTracking();
     }, [])
   );
 
-  const startTracking = async () => {
-    startTimeRef.current = new Date();
-    setTracking(true);
+  const resetTracking = useCallback(() => {
+    setLocation(null);
     setRoute([]);
     setDistance(0);
+    setTime(0);
     setCalories(0);
+    setTracking(false);
+  }, []);
+
+  const startTracking = useCallback(async () => {
+    startTimeRef.current = new Date();
+    setTracking(true);
+    resetTracking();
 
     if (locationSubscription.current) {
       locationSubscription.current.remove();
@@ -59,16 +67,18 @@ export default function ExerciseTracker({ navigation }) {
     locationSubscription.current = await Location.watchPositionAsync(
       { accuracy: Location.Accuracy.High, distanceInterval: 1 },
       (newLocation) => {
-        setLocation(newLocation.coords);
-        setRoute((prevRoute) => [...prevRoute, newLocation.coords]);
-        calculateDistance(newLocation.coords);
-        updateTime();
-        centerMap(newLocation.coords);
+        if (newLocation) {
+          setLocation(newLocation.coords);
+          setRoute((prevRoute) => [...prevRoute, newLocation.coords]);
+          calculateDistance(newLocation.coords);
+          updateTime();
+          centerMap(newLocation.coords);
+        }
       }
     );
-  };
+  }, [calculateDistance, updateTime, centerMap, resetTracking]);
 
-  const stopTracking = async () => {
+  const stopTracking = useCallback(async () => {
     setTracking(false);
     if (locationSubscription.current) {
       locationSubscription.current.remove();
@@ -81,14 +91,15 @@ export default function ExerciseTracker({ navigation }) {
         distance: distance.toFixed(2),
         time,
         calories: calories.toFixed(0),
+        mode,
         createdAt: new Date().toISOString(),
       };
-      await AsyncStorage.setItem('exerciseData', JSON.stringify(exerciseData));
+      await AsyncStorage.setItem("exerciseData", JSON.stringify(exerciseData));
       uploadDataToFirebase(exerciseData);
     }
-  };
+  }, [distance, time, calories, mode, uploadDataToFirebase]);
 
-  const uploadDataToFirebase = async (data) => {
+  const uploadDataToFirebase = useCallback(async (data) => {
     const user = auth.currentUser;
     if (user) {
       await addDoc(collection(db, "exerciseData"), {
@@ -96,85 +107,177 @@ export default function ExerciseTracker({ navigation }) {
         createdAt: serverTimestamp(),
       });
     }
-  };
+  }, []);
 
-  const calculateDistance = (newCoords) => {
-    if (route.length > 0) {
-      const lastCoords = route[route.length - 1];
-      const dist = getDistanceFromLatLonInKm(
-        lastCoords.latitude,
-        lastCoords.longitude,
-        newCoords.latitude,
-        newCoords.longitude
-      );
-      setDistance((prevDistance) => prevDistance + dist);
-      setCalories((prevCalories) => prevCalories + dist * 60); // Example calculation: 60 calories per km
-    }
-  };
+  const calculateDistance = useCallback(
+    (newCoords) => {
+      if (route.length > 0) {
+        const lastCoords = route[route.length - 1];
+        const dist = getDistanceFromLatLonInKm(
+          lastCoords.latitude,
+          lastCoords.longitude,
+          newCoords.latitude,
+          newCoords.longitude
+        );
+        setDistance((prevDistance) => prevDistance + dist);
+        updateCalories(dist);
+      }
+    },
+    [route, updateCalories]
+  );
 
-  const updateTime = () => {
+  const updateCalories = useCallback(
+    (dist) => {
+      const caloriesPerKm =
+        {
+          walking: 50,
+          running: 100,
+          cycling: 75,
+        }[mode] || 50;
+      setCalories((prevCalories) => prevCalories + dist * caloriesPerKm);
+    },
+    [mode]
+  );
+
+  const updateTime = useCallback(() => {
     const now = new Date();
-    const elapsedTime = Math.floor((now - startTimeRef.current) / 60000); // Convert ms to minutes
+    const elapsedTime = Math.floor((now - startTimeRef.current) / 60000);
     setTime(elapsedTime);
-  };
+  }, []);
 
   const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Radius of the earth in km
+    const R = 6371;
     const dLat = deg2rad(lat2 - lat1);
     const dLon = deg2rad(lon2 - lon1);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.cos(deg2rad(lat1)) *
+        Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const d = R * c; // Distance in km
-    return d;
+    return R * c;
   };
 
-  const deg2rad = (deg) => {
-    return deg * (Math.PI / 180);
-  };
+  const deg2rad = (deg) => deg * (Math.PI / 180);
 
-  const centerMap = (coords) => {
+  const centerMap = useCallback((coords) => {
     if (mapRef.current && coords) {
-      mapRef.current.animateToRegion({
-        latitude: coords.latitude,
-        longitude: coords.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      }, 1000);
+      mapRef.current.animateToRegion(
+        {
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        1000
+      );
     }
-  };
+  }, []);
 
   return (
-    <View style={{ backgroundColor: isDarkTheme ? "#1e1e1e" : "#f5f5f5", flex: 1 }}>
+    <View
+      style={{ backgroundColor: isDarkTheme ? "#1e1e1e" : "#f5f5f5", flex: 1 }}
+    >
       <FlatList
         data={[]}
         ListHeaderComponent={
           <>
-            <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#000" }]}>
+            <Text
+              style={[styles.header, { color: isDarkTheme ? "#fff" : "#000" }]}
+            >
               {isThaiLanguage ? "ตัวติดตามการออกกำลังกาย" : "Exercise Tracker"}
             </Text>
-            <View style={[styles.statsContainer, { backgroundColor: isDarkTheme ? "#2c2c2c" : "#fff" }]}>
-              <Text style={[styles.statText, { color: isDarkTheme ? "#fff" : "#000" }]}>
-                {isThaiLanguage ? "ระยะทาง" : "Distance"}: {distance.toFixed(2)} Km
+            <View
+              style={[
+                styles.statsContainer,
+                { backgroundColor: isDarkTheme ? "#2c2c2c" : "#fff" },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statText,
+                  { color: isDarkTheme ? "#fff" : "#000" },
+                ]}
+              >
+                {isThaiLanguage ? "ระยะทาง" : "Distance"}: {distance.toFixed(2)}{" "}
+                Km
               </Text>
-              <Text style={[styles.statText, { color: isDarkTheme ? "#fff" : "#000" }]}>
+              <Text
+                style={[
+                  styles.statText,
+                  { color: isDarkTheme ? "#fff" : "#000" },
+                ]}
+              >
                 {isThaiLanguage ? "เวลา" : "Time"}: {time} min
               </Text>
-              <Text style={[styles.statText, { color: isDarkTheme ? "#fff" : "#000" }]}>
-                {isThaiLanguage ? "แคลอรี่" : "Calories"}: {calories.toFixed(0)} cal
+              <Text
+                style={[
+                  styles.statText,
+                  { color: isDarkTheme ? "#fff" : "#000" },
+                ]}
+              >
+                {isThaiLanguage ? "แคลอรี่" : "Calories"}: {calories.toFixed(0)}{" "}
+                cal
               </Text>
             </View>
             <MapView ref={mapRef} style={styles.map}>
-              <Polyline coordinates={route} strokeWidth={5} strokeColor="green" />
+              <Polyline
+                coordinates={route}
+                strokeWidth={5}
+                strokeColor="green"
+              />
               {location && (
                 <Marker coordinate={location}>
                   <Icon name="person-pin-circle" size={40} color="red" />
                 </Marker>
               )}
             </MapView>
-            <TouchableOpacity style={styles.locateButton} onPress={() => centerMap(location)}>
+            <View style={styles.modeContainer}>
+              {["walking", "running", "cycling"].map((activity) => (
+                <TouchableOpacity
+                  key={activity}
+                  onPress={() => setMode(activity)}
+                  style={styles.modeButton}
+                >
+                  <Icon
+                    name={
+                      activity === "walking"
+                        ? "directions-walk"
+                        : activity === "running"
+                        ? "directions-run"
+                        : "directions-bike" // Corrected icon name
+                    }
+                    size={24}
+                    color={
+                      mode === activity
+                        ? "#FF5722"
+                        : isDarkTheme
+                        ? "#fff"
+                        : "#000"
+                    }
+                  />
+                  <Text
+                    style={[
+                      styles.modeText,
+                      { color: isDarkTheme ? "#fff" : "#000" },
+                    ]}
+                  >
+                    {isThaiLanguage
+                      ? activity === "walking"
+                        ? "เดิน"
+                        : activity === "running"
+                        ? "วิ่ง"
+                        : "ขี่จักรยาน"
+                      : activity.charAt(0).toUpperCase() + activity.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity
+              style={styles.locateButton}
+              onPress={() => centerMap(location)}
+            >
               <Icon name="my-location" size={24} color="white" />
               <Text style={styles.locateButtonText}>
                 {isThaiLanguage ? "ค้นหาฉัน" : "Locate Me"}
@@ -184,9 +287,19 @@ export default function ExerciseTracker({ navigation }) {
               style={styles.startButton}
               onPress={tracking ? stopTracking : startTracking}
             >
-              <Icon name={tracking ? "stop" : "play-arrow"} size={24} color="white" />
+              <Icon
+                name={tracking ? "stop" : "play-arrow"}
+                size={24}
+                color="white"
+              />
               <Text style={styles.startButtonText}>
-                {tracking ? (isThaiLanguage ? "หยุด" : "Stop") : (isThaiLanguage ? "เริ่ม" : "Start")}
+                {tracking
+                  ? isThaiLanguage
+                    ? "หยุด"
+                    : "Stop"
+                  : isThaiLanguage
+                  ? "เริ่ม"
+                  : "Start"}
               </Text>
             </TouchableOpacity>
           </>
@@ -200,7 +313,7 @@ export default function ExerciseTracker({ navigation }) {
 const styles = StyleSheet.create({
   header: {
     fontSize: 26,
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     textAlign: "center",
     marginVertical: 15,
   },
@@ -215,7 +328,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   statText: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     fontSize: 18,
     marginVertical: 5,
   },
@@ -223,6 +336,19 @@ const styles = StyleSheet.create({
     height: 300,
     margin: 10,
     borderRadius: 10,
+  },
+  modeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginVertical: 10,
+  },
+  modeButton: {
+    alignItems: "center",
+  },
+  modeText: {
+    fontFamily: "NotoSansThai-Regular",
+    fontSize: 14,
+    marginTop: 5,
   },
   locateButton: {
     flexDirection: "row",
@@ -240,7 +366,7 @@ const styles = StyleSheet.create({
   },
   locateButtonText: {
     color: "white",
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     marginLeft: 5,
     fontSize: 16,
   },
@@ -260,7 +386,7 @@ const styles = StyleSheet.create({
   },
   startButtonText: {
     color: "white",
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     marginLeft: 5,
     fontSize: 16,
   },

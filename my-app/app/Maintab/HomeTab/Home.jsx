@@ -33,24 +33,22 @@ export default function Home({ navigation }) {
         }
       }
     });
-    return () => {
-      unsubscribe();
-    };
+    return unsubscribe;
   }, []);
 
-  const fetchArticles = async () => {
+  const fetchArticles = useCallback(async () => {
     const querySnapshot = await getDocs(collection(db, "articles"));
     const articles = querySnapshot.docs.map((doc) => ({
       ...doc.data(),
       id: doc.id,
     }));
     setArticles(articles.slice(0, 4)); // Get the latest 4 articles
-  };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       fetchArticles();
-    }, [])
+    }, [fetchArticles])
   );
 
   return (
@@ -60,9 +58,7 @@ export default function Home({ navigation }) {
         { backgroundColor: isDarkTheme ? "#222" : "#f5f5f5" },
       ]}
     >
-      <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
-        {isThaiLanguage ? "หมวดหมู่" : "Categories"}
-      </Text>
+      <SectionHeader title={isThaiLanguage ? "หมวดหมู่" : "Categories"} />
       <View style={styles.grid}>
         <CategoryItem
           icon="calendar-today"
@@ -93,9 +89,7 @@ export default function Home({ navigation }) {
         )}
       </View>
 
-      <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
-        {isThaiLanguage ? "บทความที่น่าสนใจ" : "Interesting Articles"}
-      </Text>
+      <SectionHeader title={isThaiLanguage ? "บทความที่น่าสนใจ" : "Interesting Articles"} />
       <View style={styles.articles}>
         {articles.map((article) => (
           <ArticleItem
@@ -111,36 +105,33 @@ export default function Home({ navigation }) {
   );
 }
 
-function CategoryItem({ icon, label, onPress }) {
+const SectionHeader = React.memo(({ title }) => {
+  const { isDarkTheme } = useTheme();
+  return (
+    <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
+      {title}
+    </Text>
+  );
+});
+
+const CategoryItem = React.memo(({ icon, label, onPress }) => {
   const { isDarkTheme } = useTheme();
   return (
     <TouchableOpacity
       style={[styles.item, { backgroundColor: isDarkTheme ? "#444" : "#fff" }]}
       onPress={onPress}
     >
-      <Icon
-        name={icon}
-        size={40}
-        color={isDarkTheme ? "#ff7f50" : "#ff7f50"}
-        style={styles.icon}
-      />
+      <Icon name={icon} size={40} color="#ff7f50" style={styles.icon} />
       <Text style={[styles.label, { color: isDarkTheme ? "#fff" : "#555" }]}>
         {label}
       </Text>
     </TouchableOpacity>
   );
-}
+});
 
-function ArticleItem({ article }) {
+const ArticleItem = React.memo(({ article }) => {
   const { isDarkTheme } = useTheme();
-  const navigation = useNavigation(); // Use the hook to get navigation
-
-  const formatDate = (timestamp) => {
-    const date = timestamp.toDate(); // Convert Firestore Timestamp to Date
-    return `${date.getDate()}/${
-      date.getMonth() + 1
-    }/${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}`;
-  };
+  const navigation = useNavigation();
 
   return (
     <TouchableOpacity
@@ -159,15 +150,13 @@ function ArticleItem({ article }) {
             style={styles.fullArticleImage}
           />
         ) : (
-          article.images
-            .slice(0, 2)
-            .map((img, index) => (
-              <Image
-                key={index}
-                source={{ uri: img }}
-                style={styles.articleImage}
-              />
-            ))
+          article.images.slice(0, 2).map((img, index) => (
+            <Image
+              key={index}
+              source={{ uri: img }}
+              style={styles.articleImage}
+            />
+          ))
         )}
         {article.images.length > 2 && (
           <View style={styles.moreImagesOverlay}>
@@ -185,7 +174,7 @@ function ArticleItem({ article }) {
       </Text>
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -271,12 +260,6 @@ const styles = StyleSheet.create({
     fontFamily: "NotoSansThai-Regular",
     textAlign: "center",
     fontSize: 16,
-    marginTop: 5,
-  },
-  articleDate: {
-    fontFamily: "NotoSansThai-Regular",
-    textAlign: "center",
-    fontSize: 14,
     marginTop: 5,
   },
 });

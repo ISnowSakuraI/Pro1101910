@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import {
   Text,
   View,
@@ -14,12 +14,12 @@ import { useTheme } from "../../ThemeContext";
 import { useLanguage } from "../../LanguageContext";
 
 export default function ForgotPassword({ navigation }) {
-  const [email, setEmail] = React.useState("");
-  const [requestSent, setRequestSent] = React.useState(false);
+  const [email, setEmail] = useState("");
+  const [requestSent, setRequestSent] = useState(false);
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const handleResetPassword = async () => {
+  const handleResetPassword = useCallback(async () => {
     if (!email) {
       Alert.alert(
         isThaiLanguage ? "ข้อผิดพลาด" : "Error",
@@ -47,9 +47,9 @@ export default function ForgotPassword({ navigation }) {
       );
       console.error(error);
     }
-  };
+  }, [email, isThaiLanguage]);
 
-  const handleResendRequest = () => {
+  const handleResendRequest = useCallback(() => {
     setRequestSent(false);
     Alert.alert(
       isThaiLanguage ? "ข้อมูล" : "Info",
@@ -57,7 +57,7 @@ export default function ForgotPassword({ navigation }) {
         ? "คุณสามารถส่งคำขอเปลี่ยนรหัสผ่านอีกครั้ง"
         : "You can send the password reset request again"
     );
-  };
+  }, [isThaiLanguage]);
 
   return (
     <View

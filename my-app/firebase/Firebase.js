@@ -1,8 +1,12 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, initializeAuth, getReactNativePersistence } from "firebase/auth";
+import {
+  getAuth,
+  initializeAuth,
+  getReactNativePersistence,
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBPzHJDZ7RIDu0_hK-RtQCRiWrmn0sdnrs",
@@ -11,7 +15,7 @@ const firebaseConfig = {
   storageBucket: "pro1910-257c8.appspot.com",
   messagingSenderId: "983398933034",
   appId: "1:983398933034:web:125870997bcde02d289953",
-  measurementId: "G-4T1J7XZHEP"
+  measurementId: "G-4T1J7XZHEP",
 };
 
 // Initialize Firebase
@@ -21,10 +25,10 @@ const app = initializeApp(firebaseConfig);
 let auth;
 try {
   auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(ReactNativeAsyncStorage)
+    persistence: getReactNativePersistence(ReactNativeAsyncStorage),
   });
 } catch (error) {
-  if (error.code === 'auth/already-initialized') {
+  if (error.code === "auth/already-initialized") {
     auth = getAuth(app);
   } else {
     console.error("Error initializing Firebase Auth:", error);

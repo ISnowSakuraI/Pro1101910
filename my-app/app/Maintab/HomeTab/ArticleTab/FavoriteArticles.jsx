@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { db, auth } from "../../../../firebase/Firebase";
@@ -28,11 +29,7 @@ export default function FavoriteArticles({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  useEffect(() => {
-    fetchFavoriteArticles();
-  }, []);
-
-  const fetchFavoriteArticles = async () => {
+  const fetchFavoriteArticles = useCallback(async () => {
     const user = auth.currentUser;
     if (user) {
       try {
@@ -67,9 +64,14 @@ export default function FavoriteArticles({ navigation }) {
         setFavorites(querySnapshot.docs.map((doc) => doc.data().articleId));
       } catch (error) {
         console.error("Error fetching favorite articles: ", error);
+        Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถดึงข้อมูลบทความโปรดได้" : "Failed to fetch favorite articles.");
       }
     }
-  };
+  }, [isThaiLanguage]);
+
+  useEffect(() => {
+    fetchFavoriteArticles();
+  }, [fetchFavoriteArticles]);
 
   const toggleFavorite = async (articleId) => {
     const user = auth.currentUser;
@@ -79,14 +81,19 @@ export default function FavoriteArticles({ navigation }) {
         "favoriteArticles",
         `${user.uid}_${articleId}`
       );
-      if (favorites.includes(articleId)) {
-        await deleteDoc(favoriteDocRef);
-        setFavorites(favorites.filter((id) => id !== articleId));
-      } else {
-        await setDoc(favoriteDocRef, { userId: user.uid, articleId });
-        setFavorites([...favorites, articleId]);
+      try {
+        if (favorites.includes(articleId)) {
+          await deleteDoc(favoriteDocRef);
+          setFavorites(favorites.filter((id) => id !== articleId));
+        } else {
+          await setDoc(favoriteDocRef, { userId: user.uid, articleId });
+          setFavorites([...favorites, articleId]);
+        }
+        fetchFavoriteArticles();
+      } catch (error) {
+        console.error("Error toggling favorite: ", error);
+        Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถเปลี่ยนสถานะบทความโปรดได้" : "Failed to toggle favorite status.");
       }
-      fetchFavoriteArticles();
     }
   };
 

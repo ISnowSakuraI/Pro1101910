@@ -27,28 +27,36 @@ export default function ArticleDetail({ route, navigation }) {
 
   useEffect(() => {
     const fetchArticle = async () => {
-      const docRef = doc(db, 'articles', articleId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        const userDoc = await getDoc(doc(db, 'Users', data.userId));
-        const userName = userDoc.exists() ? userDoc.data().username : 'Unknown';
-        setArticle({ ...data, userName });
-      } else {
-        console.log('No such document!');
+      try {
+        const docRef = doc(db, 'articles', articleId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const userDoc = await getDoc(doc(db, 'Users', data.userId));
+          const userName = userDoc.exists() ? userDoc.data().username : 'Unknown';
+          setArticle({ ...data, userName });
+        } else {
+          console.log('No such document!');
+        }
+      } catch (error) {
+        console.error("Error fetching article: ", error);
       }
     };
 
     const fetchLikes = async () => {
-      const likesQuery = query(collection(db, 'favoriteArticles'), where('articleId', '==', articleId));
-      const likesSnapshot = await getDocs(likesQuery);
-      setLikesCount(likesSnapshot.size);
+      try {
+        const likesQuery = query(collection(db, 'favoriteArticles'), where('articleId', '==', articleId));
+        const likesSnapshot = await getDocs(likesQuery);
+        setLikesCount(likesSnapshot.size);
 
-      const user = auth.currentUser;
-      if (user) {
-        const userLikeQuery = query(collection(db, 'favoriteArticles'), where('articleId', '==', articleId), where('userId', '==', user.uid));
-        const userLikeSnapshot = await getDocs(userLikeQuery);
-        setIsLiked(!userLikeSnapshot.empty);
+        const user = auth.currentUser;
+        if (user) {
+          const userLikeQuery = query(collection(db, 'favoriteArticles'), where('articleId', '==', articleId), where('userId', '==', user.uid));
+          const userLikeSnapshot = await getDocs(userLikeQuery);
+          setIsLiked(!userLikeSnapshot.empty);
+        }
+      } catch (error) {
+        console.error("Error fetching likes: ", error);
       }
     };
 
@@ -70,16 +78,20 @@ export default function ArticleDetail({ route, navigation }) {
     const user = auth.currentUser;
     if (user) {
       const favoriteDocRef = doc(db, 'favoriteArticles', `${user.uid}_${articleId}`);
-      if (isLiked) {
-        // Remove from favorites
-        await deleteDoc(favoriteDocRef);
-        setLikesCount(likesCount - 1);
-      } else {
-        // Add to favorites
-        await setDoc(favoriteDocRef, { userId: user.uid, articleId });
-        setLikesCount(likesCount + 1);
+      try {
+        if (isLiked) {
+          // Remove from favorites
+          await deleteDoc(favoriteDocRef);
+          setLikesCount(likesCount - 1);
+        } else {
+          // Add to favorites
+          await setDoc(favoriteDocRef, { userId: user.uid, articleId });
+          setLikesCount(likesCount + 1);
+        }
+        setIsLiked(!isLiked);
+      } catch (error) {
+        console.error("Error toggling favorite: ", error);
       }
-      setIsLiked(!isLiked);
     }
   };
 
@@ -95,12 +107,16 @@ export default function ArticleDetail({ route, navigation }) {
         Alert.alert(isThaiLanguage ? "กรุณาเลือกหรือใส่เหตุผล" : "Please select or enter a reason");
         return;
       }
-      const reportDocRef = doc(db, "reports", `${user.uid}_${articleId}`);
-      await setDoc(reportDocRef, { userId: user.uid, articleId, reason });
-      Alert.alert(isThaiLanguage ? "รายงานสำเร็จ" : "Report Successful", isThaiLanguage ? "บทความนี้ถูกรีพอร์ตแล้ว" : "This article has been reported.");
-      setReportModalVisible(false);
-      setSelectedReason("");
-      setCustomReason("");
+      try {
+        const reportDocRef = doc(db, "reports", `${user.uid}_${articleId}`);
+        await setDoc(reportDocRef, { userId: user.uid, articleId, reason });
+        Alert.alert(isThaiLanguage ? "รายงานสำเร็จ" : "Report Successful", isThaiLanguage ? "บทความนี้ถูกรีพอร์ตแล้ว" : "This article has been reported.");
+        setReportModalVisible(false);
+        setSelectedReason("");
+        setCustomReason("");
+      } catch (error) {
+        console.error("Error submitting report: ", error);
+      }
     }
   };
 

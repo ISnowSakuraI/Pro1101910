@@ -8,7 +8,6 @@ import {
   Image,
   Alert,
   TextInput,
-  Animated,
 } from "react-native";
 import { db, auth } from "../../../../firebase/Firebase";
 import { collection, query, where, getDocs, deleteDoc, doc, orderBy } from "firebase/firestore";
@@ -26,20 +25,25 @@ export default function ManageMyArticles({ navigation }) {
   const fetchMyArticles = useCallback(async () => {
     const user = auth.currentUser;
     if (user) {
-      const q = query(
-        collection(db, "articles"),
-        where("userId", "==", user.uid),
-        orderBy("createdAt", "desc")
-      );
-      const querySnapshot = await getDocs(q);
-      const articles = querySnapshot.docs.map((doc) => ({
-        ...doc.data(),
-        id: doc.id,
-        images: doc.data().images || [],
-      }));
-      setMyArticles(articles);
+      try {
+        const q = query(
+          collection(db, "articles"),
+          where("userId", "==", user.uid),
+          orderBy("createdAt", "desc")
+        );
+        const querySnapshot = await getDocs(q);
+        const articles = querySnapshot.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+          images: doc.data().images || [],
+        }));
+        setMyArticles(articles);
+      } catch (error) {
+        console.error("Error fetching articles: ", error);
+        Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถดึงข้อมูลบทความได้" : "Failed to fetch articles.");
+      }
     }
-  }, []);
+  }, [isThaiLanguage]);
 
   useFocusEffect(
     useCallback(() => {
@@ -50,7 +54,7 @@ export default function ManageMyArticles({ navigation }) {
   const handleDeleteArticle = async (articleId) => {
     try {
       await deleteDoc(doc(db, "articles", articleId));
-      setMyArticles(myArticles.filter(article => article.id !== articleId));
+      setMyArticles((prevArticles) => prevArticles.filter(article => article.id !== articleId));
       Alert.alert(isThaiLanguage ? "สำเร็จ" : "Success", isThaiLanguage ? "ลบบทความเรียบร้อยแล้ว!" : "Article deleted successfully!");
     } catch (error) {
       console.error("Error deleting article: ", error);
@@ -121,6 +125,11 @@ export default function ManageMyArticles({ navigation }) {
             </View>
           </View>
         )}
+        ListEmptyComponent={
+          <Text style={[styles.noDataText, { color: isDarkTheme ? "#aaa" : "#777" }]}>
+            {isThaiLanguage ? "ไม่มีบทความ" : "No articles found"}
+          </Text>
+        }
       />
     </View>
   );
@@ -220,5 +229,11 @@ const styles = StyleSheet.create({
     color: "white",
     marginLeft: 5,
     fontFamily: 'NotoSansThai-Regular',
+  },
+  noDataText: {
+    textAlign: "center",
+    fontSize: 16,
+    fontFamily: 'NotoSansThai-Regular',
+    marginTop: 20,
   },
 });

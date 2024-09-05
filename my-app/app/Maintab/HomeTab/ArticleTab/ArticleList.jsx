@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -46,52 +46,60 @@ export default function ArticleList({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const fetchArticles = async () => {
-    const q = query(collection(db, "articles"), orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    const articles = await Promise.all(
-      querySnapshot.docs.map(async (docSnapshot) => {
-        const data = docSnapshot.data();
-        const userDoc = await getDoc(doc(db, "Users", data.userId));
-        const userName = userDoc.exists() ? userDoc.data().username : "Unknown";
+  const fetchArticles = useCallback(async () => {
+    try {
+      const q = query(collection(db, "articles"), orderBy("createdAt", "desc"));
+      const querySnapshot = await getDocs(q);
+      const articles = await Promise.all(
+        querySnapshot.docs.map(async (docSnapshot) => {
+          const data = docSnapshot.data();
+          const userDoc = await getDoc(doc(db, "Users", data.userId));
+          const userName = userDoc.exists() ? userDoc.data().username : "Unknown";
 
-        // Fetch likes count
-        const likesQuery = query(
-          collection(db, "favoriteArticles"),
-          where("articleId", "==", docSnapshot.id)
-        );
-        const likesSnapshot = await getDocs(likesQuery);
-        const likesCount = likesSnapshot.size;
+          // Fetch likes count
+          const likesQuery = query(
+            collection(db, "favoriteArticles"),
+            where("articleId", "==", docSnapshot.id)
+          );
+          const likesSnapshot = await getDocs(likesQuery);
+          const likesCount = likesSnapshot.size;
 
-        return {
-          ...data,
-          id: docSnapshot.id,
-          userName,
-          likesCount,
-        };
-      })
-    );
-    setArticles(articles);
-  };
+          return {
+            ...data,
+            id: docSnapshot.id,
+            userName,
+            likesCount,
+          };
+        })
+      );
+      setArticles(articles);
+    } catch (error) {
+      console.error("Error fetching articles: ", error);
+    }
+  }, []);
 
-  const fetchFavorites = async () => {
+  const fetchFavorites = useCallback(async () => {
     const user = auth.currentUser;
     if (user) {
-      const q = query(
-        collection(db, "favoriteArticles"),
-        where("userId", "==", user.uid)
-      );
-      const querySnapshot = await getDocs(q);
-      const favoriteIds = querySnapshot.docs.map((doc) => doc.data().articleId);
-      setFavorites(favoriteIds);
+      try {
+        const q = query(
+          collection(db, "favoriteArticles"),
+          where("userId", "==", user.uid)
+        );
+        const querySnapshot = await getDocs(q);
+        const favoriteIds = querySnapshot.docs.map((doc) => doc.data().articleId);
+        setFavorites(favoriteIds);
+      } catch (error) {
+        console.error("Error fetching favorites: ", error);
+      }
     }
-  };
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       fetchArticles();
       fetchFavorites();
-    }, [])
+    }, [fetchArticles, fetchFavorites])
   );
 
   const onRefresh = async () => {
@@ -101,26 +109,30 @@ export default function ArticleList({ navigation }) {
     setRefreshing(false);
   };
 
-  const toggleFavorite = async (articleId) => {
+  const toggleFavorite = useCallback(async (articleId) => {
     const user = auth.currentUser;
     if (user) {
-      const favoriteDocRef = doc(
-        db,
-        "favoriteArticles",
-        `${user.uid}_${articleId}`
-      );
-      if (favorites.includes(articleId)) {
-        await deleteDoc(favoriteDocRef);
-        setFavorites(favorites.filter((id) => id !== articleId));
-      } else {
-        await setDoc(favoriteDocRef, { userId: user.uid, articleId });
-        setFavorites([...favorites, articleId]);
+      try {
+        const favoriteDocRef = doc(
+          db,
+          "favoriteArticles",
+          `${user.uid}_${articleId}`
+        );
+        if (favorites.includes(articleId)) {
+          await deleteDoc(favoriteDocRef);
+          setFavorites(favorites.filter((id) => id !== articleId));
+        } else {
+          await setDoc(favoriteDocRef, { userId: user.uid, articleId });
+          setFavorites([...favorites, articleId]);
+        }
+        // Refresh articles and favorites after toggling
+        await fetchArticles();
+        await fetchFavorites();
+      } catch (error) {
+        console.error("Error toggling favorite: ", error);
       }
-      // Refresh articles and favorites after toggling
-      await fetchArticles();
-      await fetchFavorites();
     }
-  };
+  }, [favorites, fetchArticles, fetchFavorites]);
 
   const openReportModal = (articleId) => {
     setSelectedArticleId(articleId);
@@ -135,18 +147,24 @@ export default function ArticleList({ navigation }) {
         Alert.alert(isThaiLanguage ? "กรุณาเลือกหรือใส่เหตุผล" : "Please select or enter a reason");
         return;
       }
-      const reportDocRef = doc(db, "reports", `${user.uid}_${selectedArticleId}`);
-      await setDoc(reportDocRef, { userId: user.uid, articleId: selectedArticleId, reason });
-      Alert.alert(isThaiLanguage ? "รายงานสำเร็จ" : "Report Successful", isThaiLanguage ? "บทความนี้ถูกรีพอร์ตแล้ว" : "This article has been reported.");
-      setReportModalVisible(false);
-      setSelectedReason("");
-      setCustomReason("");
+      try {
+        const reportDocRef = doc(db, "reports", `${user.uid}_${selectedArticleId}`);
+        await setDoc(reportDocRef, { userId: user.uid, articleId: selectedArticleId, reason });
+        Alert.alert(isThaiLanguage ? "รายงานสำเร็จ" : "Report Successful", isThaiLanguage ? "บทความนี้ถูกรีพอร์ตแล้ว" : "This article has been reported.");
+        setReportModalVisible(false);
+        setSelectedReason("");
+        setCustomReason("");
+      } catch (error) {
+        console.error("Error submitting report: ", error);
+      }
     }
   };
 
-  const filteredArticles = articles.filter((article) =>
-    article.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredArticles = useMemo(() => {
+    return articles.filter((article) =>
+      article.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [articles, searchQuery]);
 
   const formatDate = (timestamp) => {
     const date = timestamp.toDate();
@@ -232,6 +250,7 @@ export default function ArticleList({ navigation }) {
               </Text>
               <Text
                 style={[styles.title, { color: isDarkTheme ? "#fff" : "#000" }]}
+                numberOfLines={4}
               >
                 {item.title}
               </Text>
@@ -291,9 +310,21 @@ export default function ArticleList({ navigation }) {
         animationType="slide"
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {isThaiLanguage ? "เลือกเหตุผลในการรายงาน" : "Select Report Reason"}
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: isDarkTheme ? "#333" : "#fff" },
+            ]}
+          >
+            <Text
+              style={[
+                styles.modalTitle,
+                { color: isDarkTheme ? "#fff" : "#000" },
+              ]}
+            >
+              {isThaiLanguage
+                ? "เลือกเหตุผลในการรายงาน"
+                : "Select Report Reason"}
             </Text>
             {predefinedReasons.map((reason) => (
               <TouchableOpacity
@@ -301,15 +332,35 @@ export default function ArticleList({ navigation }) {
                 style={styles.reasonButton}
                 onPress={() => setSelectedReason(reason.text)}
               >
-                <Text style={styles.reasonText}>{reason.text}</Text>
+                <Text
+                  style={[
+                    styles.reasonText,
+                    { color: isDarkTheme ? "#fff" : "#000" },
+                  ]}
+                >
+                  {isThaiLanguage
+                    ? translateReasonToThai(reason.text)
+                    : reason.text}
+                </Text>
                 {selectedReason === reason.text && (
                   <Icon name="check" size={20} color="green" />
                 )}
               </TouchableOpacity>
             ))}
             <TextInput
-              style={styles.customReasonInput}
-              placeholder={isThaiLanguage ? "หรือใส่เหตุผลของคุณเอง..." : "Or enter your own reason..."}
+              style={[
+                styles.customReasonInput,
+                {
+                  backgroundColor: isDarkTheme ? "#444" : "#fff",
+                  color: isDarkTheme ? "#fff" : "#000",
+                },
+              ]}
+              placeholder={
+                isThaiLanguage
+                  ? "หรือใส่เหตุผลของคุณเอง..."
+                  : "Or enter your own reason..."
+              }
+              placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
               value={customReason}
               onChangeText={setCustomReason}
             />
@@ -337,6 +388,19 @@ export default function ArticleList({ navigation }) {
     </View>
   );
 }
+
+const translateReasonToThai = (reason) => {
+  switch (reason) {
+    case "Inappropriate content":
+      return "เนื้อหาไม่เหมาะสม";
+    case "Spam":
+      return "สแปม";
+    case "False information":
+      return "ข้อมูลเท็จ";
+    default:
+      return reason;
+  }
+};
 
 const styles = StyleSheet.create({
   container: {

@@ -37,15 +37,19 @@ export default function EditArticle({ route, navigation }) {
 
   useEffect(() => {
     const fetchArticle = async () => {
-      const docRef = doc(db, "articles", articleId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setTitle(data.title);
-        setDescription(data.description);
-        setImages(data.images || []);
-      } else {
-        console.log("No such document!");
+      try {
+        const docRef = doc(db, "articles", articleId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setTitle(data.title);
+          setDescription(data.description);
+          setImages(data.images || []);
+        } else {
+          console.log("No such document!");
+        }
+      } catch (error) {
+        console.error("Error fetching article: ", error);
       }
     };
     fetchArticle();
@@ -107,11 +111,21 @@ export default function EditArticle({ route, navigation }) {
         description,
         images: imageUrls,
       });
-      Alert.alert(isThaiLanguage ? "สำเร็จ" : "Success", isThaiLanguage ? "อัปเดตบทความเรียบร้อยแล้ว!" : "Article updated successfully!");
+      Alert.alert(
+        isThaiLanguage ? "สำเร็จ" : "Success",
+        isThaiLanguage
+          ? "อัปเดตบทความเรียบร้อยแล้ว!"
+          : "Article updated successfully!"
+      );
       navigation.goBack();
     } catch (error) {
       console.error("Error updating article: ", error);
-      Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถอัปเดตบทความได้ กรุณาลองใหม่อีกครั้ง." : "Failed to update article. Please try again.");
+      Alert.alert(
+        isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+        isThaiLanguage
+          ? "ไม่สามารถอัปเดตบทความได้ กรุณาลองใหม่อีกครั้ง."
+          : "Failed to update article. Please try again."
+      );
     } finally {
       setUploading(false);
     }
@@ -123,7 +137,12 @@ export default function EditArticle({ route, navigation }) {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDarkTheme ? "#333" : "#f9f9f9" }]}>
+    <ScrollView
+      style={[
+        styles.container,
+        { backgroundColor: isDarkTheme ? "#333" : "#f9f9f9" },
+      ]}
+    >
       <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
         {isThaiLanguage ? "แก้ไขบทความ" : "Edit Article"}
       </Text>
@@ -149,7 +168,13 @@ export default function EditArticle({ route, navigation }) {
         ))}
       </View>
       <TextInput
-        style={[styles.titleInput, { backgroundColor: isDarkTheme ? "#444" : "#fff", color: isDarkTheme ? "#fff" : "#000" }]}
+        style={[
+          styles.titleInput,
+          {
+            backgroundColor: isDarkTheme ? "#444" : "#fff",
+            color: isDarkTheme ? "#fff" : "#000",
+          },
+        ]}
         value={title}
         onChangeText={setTitle}
         placeholder={isThaiLanguage ? "หัวข้อบทความ" : "Article Title"}
@@ -157,7 +182,13 @@ export default function EditArticle({ route, navigation }) {
         multiline
       />
       <TextInput
-        style={[styles.descriptionInput, { backgroundColor: isDarkTheme ? "#444" : "#fff", color: isDarkTheme ? "#fff" : "#000" }]}
+        style={[
+          styles.descriptionInput,
+          {
+            backgroundColor: isDarkTheme ? "#444" : "#fff",
+            color: isDarkTheme ? "#fff" : "#000",
+          },
+        ]}
         value={description}
         onChangeText={setDescription}
         placeholder={isThaiLanguage ? "คำอธิบาย" : "Description"}

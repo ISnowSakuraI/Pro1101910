@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -39,7 +39,7 @@ export default function Schedule({ navigation }) {
     Notifications.requestPermissionsAsync();
   }, [user]);
 
-  const loadSchedule = async (uid) => {
+  const loadSchedule = useCallback(async (uid) => {
     try {
       const docRef = doc(db, "schedules", uid);
       const docSnap = await getDoc(docRef);
@@ -49,34 +49,39 @@ export default function Schedule({ navigation }) {
     } catch (error) {
       console.error("Failed to load schedule data", error);
     }
-  };
+  }, []);
 
-  const saveSchedule = async (uid, data) => {
+  const saveSchedule = useCallback(async (uid, data) => {
     try {
       await setDoc(doc(db, "schedules", uid), data);
     } catch (error) {
       console.error("Failed to save schedule data", error);
     }
-  };
+  }, []);
 
-  const handleDayPress = (day) => {
+  const handleDayPress = useCallback((day) => {
     setSelectedDate(day.dateString);
-  };
+  }, []);
 
-  const scheduleNotification = async (exercise, time) => {
+  const scheduleNotification = useCallback(async (exercise, time) => {
     const trigger = new Date(time);
     await Notifications.scheduleNotificationAsync({
       content: {
         title: isThaiLanguage ? "ถึงเวลาออกกำลังกาย!" : "Time to Exercise!",
-        body: isThaiLanguage ? `ถึงเวลา ${exercise} ของคุณแล้ว.` : `It's time for your ${exercise} session.`,
+        body: isThaiLanguage
+          ? `ถึงเวลา ${exercise} ของคุณแล้ว.`
+          : `It's time for your ${exercise} session.`,
       },
       trigger,
     });
-  };
+  }, [isThaiLanguage]);
 
-  const addOrUpdateSchedule = () => {
+  const addOrUpdateSchedule = useCallback(() => {
     if (newExercise.trim() === "" || duration.trim() === "") {
-      Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "กรุณาใส่ข้อมูลให้ครบถ้วน" : "Please fill in all fields");
+      Alert.alert(
+        isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+        isThaiLanguage ? "กรุณาใส่ข้อมูลให้ครบถ้วน" : "Please fill in all fields"
+      );
       return;
     }
     const newSchedule = {
@@ -111,17 +116,28 @@ export default function Schedule({ navigation }) {
     const [hours, minutes] = newSchedule.startTime.split(":");
     notificationTime.setHours(hours, minutes);
     scheduleNotification(newExercise, notificationTime);
-  };
+  }, [
+    newExercise,
+    duration,
+    editingId,
+    scheduleData,
+    selectedDate,
+    startTime,
+    user,
+    saveSchedule,
+    scheduleNotification,
+    isThaiLanguage,
+  ]);
 
-  const editSchedule = (item) => {
+  const editSchedule = useCallback((item) => {
     setNewExercise(item.exercise);
     setStartTime(new Date(`1970-01-01T${item.startTime}`));
     setDuration(item.duration);
     setEditingId(item.id);
     setModalVisible(true);
-  };
+  }, []);
 
-  const deleteSchedule = (id) => {
+  const deleteSchedule = useCallback((id) => {
     const updatedSchedule = {
       ...scheduleData,
       [selectedDate]: scheduleData[selectedDate].filter(
@@ -132,10 +148,15 @@ export default function Schedule({ navigation }) {
     if (user) {
       saveSchedule(user.uid, updatedSchedule);
     }
-  };
+  }, [scheduleData, selectedDate, user, saveSchedule]);
 
   return (
-    <View style={[styles.container, { backgroundColor: isDarkTheme ? "#1e1e1e" : "#f5f5f5" }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDarkTheme ? "#1e1e1e" : "#f5f5f5" },
+      ]}
+    >
       <Calendar
         onDayPress={handleDayPress}
         markedDates={{
@@ -175,9 +196,30 @@ export default function Schedule({ navigation }) {
         renderItem={({ item }) => (
           <View style={styles.row}>
             <View style={styles.info}>
-              <Text style={[styles.cell, { color: isDarkTheme ? "#fff" : "#000" }]}>{item.startTime}</Text>
-              <Text style={[styles.cell, { color: isDarkTheme ? "#fff" : "#000" }]}>{item.duration} {isThaiLanguage ? "นาที" : "minutes"}</Text>
-              <Text style={[styles.cell, { color: isDarkTheme ? "#fff" : "#000" }]}>{item.exercise}</Text>
+              <Text
+                style={[
+                  styles.cell,
+                  { color: isDarkTheme ? "#fff" : "#000" },
+                ]}
+              >
+                {item.startTime}
+              </Text>
+              <Text
+                style={[
+                  styles.cell,
+                  { color: isDarkTheme ? "#fff" : "#000" },
+                ]}
+              >
+                {item.duration} {isThaiLanguage ? "นาที" : "minutes"}
+              </Text>
+              <Text
+                style={[
+                  styles.cell,
+                  { color: isDarkTheme ? "#fff" : "#000" },
+                ]}
+              >
+                {item.exercise}
+              </Text>
             </View>
             <View style={styles.actions}>
               <TouchableOpacity
@@ -202,13 +244,30 @@ export default function Schedule({ navigation }) {
         transparent={true}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={[styles.modalView, { backgroundColor: isDarkTheme ? "#444" : "#fff" }]}>
-          <Text style={[styles.modalText, { color: isDarkTheme ? "#fff" : "#000" }]}>
-            {isThaiLanguage ? "แก้ไขตารางสำหรับ" : "Edit Schedule for"} {selectedDate}
+        <View
+          style={[
+            styles.modalView,
+            { backgroundColor: isDarkTheme ? "#444" : "#fff" },
+          ]}
+        >
+          <Text
+            style={[
+              styles.modalText,
+              { color: isDarkTheme ? "#fff" : "#000" },
+            ]}
+          >
+            {isThaiLanguage ? "แก้ไขตารางสำหรับ" : "Edit Schedule for"}{" "}
+            {selectedDate}
           </Text>
           <TouchableOpacity onPress={() => setShowStartTimePicker(true)}>
             <TextInput
-              style={[styles.input, { color: isDarkTheme ? "#fff" : "#000", backgroundColor: isDarkTheme ? "#555" : "#fff" }]}
+              style={[
+                styles.input,
+                {
+                  color: isDarkTheme ? "#fff" : "#000",
+                  backgroundColor: isDarkTheme ? "#555" : "#fff",
+                },
+              ]}
               placeholder={isThaiLanguage ? "เวลาเริ่มต้น" : "Start Time"}
               placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
               value={startTime.toLocaleTimeString("en-GB", {
@@ -231,7 +290,13 @@ export default function Schedule({ navigation }) {
             />
           )}
           <TextInput
-            style={[styles.input, { color: isDarkTheme ? "#fff" : "#000", backgroundColor: isDarkTheme ? "#555" : "#fff" }]}
+            style={[
+              styles.input,
+              {
+                color: isDarkTheme ? "#fff" : "#000",
+                backgroundColor: isDarkTheme ? "#555" : "#fff",
+              },
+            ]}
             placeholder={isThaiLanguage ? "ระยะเวลา (นาที)" : "Duration (minutes)"}
             placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
             value={duration}
@@ -239,7 +304,13 @@ export default function Schedule({ navigation }) {
             keyboardType="numeric"
           />
           <TextInput
-            style={[styles.input, { color: isDarkTheme ? "#fff" : "#000", backgroundColor: isDarkTheme ? "#555" : "#fff" }]}
+            style={[
+              styles.input,
+              {
+                color: isDarkTheme ? "#fff" : "#000",
+                backgroundColor: isDarkTheme ? "#555" : "#fff",
+              },
+            ]}
             placeholder={isThaiLanguage ? "การออกกำลังกาย" : "Exercise"}
             placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
             value={newExercise}

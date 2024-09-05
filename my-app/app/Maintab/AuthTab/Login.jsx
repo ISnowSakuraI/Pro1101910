@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import {
   Text,
   View,
@@ -7,42 +7,42 @@ import {
   Image,
   TouchableOpacity,
   Alert,
+  StatusBar,
 } from "react-native";
 import { auth, db } from "../../../firebase/Firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import logo from "../../../assets/images/150.png";
-import { StatusBar } from "react-native";
 import { useTheme } from "../../ThemeContext";
 import { useLanguage } from "../../LanguageContext";
 
 export default function Login({ navigation }) {
-  const [input, setInput] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [showPassword, setShowPassword] = React.useState(false);
+  const [input, setInput] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const handleLogin = async () => {
-    try {
-      if (!input || !password) {
-        Alert.alert(
-          isThaiLanguage
-            ? "โปรดใส่อีเมล/ชื่อผู้ใช้ และรหัสผ่าน"
-            : "Please enter email/username and password"
-        );
-        return;
-      }
+  const handleLogin = useCallback(async () => {
+    if (!input || !password) {
+      Alert.alert(
+        isThaiLanguage
+          ? "โปรดใส่อีเมล/ชื่อผู้ใช้ และรหัสผ่าน"
+          : "Please enter email/username and password"
+      );
+      return;
+    }
 
+    try {
       let emailToLogin = input;
 
       if (!input.includes("@")) {
-        const q = query(
+        const userQuery = query(
           collection(db, "Users"),
           where("username", "==", input)
         );
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocs(userQuery);
 
         if (querySnapshot.empty) {
           Alert.alert(
@@ -61,7 +61,7 @@ export default function Login({ navigation }) {
       setInput("");
       setPassword("");
     } catch (error) {
-      console.error(error);
+      console.error("Login error:", error);
       Alert.alert(
         "Error",
         isThaiLanguage
@@ -69,7 +69,7 @@ export default function Login({ navigation }) {
           : "Please enter correct email/username and password"
       );
     }
-  };
+  }, [input, password, isThaiLanguage, navigation]);
 
   return (
     <View
@@ -97,10 +97,12 @@ export default function Login({ navigation }) {
             color: isDarkTheme ? "#fff" : "#000",
           },
         ]}
-        placeholder={isThaiLanguage ? "อีเมล / ชื่อผู้ใช้" : "Email / UserName"}
+        placeholder={isThaiLanguage ? "อีเมล / ชื่อผู้ใช้" : "Email / Username"}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={input}
-        onChange={(e) => setInput(e.nativeEvent.text)}
+        onChangeText={setInput}
+        autoCapitalize="none"
+        autoCorrect={false}
       />
       <View style={styles.passwordContainer}>
         <TextInput
@@ -115,7 +117,9 @@ export default function Login({ navigation }) {
           placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
           secureTextEntry={!showPassword}
           value={password}
-          onChange={(e) => setPassword(e.nativeEvent.text)}
+          onChangeText={setPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
         />
         <TouchableOpacity
           style={styles.eyeIcon}
@@ -129,7 +133,7 @@ export default function Login({ navigation }) {
         </TouchableOpacity>
       </View>
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Icon name="login" size={20} color="white" />
+        <Icon name="login" size={20} color="#fff" />
         <Text style={styles.buttonText}>
           {isThaiLanguage ? "เข้าสู่ระบบ" : "Login"}
         </Text>

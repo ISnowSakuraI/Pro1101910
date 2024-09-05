@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Text,
   View,
@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Dimensions,
   StatusBar,
+  Alert,
 } from "react-native";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, db } from "../../../firebase/Firebase";
@@ -37,19 +38,24 @@ export default function Profile({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const fetchUserData = async (currentUser) => {
+  const fetchUserData = useCallback(async (currentUser) => {
     if (currentUser) {
       setUser(currentUser);
-      const userDoc = await getDoc(doc(db, "Users", currentUser.uid));
-      if (userDoc.exists()) {
-        const data = userDoc.data();
-        setUserData(data);
-        setImage(data.photoURL || null);
+      try {
+        const userDoc = await getDoc(doc(db, "Users", currentUser.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          setUserData(data);
+          setImage(data.photoURL || null);
+        }
+      } catch (error) {
+        console.error("Error fetching user data: ", error);
+        Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถดึงข้อมูลผู้ใช้ได้" : "Failed to fetch user data.");
       }
     }
-  };
+  }, [isThaiLanguage]);
 
-  const fetchUserStatistics = async () => {
+  const fetchUserStatistics = useCallback(async () => {
     const user = auth.currentUser;
     if (user) {
       try {
@@ -80,33 +86,40 @@ export default function Profile({ navigation }) {
         setDailyData(dailyDataArray);
       } catch (error) {
         console.error("Error fetching user statistics: ", error);
+        Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถดึงข้อมูลสถิติได้" : "Failed to fetch statistics.");
       }
     }
-  };
+  }, [isThaiLanguage]);
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       const unsubscribe = onAuthStateChanged(auth, fetchUserData);
       fetchUserStatistics();
       return () => {
         unsubscribe();
       };
-    }, [])
+    }, [fetchUserData, fetchUserStatistics])
   );
 
   const pickImage = async () => {
     setLoading(true);
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
 
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
+      if (!result.canceled) {
+        setImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error("Error picking image: ", error);
+      Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถเลือกภาพได้" : "Failed to pick image.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const chartConfig = {
@@ -236,14 +249,20 @@ export default function Profile({ navigation }) {
           </TouchableOpacity>
         </View>
         <View style={styles.graphContainer}>
-          <IconAntDesign name="linechart" size={24} color={isDarkTheme ? "#fff" : "#333"} />
+          <IconAntDesign
+            name="linechart"
+            size={24}
+            color={isDarkTheme ? "#fff" : "#333"}
+          />
           <Text
             style={[
               styles.graphTitle,
               { color: isDarkTheme ? "#fff" : "#333" },
             ]}
           >
-            {isThaiLanguage ? "แคลอรี่ที่เผาผลาญตามเวลา" : "Calories Burned Over Time"}
+            {isThaiLanguage
+              ? "แคลอรี่ที่เผาผลาญตามเวลา"
+              : "Calories Burned Over Time"}
           </Text>
         </View>
         {dailyData.length > 0 ? (
@@ -280,7 +299,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 29,
+    padding: 20,
   },
   settingsIcon: {
     position: "absolute",

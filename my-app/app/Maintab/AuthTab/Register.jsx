@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Text,
   View,
@@ -26,7 +26,7 @@ export default function Register({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!email || !username || !password || !confirmPassword) {
       Alert.alert(
         isThaiLanguage ? "ข้อผิดพลาด" : "Error",
@@ -59,7 +59,7 @@ export default function Register({ navigation }) {
         isThaiLanguage ? "สำเร็จ" : "Success",
         isThaiLanguage ? "สร้างบัญชีเสร็จสิ้น" : "Account created successfully"
       );
-      navigation.navigate("LoginScreen")
+      navigation.navigate("LoginScreen");
     } catch (error) {
       console.error(error);
       Alert.alert(
@@ -69,7 +69,7 @@ export default function Register({ navigation }) {
           : "An error occurred while creating the account"
       );
     }
-  };
+  }, [email, username, password, confirmPassword, isThaiLanguage, navigation]);
 
   return (
     <View
@@ -90,7 +90,9 @@ export default function Register({ navigation }) {
         placeholder={isThaiLanguage ? "อีเมล" : "Email"}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={email}
-        onChange={(e) => setEmail(e.nativeEvent.text)}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
       />
       <TextInput
         style={[
@@ -103,7 +105,8 @@ export default function Register({ navigation }) {
         placeholder={isThaiLanguage ? "ชื่อผู้ใช้" : "Username"}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={username}
-        onChange={(e) => setUsername(e.nativeEvent.text)}
+        onChangeText={setUsername}
+        autoCapitalize="none"
       />
       <View style={styles.passwordContainer}>
         <TextInput
@@ -118,7 +121,8 @@ export default function Register({ navigation }) {
           placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
           secureTextEntry={!showPassword}
           value={password}
-          onChange={(e) => setPassword(e.nativeEvent.text)}
+          onChangeText={setPassword}
+          autoCapitalize="none"
         />
         <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
           <Icon
@@ -141,7 +145,8 @@ export default function Register({ navigation }) {
           placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
           secureTextEntry={!showConfirmPassword}
           value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.nativeEvent.text)}
+          onChangeText={setConfirmPassword}
+          autoCapitalize="none"
         />
         <TouchableOpacity
           onPress={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -208,7 +213,6 @@ const styles = StyleSheet.create({
     fontFamily: "NotoSansThai-Regular",
     flex: 1,
     height: "100%",
-    
   },
   button: {
     flexDirection: "row",

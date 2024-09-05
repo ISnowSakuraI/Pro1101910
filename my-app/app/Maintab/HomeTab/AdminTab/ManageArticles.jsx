@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Image, Alert } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Image, Alert, RefreshControl } from "react-native";
 import { db, auth } from "../../../../firebase/Firebase";
 import { collection, getDocs, deleteDoc, doc, getDoc } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -10,6 +10,7 @@ export default function ManageArticles({ navigation }) {
   const [articles, setArticles] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
@@ -67,6 +68,11 @@ export default function ManageArticles({ navigation }) {
     }
   };
 
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchArticles().then(() => setRefreshing(false));
+  }, [fetchArticles]);
+
   const filteredArticles = articles.filter(article =>
     article.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -90,6 +96,9 @@ export default function ManageArticles({ navigation }) {
       <FlatList
         data={filteredArticles}
         keyExtractor={(item) => item.id}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         renderItem={({ item }) => (
           <View style={[styles.card, { backgroundColor: isDarkTheme ? "#444" : "white" }]}>
             {item.images && item.images[0] ? (
@@ -99,8 +108,12 @@ export default function ManageArticles({ navigation }) {
                 <Text style={styles.imagePlaceholderText}>No Image</Text>
               </View>
             )}
-            <Text style={[styles.title, { color: isDarkTheme ? "#fff" : "#333" }]}>{item.title}</Text>
-            <Text style={[styles.description, { color: isDarkTheme ? "#aaa" : "#666" }]}>{item.description}</Text>
+            <Text style={[styles.title, { color: isDarkTheme ? "#fff" : "#333" }]} numberOfLines={4}>
+              {item.title}
+            </Text>
+            <Text style={[styles.description, { color: isDarkTheme ? "#aaa" : "#666" }]} numberOfLines={3}>
+              {item.description}
+            </Text>
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={styles.deleteButton}

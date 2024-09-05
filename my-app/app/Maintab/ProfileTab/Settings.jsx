@@ -1,5 +1,14 @@
-import React from "react";
-import { View, Text, StyleSheet, Switch, TouchableOpacity, Animated } from "react-native";
+import React, { useRef, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Switch,
+  TouchableOpacity,
+  Animated,
+  Platform,
+  Vibration,
+} from "react-native";
 import { useTheme } from "../../ThemeContext";
 import { useLanguage } from "../../LanguageContext";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -7,54 +16,70 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 export default function Settings({ navigation }) {
   const { isDarkTheme, toggleTheme } = useTheme();
   const { isThaiLanguage, toggleLanguage } = useLanguage();
-  const animatedValue = new Animated.Value(0);
+  const animatedValue = useRef(new Animated.Value(0)).current;
 
-  const handleBackPress = () => {
+  const handleBackPress = useCallback(() => {
     Animated.timing(animatedValue, {
       toValue: 1,
-      duration: 300,
+      duration: 200,
       useNativeDriver: true,
     }).start(() => {
       navigation.goBack();
       animatedValue.setValue(0);
     });
-  };
+  }, [navigation, animatedValue]);
+
+  const handleToggleSwitch = useCallback((toggleFunction) => {
+    Vibration.vibrate(Platform.OS === "ios" ? 10 : 50); // Haptic feedback
+    toggleFunction();
+  }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: isDarkTheme ? "#1e1e1e" : "#f0f0f0" }]}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={handleBackPress}
-      >
-        <Animated.View style={{ transform: [{ scale: animatedValue.interpolate({
-          inputRange: [0, 1],
-          outputRange: [1, 1.2]
-        }) }] }}>
-          <Icon name="arrow-back" size={28} color={isDarkTheme ? "#fff" : "#000"} />
-        </Animated.View>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDarkTheme ? "#121212" : "#f7f7f7" },
+      ]}
+    >
+      <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+        <Icon
+          name="arrow-back"
+          size={28}
+          color={isDarkTheme ? "#ffffff" : "#333333"}
+        />
       </TouchableOpacity>
-      <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#000" }]}>
+      <Text style={[styles.header, { color: isDarkTheme ? "#ffffff" : "#333333" }]}>
         {isThaiLanguage ? "การตั้งค่า" : "Settings"}
       </Text>
-      <View style={[styles.setting, { backgroundColor: isDarkTheme ? "#2c2c2c" : "#fff" }]}>
-        <Text style={[styles.label, { color: isDarkTheme ? "#fff" : "#000" }]}>
+      <View
+        style={[
+          styles.setting,
+          { backgroundColor: isDarkTheme ? "#1f1f1f" : "#ffffff" },
+        ]}
+      >
+        <Text style={[styles.label, { color: isDarkTheme ? "#ffffff" : "#333333" }]}>
           {isThaiLanguage ? "ธีมมืด" : "Dark Theme"}
         </Text>
         <Switch
           value={isDarkTheme}
-          onValueChange={toggleTheme}
+          onValueChange={() => handleToggleSwitch(toggleTheme)}
           trackColor={{ false: "#767577", true: "#81b0ff" }}
           thumbColor={isDarkTheme ? "#f5dd4b" : "#f4f3f4"}
           style={styles.switch}
         />
       </View>
-      <View style={[styles.setting, { backgroundColor: isDarkTheme ? "#2c2c2c" : "#fff" }]}>
-        <Text style={[styles.label, { color: isDarkTheme ? "#fff" : "#000" }]}>
+      <View
+        style={[
+          styles.setting,
+          { backgroundColor: isDarkTheme ? "#1f1f1f" : "#ffffff" },
+        ]}
+      >
+        <Text style={[styles.label, { color: isDarkTheme ? "#ffffff" : "#333333" }]}>
           {isThaiLanguage ? "ภาษาไทย" : "Thai Language"}
         </Text>
         <Switch
           value={isThaiLanguage}
-          onValueChange={toggleLanguage}
+          onValueChange={() => handleToggleSwitch(toggleLanguage)}
           trackColor={{ false: "#767577", true: "#81b0ff" }}
           thumbColor={isThaiLanguage ? "#f5dd4b" : "#f4f3f4"}
           style={styles.switch}
@@ -68,11 +93,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    justifyContent: "flex-start",
   },
   header: {
-    fontSize: 26,
+    fontSize: 30,
     textAlign: "center",
-    marginVertical: 30,
+    marginBottom: 40,
     fontFamily: "NotoSansThai-Regular",
   },
   setting: {
@@ -80,16 +106,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginVertical: 15,
-    padding: 15,
-    borderRadius: 10,
+    padding: 20,
+    borderRadius: 12,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   label: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: "NotoSansThai-Regular",
   },
   backButton: {

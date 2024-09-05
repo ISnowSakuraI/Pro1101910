@@ -27,14 +27,19 @@ export default function AddArticle({ navigation }) {
   const { isThaiLanguage } = useLanguage();
 
   const pickImages = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
-      quality: 1,
-    });
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true,
+        quality: 1,
+      });
 
-    if (!result.canceled) {
-      setImages(result.assets.map((asset) => asset.uri));
+      if (!result.canceled) {
+        setImages(result.assets.map((asset) => asset.uri));
+      }
+    } catch (error) {
+      console.error("Error picking images: ", error);
+      Alert.alert("Error", "Failed to pick images. Please try again.");
     }
   };
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Text,
   View,
@@ -32,37 +32,47 @@ export default function EditProfile({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const fetchUserData = async (currentUser) => {
+  const fetchUserData = useCallback(async (currentUser) => {
     if (currentUser) {
       setUser(currentUser);
-      const userDoc = await getDoc(doc(db, "Users", currentUser.uid));
-      if (userDoc.exists()) {
-        const data = userDoc.data();
-        setUserData(data);
-        setImage(data.photoURL || null);
+      try {
+        const userDoc = await getDoc(doc(db, "Users", currentUser.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          setUserData(data);
+          setImage(data.photoURL || null);
+        }
+      } catch (error) {
+        console.error("Error fetching user data: ", error);
+        Alert.alert("Error", "Failed to fetch user data.");
       }
     }
-  };
+  }, []);
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       const unsubscribe = onAuthStateChanged(auth, fetchUserData);
       return () => {
         unsubscribe();
       };
-    }, [])
+    }, [fetchUserData])
   );
 
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
 
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
+      if (!result.canceled) {
+        setImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error("Error picking image: ", error);
+      Alert.alert("Error", "Failed to pick image.");
     }
   };
 
@@ -70,19 +80,16 @@ export default function EditProfile({ navigation }) {
     if (!user) return;
 
     setLoading(true);
-    let photoURL = null;
+    let photoURL = userData.photoURL;
     try {
-      const response = await fetch(image);
-      const blob = await response.blob();
-      const storageRef = ref(storage, `profilePictures/${user.uid}`);
-      await uploadBytes(storageRef, blob);
-      photoURL = await getDownloadURL(storageRef);
-    } catch (error) {
-      console.error("Error uploading image: ", error);
-      Alert.alert("Error", "Failed to upload image. Please try again.");
-    }
+      if (image && image !== userData.photoURL) {
+        const response = await fetch(image);
+        const blob = await response.blob();
+        const storageRef = ref(storage, `profilePictures/${user.uid}`);
+        await uploadBytes(storageRef, blob);
+        photoURL = await getDownloadURL(storageRef);
+      }
 
-    try {
       await setDoc(doc(db, "Users", user.uid), {
         ...userData,
         photoURL: photoURL || "",
@@ -94,6 +101,7 @@ export default function EditProfile({ navigation }) {
       navigation.goBack();
     } catch (error) {
       console.error("Error updating profile: ", error);
+      Alert.alert("Error", "Failed to update profile.");
     } finally {
       setLoading(false);
     }
@@ -114,7 +122,8 @@ export default function EditProfile({ navigation }) {
       Alert.alert("Logged out", "You have been logged out successfully.");
       navigation.navigate("LoginScreen");
     } catch (error) {
-      Alert.alert("Error", "Failed to log out. Please try again.");
+      console.error("Error logging out: ", error);
+      Alert.alert("Error", "Failed to log out.");
     }
   };
 
