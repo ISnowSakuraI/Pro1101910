@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, FlatList, TouchableOpacity, Modal, Alert, TextInput } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, FlatList, TouchableOpacity, Modal, Alert, TextInput, ActivityIndicator } from 'react-native';
 import { db, auth } from '../../../../firebase/Firebase';
 import { doc, getDoc, collection, query, where, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../ThemeContext';
 import { useLanguage } from '../../../LanguageContext';
 
@@ -10,6 +10,8 @@ const predefinedReasons = [
   { id: 1, text: "Inappropriate content" },
   { id: 2, text: "Spam" },
   { id: 3, text: "False information" },
+  { id: 4, text: "Harassment" },
+  { id: 5, text: "Hate speech" },
 ];
 
 export default function ArticleDetail({ route, navigation }) {
@@ -20,7 +22,7 @@ export default function ArticleDetail({ route, navigation }) {
   const [likesCount, setLikesCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [reportModalVisible, setReportModalVisible] = useState(false);
-  const [selectedReason, setSelectedReason] = useState("");
+  const [selectedReasons, setSelectedReasons] = useState([]);
   const [customReason, setCustomReason] = useState("");
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
@@ -64,14 +66,14 @@ export default function ArticleDetail({ route, navigation }) {
     fetchLikes();
   }, [articleId]);
 
-  const openImageModal = (image) => {
+  const openImageModal = useCallback((image) => {
     setSelectedImage(image);
     setModalVisible(true);
-  };
+  }, []);
 
   const formatDate = (timestamp) => {
     const date = timestamp.toDate();
-    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.getHours()}:${date.getMinutes()} น.`;
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${date.getHours()}:${date.getMinutes()} ${isThaiLanguage ? 'น.' : 'PM'}`;
   };
 
   const toggleFavorite = async () => {
@@ -80,11 +82,9 @@ export default function ArticleDetail({ route, navigation }) {
       const favoriteDocRef = doc(db, 'favoriteArticles', `${user.uid}_${articleId}`);
       try {
         if (isLiked) {
-          // Remove from favorites
           await deleteDoc(favoriteDocRef);
           setLikesCount(likesCount - 1);
         } else {
-          // Add to favorites
           await setDoc(favoriteDocRef, { userId: user.uid, articleId });
           setLikesCount(likesCount + 1);
         }
@@ -99,20 +99,28 @@ export default function ArticleDetail({ route, navigation }) {
     setReportModalVisible(true);
   };
 
+  const toggleReasonSelection = (reasonText) => {
+    setSelectedReasons((prev) =>
+      prev.includes(reasonText)
+        ? prev.filter((r) => r !== reasonText)
+        : [...prev, reasonText]
+    );
+  };
+
   const submitReport = async () => {
     const user = auth.currentUser;
     if (user) {
-      const reason = selectedReason || customReason;
-      if (!reason) {
+      const reasons = [...predefinedReasons.filter(r => selectedReasons.includes(r.text)).map(r => r.text), customReason].filter(Boolean);
+      if (reasons.length === 0) {
         Alert.alert(isThaiLanguage ? "กรุณาเลือกหรือใส่เหตุผล" : "Please select or enter a reason");
         return;
       }
       try {
         const reportDocRef = doc(db, "reports", `${user.uid}_${articleId}`);
-        await setDoc(reportDocRef, { userId: user.uid, articleId, reason });
+        await setDoc(reportDocRef, { userId: user.uid, articleId, reasons }, { merge: true });
         Alert.alert(isThaiLanguage ? "รายงานสำเร็จ" : "Report Successful", isThaiLanguage ? "บทความนี้ถูกรีพอร์ตแล้ว" : "This article has been reported.");
         setReportModalVisible(false);
-        setSelectedReason("");
+        setSelectedReasons([]);
         setCustomReason("");
       } catch (error) {
         console.error("Error submitting report: ", error);
@@ -120,10 +128,28 @@ export default function ArticleDetail({ route, navigation }) {
     }
   };
 
+  const translateReasonToThai = (reason) => {
+    switch (reason) {
+      case "Inappropriate content":
+        return "เนื้อหาไม่เหมาะสม";
+      case "Spam":
+        return "สแปม";
+      case "False information":
+        return "ข้อมูลเท็จ";
+      case "Harassment":
+        return "การล่วงละเมิด";
+      case "Hate speech":
+        return "คำพูดเกลียดชัง";
+      default:
+        return reason;
+    }
+  };
+
   if (!article) {
     return (
       <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>{isThaiLanguage ? "กำลังโหลด..." : "Loading..."}</Text>
+        <ActivityIndicator size="large" color={isDarkTheme ? '#fff' : '#000'} />
+        <Text style={[styles.loadingText, { color: isDarkTheme ? '#fff' : '#000' }]}>{isThaiLanguage ? "กำลังโหลด..." : "Loading..."}</Text>
       </View>
     );
   }
@@ -131,13 +157,13 @@ export default function ArticleDetail({ route, navigation }) {
   return (
     <ScrollView style={[styles.container, { backgroundColor: isDarkTheme ? '#333' : '#f5f5f5' }]}>
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-back" size={24} color={isDarkTheme ? "#fff" : "#000"} />
+        <Icon name="arrow-left" size={28} color={isDarkTheme ? "#fff" : "#000"} />
       </TouchableOpacity>
       <FlatList
         data={article.images}
         horizontal
         renderItem={({ item: image }) => (
-          <TouchableOpacity onPress={() => openImageModal(image)}>
+          <TouchableOpacity onPress={() => openImageModal(image)} style={styles.imageWrapper}>
             <Image source={{ uri: image }} style={styles.image} />
           </TouchableOpacity>
         )}
@@ -149,22 +175,22 @@ export default function ArticleDetail({ route, navigation }) {
       <Text style={[styles.author, { color: isDarkTheme ? '#aaa' : '#777' }]}>{isThaiLanguage ? "โพสโดย" : "Posted by"}: {article.userName}</Text>
       <Text style={[styles.date, { color: isDarkTheme ? '#aaa' : '#777' }]}>{isThaiLanguage ? "วันที่" : "Date"}: {formatDate(article.createdAt)}</Text>
       <View style={styles.likesContainer}>
-        <Icon name="favorite" size={16} color="red" />
+        <Icon name="heart" size={20} color="red" />
         <Text style={[styles.likesText, { color: isDarkTheme ? '#aaa' : '#777' }]}>{likesCount} {isThaiLanguage ? "ถูกใจ" : "Likes"}</Text>
       </View>
       <View style={styles.actionButtons}>
-        <TouchableOpacity onPress={toggleFavorite} style={styles.favoriteButton}>
-          <Icon name={isLiked ? "favorite" : "favorite-border"} size={24} color={isLiked ? "red" : "gray"} />
+        <TouchableOpacity onPress={toggleFavorite} style={[styles.favoriteButton, { backgroundColor: isLiked ? '#ff4d4d' : '#eee' }]}>
+          <Icon name={isLiked ? "heart" : "heart-outline"} size={28} color={isLiked ? "#fff" : "#777"} />
         </TouchableOpacity>
         <TouchableOpacity onPress={openReportModal} style={styles.reportButton}>
-          <Icon name="report" size={24} color="orange" />
+          <Icon name="alert-circle-outline" size={28} color="orange" />
         </TouchableOpacity>
       </View>
 
       <Modal visible={modalVisible} transparent={true}>
         <View style={styles.modalContainer}>
           <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
-            <Icon name="close" size={30} color="white" />
+            <Icon name="close" size={28} color={isDarkTheme ? '#fff' : '#000'} />
           </TouchableOpacity>
           {selectedImage && (
             <Image source={{ uri: selectedImage }} style={styles.fullImage} />
@@ -172,50 +198,35 @@ export default function ArticleDetail({ route, navigation }) {
         </View>
       </Modal>
 
-      <Modal
-        visible={reportModalVisible}
-        transparent={true}
-        animationType="slide"
-      >
+      <Modal visible={reportModalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {isThaiLanguage ? "เลือกเหตุผลในการรายงาน" : "Select Report Reason"}
+          <View style={[styles.modalContent, { backgroundColor: isDarkTheme ? "#333" : "#fff" }]}>
+            <Text style={[styles.modalTitle, { color: isDarkTheme ? "#fff" : "#000" }]}>
+              {isThaiLanguage ? "เลือกเหตุผลในการรายงาน" : "Select Report Reasons"}
             </Text>
             {predefinedReasons.map((reason) => (
-              <TouchableOpacity
-                key={reason.id}
-                style={styles.reasonButton}
-                onPress={() => setSelectedReason(reason.text)}
-              >
-                <Text style={styles.reasonText}>{reason.text}</Text>
-                {selectedReason === reason.text && (
+              <TouchableOpacity key={reason.id} style={styles.reasonButton} onPress={() => toggleReasonSelection(reason.text)}>
+                <Text style={[styles.reasonText, { color: isDarkTheme ? "#fff" : "#000" }]}>
+                  {isThaiLanguage ? translateReasonToThai(reason.text) : reason.text}
+                </Text>
+                {selectedReasons.includes(reason.text) && (
                   <Icon name="check" size={20} color="green" />
                 )}
               </TouchableOpacity>
             ))}
             <TextInput
-              style={styles.customReasonInput}
+              style={[styles.customReasonInput, { backgroundColor: isDarkTheme ? "#444" : "#fff", color: isDarkTheme ? "#fff" : "#000" }]}
               placeholder={isThaiLanguage ? "หรือใส่เหตุผลของคุณเอง..." : "Or enter your own reason..."}
+              placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
               value={customReason}
               onChangeText={setCustomReason}
             />
             <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.submitButton}
-                onPress={submitReport}
-              >
-                <Text style={styles.submitButtonText}>
-                  {isThaiLanguage ? "ส่ง" : "Submit"}
-                </Text>
+              <TouchableOpacity style={styles.submitButton} onPress={submitReport}>
+                <Text style={styles.submitButtonText}>{isThaiLanguage ? "ส่ง" : "Submit"}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setReportModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>
-                  {isThaiLanguage ? "ยกเลิก" : "Cancel"}
-                </Text>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setReportModalVisible(false)}>
+                <Text style={styles.cancelButtonText}>{isThaiLanguage ? "ยกเลิก" : "Cancel"}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -236,39 +247,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    fontFamily: 'NotoSansThai-Regular',
     fontSize: 16,
-    color: '#777',
   },
   backButton: {
     marginBottom: 10,
   },
   title: {
     fontSize: 24,
-    fontFamily: 'NotoSansThai-Regular',
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
   },
+  imageWrapper: {
+    marginRight: 10,
+  },
   image: {
     width: 100,
     height: 100,
-    marginRight: 10,
     borderRadius: 10,
   },
   description: {
     fontSize: 16,
-    fontFamily: 'NotoSansThai-Regular',
     marginTop: 20,
   },
   author: {
     fontSize: 14,
-    fontFamily: 'NotoSansThai-Regular',
     marginTop: 10,
   },
   date: {
     fontSize: 14,
-    fontFamily: 'NotoSansThai-Regular',
     marginTop: 5,
   },
   likesContainer: {
@@ -278,7 +285,6 @@ const styles = StyleSheet.create({
   },
   likesText: {
     fontSize: 14,
-    fontFamily: 'NotoSansThai-Regular',
     marginLeft: 5,
   },
   actionButtons: {
@@ -289,10 +295,17 @@ const styles = StyleSheet.create({
   favoriteButton: {
     flex: 1,
     alignItems: 'center',
+    padding: 10,
+    borderRadius: 5,
+    marginRight: 5,
   },
   reportButton: {
     flex: 1,
     alignItems: 'center',
+    padding: 10,
+    borderRadius: 5,
+    marginLeft: 5,
+    backgroundColor: '#eee',
   },
   modalContainer: {
     flex: 1,
@@ -302,14 +315,12 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: "80%",
-    backgroundColor: "white",
     borderRadius: 10,
     padding: 20,
     alignItems: "center",
   },
   modalTitle: {
     fontSize: 18,
-    fontFamily: "NotoSansThai-Regular",
     marginBottom: 20,
   },
   reasonButton: {
@@ -323,13 +334,10 @@ const styles = StyleSheet.create({
   },
   reasonText: {
     fontSize: 16,
-    fontFamily: "NotoSansThai-Regular",
   },
   customReasonInput: {
     width: "100%",
     height: 40,
-    borderColor: "#ccc",
-    borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
     marginTop: 10,
@@ -350,7 +358,6 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: "white",
-    fontFamily: "NotoSansThai-Regular",
   },
   cancelButton: {
     backgroundColor: "#f44336",
@@ -362,11 +369,10 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     color: "white",
-    fontFamily: "NotoSansThai-Regular",
   },
   closeButton: {
     position: 'absolute',
-    top: 40,
+    top: 20,
     right: 20,
     zIndex: 1,
   },

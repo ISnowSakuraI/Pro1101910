@@ -25,21 +25,21 @@ export default function ReportedArticles({ navigation }) {
       }));
 
       const reportDetails = reports.reduce((acc, report) => {
-        if (!acc[report.articleId]) {
-          acc[report.articleId] = { count: 0, reasons: [] };
+        const articleId = report.articleId;
+        if (!acc[articleId]) {
+          acc[articleId] = { count: 0, reasons: [] };
         }
-        acc[report.articleId].count += 1;
-        acc[report.articleId].reasons.push(report.reason);
+        acc[articleId].count += 1;
+        acc[articleId].reasons = acc[articleId].reasons.concat(report.reasons);
         return acc;
       }, {});
 
       const reportedList = articles.map(article => ({
         ...article,
         reportCount: reportDetails[article.id]?.count || 0,
-        reportReasons: reportDetails[article.id]?.reasons.join(", ") || "",
+        reportReasons: reportDetails[article.id]?.reasons.join(", ") || "N/A",
       })).filter(article => reportDetails[article.id]);
 
-      // Sort articles by report count in descending order
       reportedList.sort((a, b) => b.reportCount - a.reportCount);
 
       setReportedArticles(reportedList);
@@ -71,6 +71,31 @@ export default function ReportedArticles({ navigation }) {
         isThaiLanguage
           ? "ไม่สามารถลบบทความได้ กรุณาลองใหม่อีกครั้ง."
           : "Failed to delete article. Please try again."
+      );
+    }
+  };
+
+  const handleDeleteReport = async (articleId) => {
+    try {
+      const reportsSnapshot = await getDocs(collection(db, "reports"));
+      const reportDocs = reportsSnapshot.docs.filter(doc => doc.data().articleId === articleId);
+      for (const reportDoc of reportDocs) {
+        await deleteDoc(doc(db, "reports", reportDoc.id));
+      }
+      fetchReportedArticles();
+      Alert.alert(
+        isThaiLanguage ? "สำเร็จ" : "Success",
+        isThaiLanguage
+          ? "ลบรีพอร์ตเรียบร้อยแล้ว!"
+          : "Report deleted successfully!"
+      );
+    } catch (error) {
+      console.error("Error deleting report: ", error);
+      Alert.alert(
+        isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+        isThaiLanguage
+          ? "ไม่สามารถลบรีพอร์ตได้ กรุณาลองใหม่อีกครั้ง."
+          : "Failed to delete report. Please try again."
       );
     }
   };
@@ -127,6 +152,12 @@ export default function ReportedArticles({ navigation }) {
               { backgroundColor: isDarkTheme ? "#444" : "white" },
             ]}
           >
+            <TouchableOpacity
+              style={styles.deleteIcon}
+              onPress={() => handleDeleteReport(item.id)}
+            >
+              <Icon name="close" size={20} color={isDarkTheme ? "#fff" : "#000"} />
+            </TouchableOpacity>
             {item.images && item.images[0] ? (
               <Image source={{ uri: item.images[0] }} style={styles.image} />
             ) : (
@@ -195,6 +226,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
+  backButton: {
+    marginBottom: 10,
+  },
   header: {
     fontSize: 24,
     fontFamily: "NotoSansThai-Regular",
@@ -219,6 +253,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
+    position: "relative",
+  },
+  deleteIcon: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 1,
   },
   image: {
     width: "100%",

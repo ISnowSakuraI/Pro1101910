@@ -13,7 +13,7 @@ import { auth, db } from "../../../firebase/Firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import logo from "../../../assets/images/150.png";
+import logo from "../../../assets/images/icon.png";
 import { useTheme } from "../../ThemeContext";
 import { useLanguage } from "../../LanguageContext";
 

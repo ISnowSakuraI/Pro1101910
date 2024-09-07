@@ -12,6 +12,7 @@ import Home from "./HomeTab/Home";
 import Schedule from "./HomeTab/Schedule";
 import ExerciseTracker from "./HomeTab/ExerciseTracker";
 import UserStatistics from "./HomeTab/UserStatistics";
+import HealthCalculator from "./HomeTab/HealthCalculator";
 import ManageArticles from "./HomeTab/AdminTab/ManageArticles";
 import ReportedArticles from "./HomeTab/AdminTab/ReportedArticles";
 import ArticleList from "./HomeTab/ArticleTab/ArticleList";
@@ -226,6 +227,11 @@ function HomeStack() {
        <Stack.Screen
         name="ReportedArticles"
         component={ReportedArticles}
+        options={{ headerShown: false }}
+      />
+       <Stack.Screen
+        name="HealthCalculator"
+        component={HealthCalculator}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

@@ -80,6 +80,11 @@ export default function Home({ navigation }) {
           label={isThaiLanguage ? "สถิติ" : "Statistics"}
           onPress={() => navigation.navigate("UserStatistics")}
         />
+        <CategoryItem
+          icon="favorite"
+          label={isThaiLanguage ? "คำนวณสุขภาพ" : "Health Calculator"}
+          onPress={() => navigation.navigate("HealthCalculator")}
+        />
         {isAdmin && (
           <CategoryItem
             icon="manage-accounts"
