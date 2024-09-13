@@ -75,12 +75,12 @@ export default function Login({ navigation }) {
     <View
       style={[
         styles.container,
-        { backgroundColor: isDarkTheme ? "#333" : "#f5f5f5" },
+        { backgroundColor: isDarkTheme ? "#1a1a1a" : "#f0f0f0" },
       ]}
     >
       <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
-        backgroundColor={isDarkTheme ? "#222" : "#f0f0f0"}
+        backgroundColor={isDarkTheme ? "#1a1a1a" : "#f0f0f0"}
       />
       <TouchableOpacity
         style={styles.settingsIcon}
@@ -93,7 +93,7 @@ export default function Login({ navigation }) {
         style={[
           styles.input,
           {
-            backgroundColor: isDarkTheme ? "#555" : "#fff",
+            backgroundColor: isDarkTheme ? "#333" : "#fff",
             color: isDarkTheme ? "#fff" : "#000",
           },
         ]}
@@ -109,7 +109,7 @@ export default function Login({ navigation }) {
           style={[
             styles.passwordInput,
             {
-              backgroundColor: isDarkTheme ? "#555" : "#fff",
+              backgroundColor: isDarkTheme ? "#333" : "#fff",
               color: isDarkTheme ? "#fff" : "#000",
             },
           ]}
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   input: {
     width: "100%",
     height: 50,
-    borderRadius: 8,
+    borderRadius: 12, // Increased for a more modern look
     paddingHorizontal: 15,
     marginBottom: 15,
     borderColor: "#ddd",
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     height: 50,
-    borderRadius: 8,
+    borderRadius: 12, // Increased for a more modern look
     paddingHorizontal: 15,
     borderColor: "#ddd",
     borderWidth: 1,
@@ -209,8 +209,13 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 50,
     backgroundColor: "#ff7f50",
-    borderRadius: 8,
+    borderRadius: 12, // Increased for a more modern look
     marginBottom: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   buttonText: {
     color: "#fff",

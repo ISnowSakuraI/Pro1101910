@@ -12,7 +12,7 @@ import { auth, db } from "../../../firebase/Firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { setDoc, doc } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import logo from "../../../assets/images/150.png";
+import logo from "../../../assets/images/icon.png";
 import { useTheme } from "../../ThemeContext";
 import { useLanguage } from "../../LanguageContext";
 
@@ -75,7 +75,7 @@ export default function Register({ navigation }) {
     <View
       style={[
         styles.container,
-        { backgroundColor: isDarkTheme ? "#333" : "#f5f5f5" },
+        { backgroundColor: isDarkTheme ? "#1a1a1a" : "#f0f0f0" },
       ]}
     >
       <Image style={styles.logo} source={logo} />
@@ -83,7 +83,7 @@ export default function Register({ navigation }) {
         style={[
           styles.input,
           {
-            backgroundColor: isDarkTheme ? "#555" : "#fff",
+            backgroundColor: isDarkTheme ? "#333" : "#fff",
             color: isDarkTheme ? "#fff" : "#000",
           },
         ]}
@@ -98,7 +98,7 @@ export default function Register({ navigation }) {
         style={[
           styles.input,
           {
-            backgroundColor: isDarkTheme ? "#555" : "#fff",
+            backgroundColor: isDarkTheme ? "#333" : "#fff",
             color: isDarkTheme ? "#fff" : "#000",
           },
         ]}
@@ -108,12 +108,18 @@ export default function Register({ navigation }) {
         onChangeText={setUsername}
         autoCapitalize="none"
       />
-      <View style={styles.passwordContainer}>
+      <View
+        style={[
+          styles.passwordContainer,
+          {
+            backgroundColor: isDarkTheme ? "#333" : "#fff",
+          },
+        ]}
+      >
         <TextInput
           style={[
             styles.passwordInput,
             {
-              backgroundColor: isDarkTheme ? "#555" : "#fff",
               color: isDarkTheme ? "#fff" : "#000",
             },
           ]}
@@ -132,12 +138,18 @@ export default function Register({ navigation }) {
           />
         </TouchableOpacity>
       </View>
-      <View style={styles.passwordContainer}>
+      <View
+        style={[
+          styles.passwordContainer,
+          {
+            backgroundColor: isDarkTheme ? "#333" : "#fff",
+          },
+        ]}
+      >
         <TextInput
           style={[
             styles.passwordInput,
             {
-              backgroundColor: isDarkTheme ? "#555" : "#fff",
               color: isDarkTheme ? "#fff" : "#000",
             },
           ]}
@@ -192,7 +204,7 @@ const styles = StyleSheet.create({
     fontFamily: "NotoSansThai-Regular",
     width: "100%",
     height: 50,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 15,
     marginBottom: 15,
     borderColor: "#ddd",
@@ -203,7 +215,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     height: 50,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 15,
     marginBottom: 15,
     borderColor: "#ddd",
@@ -221,8 +233,13 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 50,
     backgroundColor: "#ff7f50",
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   buttonText: {
     color: "#fff",

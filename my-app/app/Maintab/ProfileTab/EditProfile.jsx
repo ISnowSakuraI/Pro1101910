@@ -278,7 +278,9 @@ export default function EditProfile({ navigation }) {
                     },
                   ]}
                   placeholder={
-                    isThaiLanguage ? "วันเกิด (YYYY-MM-DD)" : "Birthday (YYYY-MM-DD)"
+                    isThaiLanguage
+                      ? "วันเกิด (YYYY-MM-DD)"
+                      : "Birthday (YYYY-MM-DD)"
                   }
                   placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
                   value={userData.birthday || ""}

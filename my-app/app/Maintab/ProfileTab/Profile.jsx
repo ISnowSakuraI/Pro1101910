@@ -127,7 +127,7 @@ export default function Profile({ navigation }) {
     backgroundGradientFrom: isDarkTheme ? "#1e1e1e" : "#f5f5f5",
     backgroundGradientTo: isDarkTheme ? "#3e3e3e" : "#ffffff",
     decimalPlaces: 2,
-    color: (opacity = 1) => `rgba(26, 255, 146, ${opacity})`,
+    color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`, // More vibrant color
     labelColor: (opacity = 1) =>
       isDarkTheme
         ? `rgba(255, 255, 255, ${opacity})`
@@ -272,13 +272,13 @@ export default function Profile({ navigation }) {
               datasets: [
                 {
                   data: dailyData.map((data) => data.calories),
-                  color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`,
-                  strokeWidth: 2,
+                  color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`, // More vibrant color
+                  strokeWidth: 3, // Thicker line
                 },
               ],
               legend: [isThaiLanguage ? "แคลอรี่ (cal)" : "Calories (cal)"],
             }}
-            width={Dimensions.get("window").width - 20}
+            width={Dimensions.get("window").width - 40} // Adjusted width
             height={220}
             yAxisSuffix=" cal"
             chartConfig={chartConfig}

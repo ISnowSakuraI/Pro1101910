@@ -28,6 +28,7 @@ import {
 import { useTheme } from "../../../ThemeContext";
 import { useLanguage } from "../../../LanguageContext";
 import { Menu, Provider } from "react-native-paper";
+import ImageViewing from "react-native-image-viewing";
 
 const predefinedReasons = [
   { id: 1, text: "Inappropriate content" },
@@ -48,6 +49,8 @@ export default function ArticleList({ navigation }) {
   const [customReason, setCustomReason] = useState("");
   const [menuVisible, setMenuVisible] = useState({});
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
+  const [imageViewerVisible, setImageViewerVisible] = useState(false);
+  const [selectedImages, setSelectedImages] = useState([]);
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
@@ -200,6 +203,11 @@ export default function ArticleList({ navigation }) {
     }));
   };
 
+  const openImageViewer = (images) => {
+    setSelectedImages(images.map((uri) => ({ uri })));
+    setImageViewerVisible(true);
+  };
+
   return (
     <Provider>
       <View
@@ -245,23 +253,25 @@ export default function ArticleList({ navigation }) {
                 { backgroundColor: isDarkTheme ? "#333" : "#fff" },
               ]}
             >
-              <View style={styles.imageContainer}>
-                {(item.images || []).slice(0, 4).map((image, index) => (
-                  <Image
-                    key={index}
-                    source={{ uri: image }}
-                    style={styles.image}
-                    resizeMode="cover"
-                  />
-                ))}
-                {item.images && item.images.length > 4 && (
-                  <View style={styles.moreImagesOverlay}>
-                    <Text style={styles.moreImagesText}>
-                      +{item.images.length - 4}
-                    </Text>
-                  </View>
-                )}
-              </View>
+              <TouchableOpacity onPress={() => openImageViewer(item.images)}>
+                <View style={styles.imageContainer}>
+                  {(item.images || []).slice(0, 4).map((image, index) => (
+                    <Image
+                      key={index}
+                      source={{ uri: image }}
+                      style={styles.image}
+                      resizeMode="cover"
+                    />
+                  ))}
+                  {item.images && item.images.length > 4 && (
+                    <View style={styles.moreImagesOverlay}>
+                      <Text style={styles.moreImagesText}>
+                        +{item.images.length - 4}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
               <Text
                 style={[
                   styles.title,
@@ -431,6 +441,12 @@ export default function ArticleList({ navigation }) {
             </View>
           </View>
         </Modal>
+        <ImageViewing
+          images={selectedImages}
+          imageIndex={0}
+          visible={imageViewerVisible}
+          onRequestClose={() => setImageViewerVisible(false)}
+        />
       </View>
     </Provider>
   );

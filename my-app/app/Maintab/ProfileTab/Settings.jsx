@@ -107,12 +107,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 15,
     padding: 20,
-    borderRadius: 12,
+    borderRadius: 16, // Increased for a more modern look
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 }, // Softer shadow
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 6,
   },
   label: {
     fontSize: 18,

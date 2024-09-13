@@ -96,11 +96,11 @@ export default function AddArticle({ navigation }) {
           {isThaiLanguage ? "เพิ่มรูปภาพ" : "Add Images"}
         </Text>
       </TouchableOpacity>
-      <View style={styles.imageContainer}>
+      <ScrollView horizontal style={styles.imageContainer}>
         {images.map((img, index) => (
           <Image key={index} source={{ uri: img }} style={styles.image} />
         ))}
-      </View>
+      </ScrollView>
       <TextInput
         style={[styles.input, { height: titleHeight, backgroundColor: isDarkTheme ? "#444" : "#fff", color: isDarkTheme ? "#fff" : "#000" }]}
         placeholder={isThaiLanguage ? "หัวข้อ" : "Title"}

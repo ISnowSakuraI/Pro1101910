@@ -92,9 +92,18 @@ export default function Home({ navigation }) {
             onPress={() => navigation.navigate("ManageArticles")}
           />
         )}
+        {isAdmin && (
+          <CategoryItem
+            icon="build"
+            label={isThaiLanguage ? "ทดสอบระบบ" : "System Test"}
+            onPress={() => navigation.navigate("SystemTest")}
+          />
+        )}
       </View>
 
-      <SectionHeader title={isThaiLanguage ? "บทความที่น่าสนใจ" : "Interesting Articles"} />
+      <SectionHeader
+        title={isThaiLanguage ? "บทความที่น่าสนใจ" : "Interesting Articles"}
+      />
       <View style={styles.articles}>
         {articles.map((article) => (
           <ArticleItem
@@ -155,13 +164,15 @@ const ArticleItem = React.memo(({ article }) => {
             style={styles.fullArticleImage}
           />
         ) : (
-          article.images.slice(0, 2).map((img, index) => (
-            <Image
-              key={index}
-              source={{ uri: img }}
-              style={styles.articleImage}
-            />
-          ))
+          article.images
+            .slice(0, 2)
+            .map((img, index) => (
+              <Image
+                key={index}
+                source={{ uri: img }}
+                style={styles.articleImage}
+              />
+            ))
         )}
         {article.images.length > 2 && (
           <View style={styles.moreImagesOverlay}>

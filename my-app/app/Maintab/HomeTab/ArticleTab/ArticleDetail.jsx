@@ -5,6 +5,7 @@ import { doc, getDoc, collection, query, where, getDocs, setDoc, deleteDoc } fro
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../ThemeContext';
 import { useLanguage } from '../../../LanguageContext';
+import ImageViewer from 'react-native-image-zoom-viewer';
 
 const predefinedReasons = [
   { id: 1, text: "Inappropriate content" },
@@ -18,7 +19,7 @@ export default function ArticleDetail({ route, navigation }) {
   const { articleId } = route.params;
   const [article, setArticle] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [likesCount, setLikesCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [reportModalVisible, setReportModalVisible] = useState(false);
@@ -66,8 +67,8 @@ export default function ArticleDetail({ route, navigation }) {
     fetchLikes();
   }, [articleId]);
 
-  const openImageModal = useCallback((image) => {
-    setSelectedImage(image);
+  const openImageModal = useCallback((index) => {
+    setSelectedImageIndex(index);
     setModalVisible(true);
   }, []);
 
@@ -162,8 +163,8 @@ export default function ArticleDetail({ route, navigation }) {
       <FlatList
         data={article.images}
         horizontal
-        renderItem={({ item: image }) => (
-          <TouchableOpacity onPress={() => openImageModal(image)} style={styles.imageWrapper}>
+        renderItem={({ item: image, index }) => (
+          <TouchableOpacity onPress={() => openImageModal(index)} style={styles.imageWrapper}>
             <Image source={{ uri: image }} style={styles.image} />
           </TouchableOpacity>
         )}
@@ -179,23 +180,32 @@ export default function ArticleDetail({ route, navigation }) {
         <Text style={[styles.likesText, { color: isDarkTheme ? '#aaa' : '#777' }]}>{likesCount} {isThaiLanguage ? "ถูกใจ" : "Likes"}</Text>
       </View>
       <View style={styles.actionButtons}>
-        <TouchableOpacity onPress={toggleFavorite} style={[styles.favoriteButton, { backgroundColor: isLiked ? '#ff4d4d' : '#eee' }]}>
-          <Icon name={isLiked ? "heart" : "heart-outline"} size={28} color={isLiked ? "#fff" : "#777"} />
+        <TouchableOpacity onPress={toggleFavorite} style={[styles.compactButton, { backgroundColor: isLiked ? '#ff4d4d' : (isDarkTheme ? '#555' : '#eee') }]}>
+          <Icon name={isLiked ? "heart" : "heart-outline"} size={20} color={isLiked ? "#fff" : (isDarkTheme ? "#fff" : "#777")} />
+          <Text style={[styles.buttonText, { color: isLiked ? "#fff" : (isDarkTheme ? "#fff" : "#777") }]}>
+            {isThaiLanguage ? "ถูกใจ" : "Like"}
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={openReportModal} style={styles.reportButton}>
-          <Icon name="alert-circle-outline" size={28} color="orange" />
+        <TouchableOpacity onPress={openReportModal} style={[styles.compactButton, { backgroundColor: isDarkTheme ? '#555' : '#eee' }]}>
+          <Icon name="alert-circle-outline" size={20} color="orange" />
+          <Text style={[styles.buttonText, { color: isDarkTheme ? "#fff" : "#777" }]}>
+            {isThaiLanguage ? "รายงาน" : "Report"}
+          </Text>
         </TouchableOpacity>
       </View>
 
       <Modal visible={modalVisible} transparent={true}>
-        <View style={styles.modalContainer}>
-          <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
-            <Icon name="close" size={28} color={isDarkTheme ? '#fff' : '#000'} />
-          </TouchableOpacity>
-          {selectedImage && (
-            <Image source={{ uri: selectedImage }} style={styles.fullImage} />
-          )}
-        </View>
+        <ImageViewer
+          imageUrls={article.images.map((img) => ({ url: img }))}
+          index={selectedImageIndex}
+          onSwipeDown={() => setModalVisible(false)}
+          enableSwipeDown={true}
+          renderIndicator={() => null}
+          backgroundColor="rgba(0, 0, 0, 0.9)"
+        />
+        <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+          <Icon name="close" size={28} color={isDarkTheme ? '#fff' : '#000'} />
+        </TouchableOpacity>
       </Modal>
 
       <Modal visible={reportModalVisible} transparent={true} animationType="slide">
@@ -292,20 +302,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 10,
   },
-  favoriteButton: {
+  compactButton: {
     flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     padding: 10,
     borderRadius: 5,
-    marginRight: 5,
+    marginHorizontal: 5,
   },
-  reportButton: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 10,
-    borderRadius: 5,
+  buttonText: {
     marginLeft: 5,
-    backgroundColor: '#eee',
+    fontSize: 14,
   },
   modalContainer: {
     flex: 1,

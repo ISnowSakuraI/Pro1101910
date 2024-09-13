@@ -15,6 +15,7 @@ import UserStatistics from "./HomeTab/UserStatistics";
 import HealthCalculator from "./HomeTab/HealthCalculator";
 import ManageArticles from "./HomeTab/AdminTab/ManageArticles";
 import ReportedArticles from "./HomeTab/AdminTab/ReportedArticles";
+import SystemTest from "./HomeTab/AdminTab/SystemTest";
 import ArticleList from "./HomeTab/ArticleTab/ArticleList";
 import AddArticle from "./HomeTab/ArticleTab/AddArticle";
 import ManageMyArticles from "./HomeTab/ArticleTab/ManageMyArticles";
@@ -141,6 +142,11 @@ function AdminStack() {
         component={ArticleDetail}
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="TestPage"
+        component={TestPage}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
   );
 }
@@ -232,6 +238,11 @@ function HomeStack() {
        <Stack.Screen
         name="HealthCalculator"
         component={HealthCalculator}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SystemTest"
+        component={SystemTest}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>
