@@ -54,6 +54,8 @@ export default function ArticleList({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
+  const themeStyles = isDarkTheme ? styles.dark : styles.light;
+
   const fetchArticles = useCallback(async () => {
     try {
       const q = query(collection(db, "articles"), orderBy("createdAt", "desc"));
@@ -213,19 +215,17 @@ export default function ArticleList({ navigation }) {
       <View
         style={[
           styles.container,
-          { backgroundColor: isDarkTheme ? "#121212" : "#f5f5f5" },
+          themeStyles.background,
         ]}
       >
-        <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#000" }]}>
+        <Text style={[styles.header, themeStyles.text]}>
           {isThaiLanguage ? "บทความสุขภาพและอาหาร" : "Health and Food Articles"}
         </Text>
         <TextInput
           style={[
             styles.searchInput,
-            {
-              backgroundColor: isDarkTheme ? "#333" : "#fff",
-              color: isDarkTheme ? "#fff" : "#000",
-            },
+            themeStyles.cardBackground,
+            themeStyles.text,
           ]}
           placeholder={isThaiLanguage ? "ค้นหาบทความ..." : "Search articles..."}
           placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
@@ -250,7 +250,7 @@ export default function ArticleList({ navigation }) {
             <View
               style={[
                 styles.card,
-                { backgroundColor: isDarkTheme ? "#333" : "#fff" },
+                themeStyles.cardBackground,
               ]}
             >
               <TouchableOpacity onPress={() => openImageViewer(item.images)}>
@@ -275,7 +275,7 @@ export default function ArticleList({ navigation }) {
               <Text
                 style={[
                   styles.title,
-                  { color: isDarkTheme ? "#fff" : "#000" },
+                  themeStyles.text,
                 ]}
               >
                 {item.title}
@@ -350,7 +350,7 @@ export default function ArticleList({ navigation }) {
                       : "favorite-border"
                   }
                   size={24}
-                  color={favorites.includes(item.id) ? "red" : "gray"}
+                  color={favorites.includes(item.id) ? "#f44336" : "gray"}
                 />
               </TouchableOpacity>
             </View>
@@ -369,13 +369,13 @@ export default function ArticleList({ navigation }) {
             <View
               style={[
                 styles.modalContent,
-                { backgroundColor: isDarkTheme ? "#333" : "#fff" },
+                themeStyles.cardBackground,
               ]}
             >
               <Text
                 style={[
                   styles.modalTitle,
-                  { color: isDarkTheme ? "#fff" : "#000" },
+                  themeStyles.text,
                 ]}
               >
                 {isThaiLanguage
@@ -391,7 +391,7 @@ export default function ArticleList({ navigation }) {
                   <Text
                     style={[
                       styles.reasonText,
-                      { color: isDarkTheme ? "#fff" : "#000" },
+                      themeStyles.text,
                     ]}
                   >
                     {isThaiLanguage
@@ -399,17 +399,15 @@ export default function ArticleList({ navigation }) {
                       : reason.text}
                   </Text>
                   {selectedReasons.includes(reason.text) && (
-                    <Icon name="check" size={20} color="green" />
+                    <Icon name="check" size={20} color={themeStyles.primaryColor.color} />
                   )}
                 </TouchableOpacity>
               ))}
               <TextInput
                 style={[
                   styles.customReasonInput,
-                  {
-                    backgroundColor: isDarkTheme ? "#444" : "#fff",
-                    color: isDarkTheme ? "#fff" : "#000",
-                  },
+                  themeStyles.cardBackground,
+                  themeStyles.text,
                 ]}
                 placeholder={
                   isThaiLanguage
@@ -422,7 +420,7 @@ export default function ArticleList({ navigation }) {
               />
               <View style={styles.modalActions}>
                 <TouchableOpacity
-                  style={styles.submitButton}
+                  style={[styles.submitButton, { backgroundColor: "#00A047" }]}
                   onPress={submitReport}
                 >
                   <Text style={styles.submitButtonText}>
@@ -430,7 +428,7 @@ export default function ArticleList({ navigation }) {
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.cancelButton}
+                  style={[styles.cancelButton, { backgroundColor: "#f44336" }]}
                   onPress={() => setReportModalVisible(false)}
                 >
                   <Text style={styles.cancelButtonText}>
@@ -478,7 +476,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     marginBottom: 20,
-    backgroundColor: "#2196F3",
+    backgroundColor: "#008AFF",
     padding: 10,
     borderRadius: 10,
   },
@@ -591,7 +589,6 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: "80%",
-    backgroundColor: "white",
     borderRadius: 10,
     padding: 20,
     alignItems: "center",
@@ -630,7 +627,6 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   submitButton: {
-    backgroundColor: "#4CAF50",
     padding: 10,
     borderRadius: 5,
     flex: 1,
@@ -642,7 +638,6 @@ const styles = StyleSheet.create({
     fontFamily: "NotoSansThai-Regular",
   },
   cancelButton: {
-    backgroundColor: "#f44336",
     padding: 10,
     borderRadius: 5,
     flex: 1,
@@ -652,5 +647,33 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     color: "white",
     fontFamily: "NotoSansThai-Regular",
+  },
+  light: {
+    background: {
+      backgroundColor: "#f0f0f0",
+    },
+    text: {
+      color: "#333333",
+    },
+    cardBackground: {
+      backgroundColor: "#ffffff",
+    },
+    primaryColor: {
+      color: "#ff7f50",
+    },
+  },
+  dark: {
+    background: {
+      backgroundColor: "#212121",
+    },
+    text: {
+      color: "#ffffff",
+    },
+    cardBackground: {
+      backgroundColor: "#2c2c2c",
+    },
+    primaryColor: {
+      color: "#ff7f50",
+    },
   },
 });

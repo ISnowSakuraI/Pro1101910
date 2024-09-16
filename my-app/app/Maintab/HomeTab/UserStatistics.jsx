@@ -51,27 +51,32 @@ export default function UserStatistics() {
     fetchUserStatistics();
   }, []);
 
-  const chartConfig = useMemo(() => ({
-    backgroundColor: isDarkTheme ? "#1e1e1e" : "#f5f5f5",
-    backgroundGradientFrom: isDarkTheme ? "#1e1e1e" : "#f5f5f5",
-    backgroundGradientTo: isDarkTheme ? "#3e3e3e" : "#ffffff",
-    decimalPlaces: 2,
-    color: (opacity = 1) => `rgba(26, 255, 146, ${opacity})`,
-    labelColor: (opacity = 1) =>
-      isDarkTheme ? `rgba(255, 255, 255, ${opacity})` : `rgba(0, 0, 0, ${opacity})`,
-    style: {
-      borderRadius: 16,
-    },
-    propsForDots: {
-      r: "6",
-      strokeWidth: "2",
-      stroke: "#ffa726",
-    },
-    propsForLabels: {
-      fontSize: 12,
-      fontFamily: "NotoSansThai-Regular",
-    },
-  }), [isDarkTheme]);
+  const chartConfig = useMemo(
+    () => ({
+      backgroundColor: isDarkTheme ? "#1e1e1e" : "#f5f5f5",
+      backgroundGradientFrom: isDarkTheme ? "#1e1e1e" : "#f5f5f5",
+      backgroundGradientTo: isDarkTheme ? "#3e3e3e" : "#ffffff",
+      decimalPlaces: 2,
+      color: (opacity = 1) => `rgba(26, 255, 146, ${opacity})`,
+      labelColor: (opacity = 1) =>
+        isDarkTheme
+          ? `rgba(255, 255, 255, ${opacity})`
+          : `rgba(0, 0, 0, ${opacity})`,
+      style: {
+        borderRadius: 16,
+      },
+      propsForDots: {
+        r: "6",
+        strokeWidth: "2",
+        stroke: "#ffa726",
+      },
+      propsForLabels: {
+        fontSize: 12,
+        fontFamily: "NotoSansThai-Regular",
+      },
+    }),
+    [isDarkTheme]
+  );
 
   return (
     <ScrollView
@@ -119,7 +124,15 @@ export default function UserStatistics() {
   );
 }
 
-const GraphSection = ({ title, icon, data, labels, legend, yAxisSuffix, chartConfig }) => {
+const GraphSection = ({
+  title,
+  icon,
+  data,
+  labels,
+  legend,
+  yAxisSuffix,
+  chartConfig,
+}) => {
   const { isDarkTheme } = useTheme();
   return (
     <>
@@ -193,5 +206,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "NotoSansThai-Regular",
     marginTop: 20,
+  },
+  light: {
+    primaryColor: "#ff7f50",
+    secondaryColor: "#ffa07a",
+    backgroundColor: "#f5f5f5",
+    textColor: "#333333",
+    cardBackgroundColor: "#ffffff",
+    borderColor: "#ddd",
+  },
+  dark: {
+    primaryColor: "#ff7f50",
+    secondaryColor: "#ffa07a",
+    backgroundColor: "#1e1e1e",
+    textColor: "#ffffff",
+    cardBackgroundColor: "#2c2c2c",
+    borderColor: "#444",
   },
 });

@@ -10,7 +10,15 @@ import {
   TextInput,
 } from "react-native";
 import { db, auth } from "../../../../firebase/Firebase";
-import { collection, query, where, getDocs, deleteDoc, doc, orderBy } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  deleteDoc,
+  doc,
+  orderBy,
+} from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useTheme } from "../../../ThemeContext";
@@ -40,7 +48,12 @@ export default function ManageMyArticles({ navigation }) {
         setMyArticles(articles);
       } catch (error) {
         console.error("Error fetching articles: ", error);
-        Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถดึงข้อมูลบทความได้" : "Failed to fetch articles.");
+        Alert.alert(
+          isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+          isThaiLanguage
+            ? "ไม่สามารถดึงข้อมูลบทความได้"
+            : "Failed to fetch articles."
+        );
       }
     }
   }, [isThaiLanguage]);
@@ -54,44 +67,66 @@ export default function ManageMyArticles({ navigation }) {
   const handleDeleteArticle = async (articleId) => {
     try {
       await deleteDoc(doc(db, "articles", articleId));
-      setMyArticles((prevArticles) => prevArticles.filter(article => article.id !== articleId));
-      Alert.alert(isThaiLanguage ? "สำเร็จ" : "Success", isThaiLanguage ? "ลบบทความเรียบร้อยแล้ว!" : "Article deleted successfully!");
+      setMyArticles((prevArticles) =>
+        prevArticles.filter((article) => article.id !== articleId)
+      );
+      Alert.alert(
+        isThaiLanguage ? "สำเร็จ" : "Success",
+        isThaiLanguage
+          ? "ลบบทความเรียบร้อยแล้ว!"
+          : "Article deleted successfully!"
+      );
     } catch (error) {
       console.error("Error deleting article: ", error);
-      Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถลบบทความได้ กรุณาลองใหม่อีกครั้ง." : "Failed to delete article. Please try again.");
+      Alert.alert(
+        isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+        isThaiLanguage
+          ? "ไม่สามารถลบบทความได้ กรุณาลองใหม่อีกครั้ง."
+          : "Failed to delete article. Please try again."
+      );
     }
   };
 
-  const filteredArticles = myArticles.filter(article =>
+  const filteredArticles = myArticles.filter((article) =>
     article.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const themeStyles = isDarkTheme ? styles.dark : styles.light;
+
   return (
-    <View style={[styles.container, { backgroundColor: isDarkTheme ? "#333" : "#f9f9f9" }]}>
+    <View style={[styles.container, themeStyles.background]}>
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}
       >
-        <Icon name="arrow-back" size={24} color={isDarkTheme ? "#fff" : "#000"} />
+        <Icon name="arrow-back" size={24} color={themeStyles.text.color} />
       </TouchableOpacity>
-      <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
+      <Text style={[styles.header, themeStyles.text]}>
         {isThaiLanguage ? "จัดการบทความของฉัน" : "Manage My Articles"}
       </Text>
       <TextInput
-        style={[styles.searchInput, { backgroundColor: isDarkTheme ? "#444" : "#fff", color: isDarkTheme ? "#fff" : "#000" }]}
-        placeholder={isThaiLanguage ? "ค้นหาบทความ..." : "Search articles..."}
-        placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
+  style={[
+    styles.searchInput,
+    themeStyles.cardBackground,
+    { color: isDarkTheme ? "#fff" : "#000" } // Adjust input text color
+  ]}
+  placeholder={isThaiLanguage ? "ค้นหาบทความ..." : "Search articles..."}
+  placeholderTextColor={isDarkTheme ? "#aaa" : "#555"} // Adjust placeholder text color
+  value={searchQuery}
+  onChangeText={setSearchQuery}
+/>
       <FlatList
         data={filteredArticles}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={[styles.card, { backgroundColor: isDarkTheme ? "#444" : "white" }]}>
+          <View style={[styles.card, themeStyles.cardBackground]}>
             <View style={styles.imageContainer}>
               {item.images.slice(0, 3).map((image, index) => (
-                <Image key={index} source={{ uri: image }} style={styles.articleImage} />
+                <Image
+                  key={index}
+                  source={{ uri: image }}
+                  style={styles.articleImage}
+                />
               ))}
               {item.images.length > 3 && (
                 <View style={styles.moreImagesOverlay}>
@@ -101,32 +136,49 @@ export default function ManageMyArticles({ navigation }) {
                 </View>
               )}
             </View>
-            <Text style={[styles.title, { color: isDarkTheme ? "#fff" : "#333" }]}>{item.title}</Text>
-            <Text style={[styles.description, { color: isDarkTheme ? "#ccc" : "#555" }]} numberOfLines={3}>
+            <Text style={[styles.title, themeStyles.text]}>{item.title}</Text>
+            <Text
+              style={[
+                styles.description,
+                { color: isDarkTheme ? "#ccc" : "#555" },
+              ]}
+              numberOfLines={3}
+            >
               {item.description}
             </Text>
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => navigation.navigate("EditArticle", { articleId: item.id })}
+                style={[styles.editButton, { backgroundColor: "#00A047" }]}
+                onPress={() =>
+                  navigation.navigate("EditArticle", { articleId: item.id })
+                }
                 activeOpacity={0.7}
               >
                 <Icon name="edit" size={20} color="white" />
-                <Text style={styles.buttonText}>{isThaiLanguage ? "แก้ไข" : "Edit"}</Text>
+                <Text style={styles.buttonText}>
+                  {isThaiLanguage ? "แก้ไข" : "Edit"}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.deleteButton}
+                style={[styles.deleteButton, { backgroundColor: "#F44336" }]}
                 onPress={() => handleDeleteArticle(item.id)}
                 activeOpacity={0.7}
               >
                 <Icon name="delete" size={20} color="white" />
-                <Text style={styles.buttonText}>{isThaiLanguage ? "ลบ" : "Delete"}</Text>
+                <Text style={styles.buttonText}>
+                  {isThaiLanguage ? "ลบ" : "Delete"}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
         ListEmptyComponent={
-          <Text style={[styles.noDataText, { color: isDarkTheme ? "#aaa" : "#777" }]}>
+          <Text
+            style={[
+              styles.noDataText,
+              { color: isDarkTheme ? "#aaa" : "#777" },
+            ]}
+          >
             {isThaiLanguage ? "ไม่มีบทความ" : "No articles found"}
           </Text>
         }
@@ -145,12 +197,12 @@ const styles = StyleSheet.create({
   },
   header: {
     fontSize: 24,
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     marginBottom: 20,
     textAlign: "center",
   },
   searchInput: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     height: 40,
     borderColor: "#ccc",
     borderWidth: 1,
@@ -191,15 +243,15 @@ const styles = StyleSheet.create({
   },
   moreImagesText: {
     color: "white",
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
   },
   title: {
     fontSize: 16,
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     marginVertical: 10,
   },
   description: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     fontSize: 14,
   },
   buttonContainer: {
@@ -210,7 +262,6 @@ const styles = StyleSheet.create({
   editButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#4CAF50",
     padding: 10,
     borderRadius: 5,
     flex: 1,
@@ -219,7 +270,6 @@ const styles = StyleSheet.create({
   deleteButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f44336",
     padding: 10,
     borderRadius: 5,
     flex: 1,
@@ -228,12 +278,40 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     marginLeft: 5,
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
   },
   noDataText: {
     textAlign: "center",
     fontSize: 16,
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     marginTop: 20,
+  },
+  light: {
+    background: {
+      backgroundColor: "#f0f0f0",
+    },
+    text: {
+      color: "#333333",
+    },
+    cardBackground: {
+      backgroundColor: "#ffffff",
+    },
+    primaryBackground: {
+      backgroundColor: "#ff7f50",
+    },
+  },
+  dark: {
+    background: {
+      backgroundColor: "#212121",
+    },
+    text: {
+      color: "#ffffff",
+    },
+    cardBackground: {
+      backgroundColor: "#2c2c2c",
+    },
+    primaryBackground: {
+      backgroundColor: "#ff7f50",
+    },
   },
 });

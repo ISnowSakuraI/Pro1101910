@@ -59,24 +59,15 @@ export default function ForgotPassword({ navigation }) {
     );
   }, [isThaiLanguage]);
 
+  const themeStyles = isDarkTheme ? styles.dark : styles.light;
+
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: isDarkTheme ? "#333" : "#f5f5f5" },
-      ]}
-    >
-      <Text style={[styles.title, { color: isDarkTheme ? "#fff" : "#333" }]}>
+    <View style={[styles.container, themeStyles.background]}>
+      <Text style={[styles.title, themeStyles.text]}>
         {isThaiLanguage ? "ลืมรหัสผ่าน?" : "Forgot Password?"}
       </Text>
       <TextInput
-        style={[
-          styles.input,
-          {
-            backgroundColor: isDarkTheme ? "#555" : "#fff",
-            color: isDarkTheme ? "#fff" : "#000",
-          },
-        ]}
+        style={[styles.input, themeStyles.inputBackground]}
         placeholder={isThaiLanguage ? "อีเมล" : "Email"}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={email}
@@ -163,5 +154,29 @@ const styles = StyleSheet.create({
   resendButtonText: {
     color: "#ff7f50",
     fontFamily: "NotoSansThai-Regular",
+  },
+  light: {
+    background: {
+      backgroundColor: "#f0f0f0",
+    },
+    text: {
+      color: "#333333",
+    },
+    inputBackground: {
+      backgroundColor: "#ffffff",
+      color: "#333333",
+    },
+  },
+  dark: {
+    background: {
+      backgroundColor: "#212121",
+    },
+    text: {
+      color: "#ffffff",
+    },
+    inputBackground: {
+      backgroundColor: "#2c2c2c",
+      color: "#ffffff",
+    },
   },
 });

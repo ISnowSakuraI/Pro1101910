@@ -64,7 +64,12 @@ export default function FavoriteArticles({ navigation }) {
         setFavorites(querySnapshot.docs.map((doc) => doc.data().articleId));
       } catch (error) {
         console.error("Error fetching favorite articles: ", error);
-        Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถดึงข้อมูลบทความโปรดได้" : "Failed to fetch favorite articles.");
+        Alert.alert(
+          isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+          isThaiLanguage
+            ? "ไม่สามารถดึงข้อมูลบทความโปรดได้"
+            : "Failed to fetch favorite articles."
+        );
       }
     }
   }, [isThaiLanguage]);
@@ -92,7 +97,12 @@ export default function FavoriteArticles({ navigation }) {
         fetchFavoriteArticles();
       } catch (error) {
         console.error("Error toggling favorite: ", error);
-        Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถเปลี่ยนสถานะบทความโปรดได้" : "Failed to toggle favorite status.");
+        Alert.alert(
+          isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+          isThaiLanguage
+            ? "ไม่สามารถเปลี่ยนสถานะบทความโปรดได้"
+            : "Failed to toggle favorite status."
+        );
       }
     }
   };
@@ -106,7 +116,10 @@ export default function FavoriteArticles({ navigation }) {
 
   const renderArticle = ({ item }) => (
     <TouchableOpacity
-      style={[styles.card, { backgroundColor: isDarkTheme ? "#444" : "#fff" }]}
+      style={[
+        styles.card,
+        { backgroundColor: isDarkTheme ? styles.dark.cardBackground.backgroundColor : styles.light.cardBackground.backgroundColor },
+      ]}
       onPress={() =>
         navigation.navigate("ArticleDetail", { articleId: item.id })
       }
@@ -126,13 +139,19 @@ export default function FavoriteArticles({ navigation }) {
         )}
       </View>
       <Text
-        style={[styles.articleInfo, { color: isDarkTheme ? "#aaa" : "#555" }]}
+        style={[
+          styles.articleInfo,
+          { color: isDarkTheme ? styles.dark.text.color : styles.light.text.color },
+        ]}
       >
         {isThaiLanguage ? "โพสโดย" : "Posted by"}: {item.userName} |{" "}
         {formatDate(item.createdAt)}
       </Text>
       <Text
-        style={[styles.articleTitle, { color: isDarkTheme ? "#fff" : "#333" }]}
+        style={[
+          styles.articleTitle,
+          { color: isDarkTheme ? styles.dark.text.color : styles.light.text.color },
+        ]}
       >
         {item.title}
       </Text>
@@ -157,7 +176,7 @@ export default function FavoriteArticles({ navigation }) {
         <Icon
           name={favorites.includes(item.id) ? "favorite" : "favorite-border"}
           size={24}
-          color={favorites.includes(item.id) ? "red" : "gray"}
+          color={favorites.includes(item.id) ? styles.dark.primaryColor : "gray"}
         />
       </TouchableOpacity>
     </TouchableOpacity>
@@ -167,7 +186,7 @@ export default function FavoriteArticles({ navigation }) {
     <View
       style={[
         styles.container,
-        { backgroundColor: isDarkTheme ? "#333" : "#f5f5f5" },
+        { backgroundColor: isDarkTheme ? styles.dark.background.backgroundColor : styles.light.background.backgroundColor },
       ]}
     >
       <TouchableOpacity
@@ -177,10 +196,15 @@ export default function FavoriteArticles({ navigation }) {
         <Icon
           name="arrow-back"
           size={24}
-          color={isDarkTheme ? "#fff" : "#000"}
+          color={isDarkTheme ? styles.dark.text.color : styles.light.text.color}
         />
       </TouchableOpacity>
-      <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
+      <Text
+        style={[
+          styles.header,
+          { color: isDarkTheme ? styles.dark.text.color : styles.light.text.color },
+        ]}
+      >
         {isThaiLanguage ? "บทความโปรด" : "Favorite Articles"}
       </Text>
       <FlatList
@@ -282,5 +306,29 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     right: 10,
+  },
+  light: {
+    background: {
+      backgroundColor: "#f0f0f0",
+    },
+    text: {
+      color: "#333333",
+    },
+    cardBackground: {
+      backgroundColor: "#ffffff",
+    },
+    primaryColor: "#ff7f50",
+  },
+  dark: {
+    background: {
+      backgroundColor: "#212121",
+    },
+    text: {
+      color: "#ffffff",
+    },
+    cardBackground: {
+      backgroundColor: "#2c2c2c",
+    },
+    primaryColor: "#ff7f50",
   },
 });

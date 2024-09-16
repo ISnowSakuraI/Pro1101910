@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import * as Notifications from "expo-notifications";
 import Icon from "react-native-vector-icons/AntDesign";
 import { useTheme } from "../../ThemeContext";
 import { useLanguage } from "../../LanguageContext";
+import { useFocusEffect } from "@react-navigation/native";
 
 export default function Schedule({ navigation }) {
   const [selectedDate, setSelectedDate] = useState("");
@@ -30,14 +31,18 @@ export default function Schedule({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
+  const theme = isDarkTheme ? styles.dark : styles.light;
+
   const user = auth.currentUser;
 
-  useEffect(() => {
-    if (user) {
-      loadSchedule(user.uid);
-    }
-    Notifications.requestPermissionsAsync();
-  }, [user]);
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        loadSchedule(user.uid);
+      }
+      Notifications.requestPermissionsAsync();
+    }, [user])
+  );
 
   const loadSchedule = useCallback(async (uid) => {
     try {
@@ -63,18 +68,21 @@ export default function Schedule({ navigation }) {
     setSelectedDate(day.dateString);
   }, []);
 
-  const scheduleNotification = useCallback(async (exercise, time) => {
-    const trigger = new Date(time);
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: isThaiLanguage ? "ถึงเวลาออกกำลังกาย!" : "Time to Exercise!",
-        body: isThaiLanguage
-          ? `ถึงเวลา ${exercise} ของคุณแล้ว.`
-          : `It's time for your ${exercise} session.`,
-      },
-      trigger,
-    });
-  }, [isThaiLanguage]);
+  const scheduleNotification = useCallback(
+    async (exercise, time) => {
+      const trigger = new Date(time);
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: isThaiLanguage ? "ถึงเวลาออกกำลังกาย!" : "Time to Exercise!",
+          body: isThaiLanguage
+            ? `ถึงเวลา ${exercise} ของคุณแล้ว.`
+            : `It's time for your ${exercise} session.`,
+        },
+        trigger,
+      });
+    },
+    [isThaiLanguage]
+  );
 
   const addOrUpdateSchedule = useCallback(() => {
     if (newExercise.trim() === "" || duration.trim() === "") {
@@ -151,33 +159,28 @@ export default function Schedule({ navigation }) {
   }, [scheduleData, selectedDate, user, saveSchedule]);
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: isDarkTheme ? "#1e1e1e" : "#f5f5f5" },
-      ]}
-    >
+    <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <Calendar
         onDayPress={handleDayPress}
         markedDates={{
           [selectedDate]: {
             selected: true,
             marked: true,
-            selectedColor: "blue",
+            selectedColor: theme.primaryColor,
           },
         }}
         theme={{
-          calendarBackground: isDarkTheme ? "#333" : "#fff",
-          textSectionTitleColor: isDarkTheme ? "#fff" : "#000",
-          dayTextColor: isDarkTheme ? "#fff" : "#000",
-          todayTextColor: "red",
-          selectedDayTextColor: "#fff",
-          monthTextColor: isDarkTheme ? "#fff" : "#000",
-          arrowColor: isDarkTheme ? "#fff" : "#000",
+          calendarBackground: theme.cardBackgroundColor,
+          textSectionTitleColor: theme.textColor,
+          dayTextColor: theme.textColor,
+          todayTextColor: theme.primaryColor,
+          selectedDayTextColor: theme.textColor,
+          monthTextColor: theme.textColor,
+          arrowColor: theme.textColor,
         }}
       />
       <TouchableOpacity
-        style={styles.addButton}
+        style={[styles.addButton, { backgroundColor: theme.primaryColor }]}
         onPress={() => setModalVisible(true)}
       >
         <Icon name="pluscircle" size={24} color="white" />
@@ -196,40 +199,25 @@ export default function Schedule({ navigation }) {
         renderItem={({ item }) => (
           <View style={styles.row}>
             <View style={styles.info}>
-              <Text
-                style={[
-                  styles.cell,
-                  { color: isDarkTheme ? "#fff" : "#000" },
-                ]}
-              >
+              <Text style={[styles.cell, { color: theme.textColor }]}>
                 {item.startTime}
               </Text>
-              <Text
-                style={[
-                  styles.cell,
-                  { color: isDarkTheme ? "#fff" : "#000" },
-                ]}
-              >
+              <Text style={[styles.cell, { color: theme.textColor }]}>
                 {item.duration} {isThaiLanguage ? "นาที" : "minutes"}
               </Text>
-              <Text
-                style={[
-                  styles.cell,
-                  { color: isDarkTheme ? "#fff" : "#000" },
-                ]}
-              >
+              <Text style={[styles.cell, { color: theme.textColor }]}>
                 {item.exercise}
               </Text>
             </View>
             <View style={styles.actions}>
               <TouchableOpacity
-                style={styles.editButton}
+                style={[styles.editButton, { backgroundColor: "#00A047" }]}
                 onPress={() => editSchedule(item)}
               >
                 <Icon name="edit" size={20} color="white" />
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.deleteButton}
+                style={[styles.deleteButton, { backgroundColor: "#F44336" }]}
                 onPress={() => deleteSchedule(item.id)}
               >
                 <Icon name="delete" size={20} color="white" />
@@ -244,32 +232,21 @@ export default function Schedule({ navigation }) {
         transparent={true}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View
-          style={[
-            styles.modalView,
-            { backgroundColor: isDarkTheme ? "#444" : "#fff" },
-          ]}
-        >
-          <Text
-            style={[
-              styles.modalText,
-              { color: isDarkTheme ? "#fff" : "#000" },
-            ]}
-          >
-            {isThaiLanguage ? "แก้ไขตารางสำหรับ" : "Edit Schedule for"}{" "}
-            {selectedDate}
+        <View style={[styles.modalView, { backgroundColor: theme.cardBackgroundColor }]}>
+          <Text style={[styles.modalText, { color: theme.textColor }]}>
+            {isThaiLanguage ? "แก้ไขตารางสำหรับ" : "Edit Schedule for"} {selectedDate}
           </Text>
           <TouchableOpacity onPress={() => setShowStartTimePicker(true)}>
             <TextInput
               style={[
                 styles.input,
                 {
-                  color: isDarkTheme ? "#fff" : "#000",
-                  backgroundColor: isDarkTheme ? "#555" : "#fff",
+                  color: theme.textColor,
+                  backgroundColor: theme.backgroundColor,
                 },
               ]}
               placeholder={isThaiLanguage ? "เวลาเริ่มต้น" : "Start Time"}
-              placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+              placeholderTextColor={theme.borderColor}
               value={startTime.toLocaleTimeString("en-GB", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -293,12 +270,12 @@ export default function Schedule({ navigation }) {
             style={[
               styles.input,
               {
-                color: isDarkTheme ? "#fff" : "#000",
-                backgroundColor: isDarkTheme ? "#555" : "#fff",
+                color: theme.textColor,
+                backgroundColor: theme.backgroundColor,
               },
             ]}
             placeholder={isThaiLanguage ? "ระยะเวลา (นาที)" : "Duration (minutes)"}
-            placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+            placeholderTextColor={theme.borderColor}
             value={duration}
             onChangeText={setDuration}
             keyboardType="numeric"
@@ -307,17 +284,17 @@ export default function Schedule({ navigation }) {
             style={[
               styles.input,
               {
-                color: isDarkTheme ? "#fff" : "#000",
-                backgroundColor: isDarkTheme ? "#555" : "#fff",
+                color: theme.textColor,
+                backgroundColor: theme.backgroundColor,
               },
             ]}
             placeholder={isThaiLanguage ? "การออกกำลังกาย" : "Exercise"}
-            placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+            placeholderTextColor={theme.borderColor}
             value={newExercise}
             onChangeText={setNewExercise}
           />
           <TouchableOpacity
-            style={styles.saveButton}
+            style={[styles.saveButton, { backgroundColor: "#00A047" }]}
             onPress={addOrUpdateSchedule}
           >
             <Text style={styles.buttonText}>
@@ -325,7 +302,7 @@ export default function Schedule({ navigation }) {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.cancelButton}
+            style={[styles.cancelButton, { backgroundColor: "#F44336" }]}
             onPress={() => setModalVisible(false)}
           >
             <Text style={styles.buttonText}>
@@ -347,7 +324,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#4CAF50",
     padding: 12,
     borderRadius: 8,
     marginVertical: 10,
@@ -386,7 +362,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   editButton: {
-    backgroundColor: "#2196F3",
     padding: 5,
     borderRadius: 5,
     marginHorizontal: 5,
@@ -397,7 +372,6 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   deleteButton: {
-    backgroundColor: "#f44336",
     padding: 5,
     borderRadius: 5,
     marginHorizontal: 5,
@@ -438,7 +412,6 @@ const styles = StyleSheet.create({
     width: "80%",
   },
   saveButton: {
-    backgroundColor: "#4CAF50",
     padding: 10,
     borderRadius: 5,
     marginVertical: 5,
@@ -451,7 +424,6 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   cancelButton: {
-    backgroundColor: "#2196F3",
     padding: 10,
     borderRadius: 5,
     marginVertical: 5,
@@ -467,5 +439,21 @@ const styles = StyleSheet.create({
     color: "white",
     fontFamily: "NotoSansThai-Regular",
     fontSize: 16,
+  },
+  light: {
+    primaryColor: "#ff7f50",
+    secondaryColor: "#ffa07a",
+    backgroundColor: "#f0f0f0",
+    textColor: "#333333",
+    cardBackgroundColor: "#ffffff",
+    borderColor: "#ddd",
+  },
+  dark: {
+    primaryColor: "#ff7f50",
+    secondaryColor: "#ffa07a",
+    backgroundColor: "#212121",
+    textColor: "#ffffff",
+    cardBackgroundColor: "#2c2c2c",
+    borderColor: "#444",
   },
 });

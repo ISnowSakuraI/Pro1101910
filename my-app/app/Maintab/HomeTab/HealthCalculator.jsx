@@ -14,8 +14,8 @@ import { useTheme } from "../../ThemeContext";
 import { useLanguage } from "../../LanguageContext";
 
 export default function HealthCalculator() {
-  const { isDarkTheme, toggleTheme } = useTheme();
-  const { isThaiLanguage, toggleLanguage } = useLanguage();
+  const { isDarkTheme } = useTheme();
+  const { isThaiLanguage } = useLanguage();
   const [mode, setMode] = useState("BMI");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
@@ -25,6 +25,8 @@ export default function HealthCalculator() {
   const [bmiCategory, setBmiCategory] = useState("");
   const [bpCategory, setBpCategory] = useState("");
   const [animation] = useState(new Animated.Value(0));
+
+  const theme = isDarkTheme ? styles.dark : styles.light;
 
   const toggleMode = () => {
     Animated.timing(animation, {
@@ -44,7 +46,12 @@ export default function HealthCalculator() {
       setBmi(bmiValue.toFixed(1));
       determineBMICategory(bmiValue);
     } else {
-      Alert.alert("Invalid input", "Please enter valid height and weight.");
+      Alert.alert(
+        isThaiLanguage ? "ข้อมูลไม่ถูกต้อง" : "Invalid input",
+        isThaiLanguage
+          ? "กรุณากรอกส่วนสูงและน้ำหนักที่ถูกต้อง"
+          : "Please enter valid height and weight."
+      );
     }
   };
 
@@ -66,15 +73,15 @@ export default function HealthCalculator() {
     if (sys > 0 && dia > 0) {
       if (sys < 120 && dia < 80) {
         setBpCategory(isThaiLanguage ? "ปกติ" : "Normal");
-      } else if (sys < 140 && dia < 90) {
+      } else if (sys < 130 && dia < 80) {
         setBpCategory(isThaiLanguage ? "เริ่มสูง" : "Elevated");
-      } else if (sys < 160 || dia < 100) {
+      } else if (sys < 140 || dia < 90) {
         setBpCategory(
           isThaiLanguage
             ? "สูงกว่าปกติระดับ 1"
             : "High Blood Pressure (Stage 1)"
         );
-      } else if (sys < 180 || dia < 110) {
+      } else if (sys < 180 || dia < 120) {
         setBpCategory(
           isThaiLanguage
             ? "สูงกว่าปกติระดับ 2"
@@ -83,12 +90,17 @@ export default function HealthCalculator() {
       } else {
         setBpCategory(
           isThaiLanguage
-            ? "สูงกว่าปกติระดับ 3"
-            : "High Blood Pressure (Stage 3)"
+            ? "วิกฤตความดันโลหิต"
+            : "Hypertensive Crisis"
         );
       }
     } else {
-      Alert.alert("Invalid input", "Please enter valid blood pressure values.");
+      Alert.alert(
+        isThaiLanguage ? "ข้อมูลไม่ถูกต้อง" : "Invalid input",
+        isThaiLanguage
+          ? "กรุณากรอกค่าความดันโลหิตที่ถูกต้อง"
+          : "Please enter valid blood pressure values."
+      );
     }
   };
 
@@ -137,10 +149,14 @@ export default function HealthCalculator() {
             : "Consult a healthcare provider for further advice.";
         case "High Blood Pressure (Stage 2)":
         case "สูงกว่าปกติระดับ 2":
-        case "สูงกว่าปกติระดับ 3":
           return isThaiLanguage
             ? "ควรปรึกษาแพทย์ทันทีเพื่อการรักษา"
             : "Seek medical advice immediately for treatment.";
+        case "Hypertensive Crisis":
+        case "วิกฤตความดันโลหิต":
+          return isThaiLanguage
+            ? "ควรไปพบแพทย์ทันที"
+            : "Seek emergency medical attention immediately.";
         default:
           return "";
       }
@@ -149,19 +165,17 @@ export default function HealthCalculator() {
 
   const buttonBackgroundColor = animation.interpolate({
     inputRange: [0, 1],
-    outputRange: ["#004d40", "#00796b"],
+    outputRange: ["#008AFF", "#F44336"],
   });
 
   return (
     <ScrollView
       style={[
         styles.container,
-        { backgroundColor: isDarkTheme ? "#333" : "#fff" },
+        { backgroundColor: theme.backgroundColor },
       ]}
     >
-      <Text
-        style={[styles.header, { color: isDarkTheme ? "#fff" : "#00796b" }]}
-      >
+      <Text style={[styles.header, { color: theme.textColor }]}>
         {isThaiLanguage ? "โปรแกรมคำนวณสุขภาพ" : "Health Calculator"}
       </Text>
       <Animated.View
@@ -185,7 +199,7 @@ export default function HealthCalculator() {
       {mode === "BMI" ? (
         <View style={styles.inputContainer}>
           <View style={styles.inputRow}>
-            <Icon name="straighten" size={24} color="#ff7f50" />
+            <Icon name="straighten" size={24} color={theme.primaryColor} />
             <TextInput
               style={styles.input}
               placeholder={isThaiLanguage ? "ส่วนสูง (ซม.)" : "Height (cm)"}
@@ -195,7 +209,7 @@ export default function HealthCalculator() {
             />
           </View>
           <View style={styles.inputRow}>
-            <Icon name="fitness-center" size={24} color="#ff7f50" />
+            <Icon name="fitness-center" size={24} color={theme.primaryColor} />
             <TextInput
               style={styles.input}
               placeholder={isThaiLanguage ? "น้ำหนัก (กก.)" : "Weight (kg)"}
@@ -204,7 +218,10 @@ export default function HealthCalculator() {
               onChangeText={setWeight}
             />
           </View>
-          <TouchableOpacity style={styles.button} onPress={calculateBMI}>
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: "#00A047" }]}
+            onPress={calculateBMI}
+          >
             <Text style={styles.buttonText}>
               {isThaiLanguage ? "คำนวณ BMI" : "Calculate BMI"}
             </Text>
@@ -225,7 +242,7 @@ export default function HealthCalculator() {
       ) : (
         <View style={styles.inputContainer}>
           <View style={styles.inputRow}>
-            <Icon name="favorite" size={24} color="#ff7f50" />
+            <Icon name="favorite" size={24} color="#F44336" />
             <TextInput
               style={styles.input}
               placeholder={
@@ -239,7 +256,7 @@ export default function HealthCalculator() {
             />
           </View>
           <View style={styles.inputRow}>
-            <Icon name="favorite" size={24} color="#ff7f50" />
+            <Icon name="favorite" size={24} color="#F44336" />
             <TextInput
               style={styles.input}
               placeholder={
@@ -253,7 +270,7 @@ export default function HealthCalculator() {
             />
           </View>
           <TouchableOpacity
-            style={styles.button}
+            style={[styles.button, { backgroundColor: "#00A047" }]}
             onPress={calculateBloodPressure}
           >
             <Text style={styles.buttonText}>
@@ -327,7 +344,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   button: {
-    backgroundColor: "#ff7f50",
     padding: 15,
     borderRadius: 5,
     alignItems: "center",
@@ -365,5 +381,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 10,
     color: "#00796b",
+  },
+  light: {
+    primaryColor: "#ff7f50",
+    secondaryColor: "#ffa07a",
+    backgroundColor: "#f0f0f0",
+    textColor: "#333333",
+    cardBackgroundColor: "#ffffff",
+    borderColor: "#ddd",
+  },
+  dark: {
+    primaryColor: "#ff7f50",
+    secondaryColor: "#ffa07a",
+    backgroundColor: "#212121",
+    textColor: "#ffffff",
+    cardBackgroundColor: "#2c2c2c",
+    borderColor: "#444",
   },
 });

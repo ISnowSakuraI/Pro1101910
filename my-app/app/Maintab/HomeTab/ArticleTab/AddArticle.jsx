@@ -26,6 +26,8 @@ export default function AddArticle({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
+  const themeStyles = isDarkTheme ? styles.dark : styles.light;
+
   const pickImages = async () => {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
@@ -80,14 +82,14 @@ export default function AddArticle({ navigation }) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: isDarkTheme ? "#333" : "#f9f9f9" }]}>
+    <View style={[styles.container, themeStyles.background]}>
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}
       >
-        <Icon name="arrow-back" size={24} color={isDarkTheme ? "#fff" : "#000"} />
+        <Icon name="arrow-back" size={24} color={themeStyles.text.color} />
       </TouchableOpacity>
-      <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
+      <Text style={[styles.header, themeStyles.text]}>
         {isThaiLanguage ? "เพิ่มบทความใหม่" : "Add New Article"}
       </Text>
       <TouchableOpacity onPress={pickImages} style={styles.addImageButton}>
@@ -96,13 +98,20 @@ export default function AddArticle({ navigation }) {
           {isThaiLanguage ? "เพิ่มรูปภาพ" : "Add Images"}
         </Text>
       </TouchableOpacity>
-      <ScrollView horizontal style={styles.imageContainer}>
+      <View horizontal style={styles.imageContainer}>
         {images.map((img, index) => (
           <Image key={index} source={{ uri: img }} style={styles.image} />
         ))}
-      </ScrollView>
+      </View>
       <TextInput
-        style={[styles.input, { height: titleHeight, backgroundColor: isDarkTheme ? "#444" : "#fff", color: isDarkTheme ? "#fff" : "#000" }]}
+        style={[
+          styles.input,
+          {
+            height: titleHeight,
+            backgroundColor: themeStyles.cardBackground.backgroundColor,
+            color: themeStyles.text.color,
+          },
+        ]}
         placeholder={isThaiLanguage ? "หัวข้อ" : "Title"}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={title}
@@ -113,7 +122,14 @@ export default function AddArticle({ navigation }) {
         }
       />
       <TextInput
-        style={[styles.textArea, { height: descriptionHeight, backgroundColor: isDarkTheme ? "#444" : "#fff", color: isDarkTheme ? "#fff" : "#000" }]}
+        style={[
+          styles.textArea,
+          {
+            height: descriptionHeight,
+            backgroundColor: themeStyles.cardBackground.backgroundColor,
+            color: themeStyles.text.color,
+          },
+        ]}
         placeholder={isThaiLanguage ? "คำอธิบาย" : "Description"}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={description}
@@ -125,7 +141,7 @@ export default function AddArticle({ navigation }) {
       />
       <TouchableOpacity style={styles.saveButton} onPress={handleAddArticle}>
         <Text style={styles.saveButtonText}>
-          {isThaiLanguage ? "บันทึก" : "SAVE"}
+          {isThaiLanguage ? "อัพโหลด" : "Upload"}
         </Text>
       </TouchableOpacity>
     </View>
@@ -139,13 +155,13 @@ const styles = StyleSheet.create({
   },
   header: {
     fontSize: 24,
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     marginBottom: 20,
     textAlign: "center",
   },
   addImageButton: {
     flexDirection: "row",
-    backgroundColor: "#2196F3",
+    backgroundColor: "#008AFF",
     padding: 10,
     borderRadius: 5,
     alignItems: "center",
@@ -154,7 +170,7 @@ const styles = StyleSheet.create({
   },
   addImageText: {
     color: "white",
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     marginLeft: 5,
   },
   imageContainer: {
@@ -170,7 +186,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   input: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     minHeight: 50,
     maxHeight: 100,
     borderColor: "#ccc",
@@ -181,7 +197,7 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   textArea: {
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     minHeight: 60,
     maxHeight: 160,
     borderColor: "#ccc",
@@ -195,14 +211,36 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   saveButton: {
-    backgroundColor: "#ff7f50",
+    backgroundColor: "#00A047",
     padding: 15,
     borderRadius: 5,
     alignItems: "center",
   },
   saveButtonText: {
     color: "white",
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     fontSize: 16,
+  },
+  light: {
+    background: {
+      backgroundColor: "#f9f9f9",
+    },
+    text: {
+      color: "#333333",
+    },
+    cardBackground: {
+      backgroundColor: "#ffffff",
+    },
+  },
+  dark: {
+    background: {
+      backgroundColor: "#333333",
+    },
+    text: {
+      color: "#ffffff",
+    },
+    cardBackground: {
+      backgroundColor: "#444444",
+    },
   },
 });

@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Image, Alert, RefreshControl } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  TextInput,
+  Image,
+  Alert,
+  RefreshControl,
+} from "react-native";
 import { db, auth } from "../../../../firebase/Firebase";
 import { collection, getDocs, deleteDoc, doc, getDoc } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -14,6 +24,8 @@ export default function ManageArticles({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
+  const themeStyles = isDarkTheme ? styles.dark : styles.light;
+
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
@@ -25,7 +37,9 @@ export default function ManageArticles({ navigation }) {
           } else {
             Alert.alert(
               isThaiLanguage ? "ข้อผิดพลาด" : "Error",
-              isThaiLanguage ? "คุณไม่มีสิทธิ์เข้าถึงหน้านี้" : "You do not have permission to access this page"
+              isThaiLanguage
+                ? "คุณไม่มีสิทธิ์เข้าถึงหน้านี้"
+                : "You do not have permission to access this page"
             );
             navigation.goBack();
           }
@@ -60,11 +74,21 @@ export default function ManageArticles({ navigation }) {
   const handleDeleteArticle = async (articleId) => {
     try {
       await deleteDoc(doc(db, "articles", articleId));
-      setArticles(articles.filter(article => article.id !== articleId));
-      Alert.alert(isThaiLanguage ? "สำเร็จ" : "Success", isThaiLanguage ? "ลบบทความเรียบร้อยแล้ว!" : "Article deleted successfully!");
+      setArticles(articles.filter((article) => article.id !== articleId));
+      Alert.alert(
+        isThaiLanguage ? "สำเร็จ" : "Success",
+        isThaiLanguage
+          ? "ลบบทความเรียบร้อยแล้ว!"
+          : "Article deleted successfully!"
+      );
     } catch (error) {
       console.error("Error deleting article: ", error);
-      Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถลบบทความได้ กรุณาลองใหม่อีกครั้ง." : "Failed to delete article. Please try again.");
+      Alert.alert(
+        isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+        isThaiLanguage
+          ? "ไม่สามารถลบบทความได้ กรุณาลองใหม่อีกครั้ง."
+          : "Failed to delete article. Please try again."
+      );
     }
   };
 
@@ -73,7 +97,7 @@ export default function ManageArticles({ navigation }) {
     fetchArticles().then(() => setRefreshing(false));
   }, [fetchArticles]);
 
-  const filteredArticles = articles.filter(article =>
+  const filteredArticles = articles.filter((article) =>
     article.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -82,12 +106,12 @@ export default function ManageArticles({ navigation }) {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: isDarkTheme ? "#333" : "#f9f9f9" }]}>
-      <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
+    <View style={[styles.container, themeStyles.background]}>
+      <Text style={[styles.header, themeStyles.text]}>
         {isThaiLanguage ? "จัดการบทความ" : "Manage Articles"}
       </Text>
       <TextInput
-        style={[styles.searchInput, { backgroundColor: isDarkTheme ? "#444" : "#fff", color: isDarkTheme ? "#fff" : "#000" }]}
+        style={[styles.searchInput, themeStyles.inputBackground]}
         placeholder={isThaiLanguage ? "ค้นหาบทความ..." : "Search articles..."}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={searchQuery}
@@ -100,7 +124,7 @@ export default function ManageArticles({ navigation }) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         renderItem={({ item }) => (
-          <View style={[styles.card, { backgroundColor: isDarkTheme ? "#444" : "white" }]}>
+          <View style={[styles.card, themeStyles.cardBackground]}>
             {item.images && item.images[0] ? (
               <Image source={{ uri: item.images[0] }} style={styles.image} />
             ) : (
@@ -108,10 +132,16 @@ export default function ManageArticles({ navigation }) {
                 <Text style={styles.imagePlaceholderText}>No Image</Text>
               </View>
             )}
-            <Text style={[styles.title, { color: isDarkTheme ? "#fff" : "#333" }]} numberOfLines={4}>
+            <Text style={[styles.title, themeStyles.text]} numberOfLines={4}>
               {item.title}
             </Text>
-            <Text style={[styles.description, { color: isDarkTheme ? "#aaa" : "#666" }]} numberOfLines={3}>
+            <Text
+              style={[
+                styles.description,
+                { color: isDarkTheme ? "#aaa" : "#666" },
+              ]}
+              numberOfLines={3}
+            >
               {item.description}
             </Text>
             <View style={styles.buttonContainer}>
@@ -120,7 +150,9 @@ export default function ManageArticles({ navigation }) {
                 onPress={() => handleDeleteArticle(item.id)}
               >
                 <Icon name="delete" size={20} color="white" />
-                <Text style={styles.buttonText}>{isThaiLanguage ? "ลบ" : "Delete"}</Text>
+                <Text style={styles.buttonText}>
+                  {isThaiLanguage ? "ลบ" : "Delete"}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -131,7 +163,9 @@ export default function ManageArticles({ navigation }) {
         onPress={() => navigation.navigate("ReportedArticles")}
       >
         <Icon name="report" size={20} color="white" />
-        <Text style={styles.buttonText}>{isThaiLanguage ? "ดูบทความที่ถูกรายงาน" : "View Reported Articles"}</Text>
+        <Text style={styles.buttonText}>
+          {isThaiLanguage ? "ดูบทความที่ถูกรายงาน" : "View Reported Articles"}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -144,7 +178,7 @@ const styles = StyleSheet.create({
   },
   header: {
     fontSize: 24,
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     marginBottom: 20,
     textAlign: "center",
   },
@@ -155,7 +189,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     paddingHorizontal: 10,
     marginBottom: 20,
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
   },
   card: {
     marginBottom: 10,
@@ -184,16 +218,16 @@ const styles = StyleSheet.create({
   },
   imagePlaceholderText: {
     color: "#fff",
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
   },
   title: {
     fontSize: 16,
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     marginVertical: 10,
   },
   description: {
     fontSize: 14,
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
     marginBottom: 10,
   },
   buttonContainer: {
@@ -220,6 +254,36 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     marginLeft: 5,
-    fontFamily: 'NotoSansThai-Regular',
+    fontFamily: "NotoSansThai-Regular",
+  },
+  light: {
+    background: {
+      backgroundColor: "#f0f0f0",
+    },
+    text: {
+      color: "#333333",
+    },
+    inputBackground: {
+      backgroundColor: "#ffffff",
+      color: "#333333",
+    },
+    cardBackground: {
+      backgroundColor: "#ffffff",
+    },
+  },
+  dark: {
+    background: {
+      backgroundColor: "#212121",
+    },
+    text: {
+      color: "#ffffff",
+    },
+    inputBackground: {
+      backgroundColor: "#2c2c2c",
+      color: "#ffffff",
+    },
+    cardBackground: {
+      backgroundColor: "#2c2c2c",
+    },
   },
 });

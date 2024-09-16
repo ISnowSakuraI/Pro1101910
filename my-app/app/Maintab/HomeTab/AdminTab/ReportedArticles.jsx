@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, Image, Alert, RefreshControl } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  TextInput,
+  Image,
+  Alert,
+  RefreshControl,
+} from "react-native";
 import { db } from "../../../../firebase/Firebase";
 import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -13,13 +23,15 @@ export default function ReportedArticles({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
+  const themeStyles = isDarkTheme ? styles.dark : styles.light;
+
   const fetchReportedArticles = useCallback(async () => {
     try {
       const reportsSnapshot = await getDocs(collection(db, "reports"));
       const articlesSnapshot = await getDocs(collection(db, "articles"));
 
-      const reports = reportsSnapshot.docs.map(doc => doc.data());
-      const articles = articlesSnapshot.docs.map(doc => ({
+      const reports = reportsSnapshot.docs.map((doc) => doc.data());
+      const articles = articlesSnapshot.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
       }));
@@ -34,11 +46,13 @@ export default function ReportedArticles({ navigation }) {
         return acc;
       }, {});
 
-      const reportedList = articles.map(article => ({
-        ...article,
-        reportCount: reportDetails[article.id]?.count || 0,
-        reportReasons: reportDetails[article.id]?.reasons.join(", ") || "N/A",
-      })).filter(article => reportDetails[article.id]);
+      const reportedList = articles
+        .map((article) => ({
+          ...article,
+          reportCount: reportDetails[article.id]?.count || 0,
+          reportReasons: reportDetails[article.id]?.reasons.join(", ") || "N/A",
+        }))
+        .filter((article) => reportDetails[article.id]);
 
       reportedList.sort((a, b) => b.reportCount - a.reportCount);
 
@@ -78,7 +92,9 @@ export default function ReportedArticles({ navigation }) {
   const handleDeleteReport = async (articleId) => {
     try {
       const reportsSnapshot = await getDocs(collection(db, "reports"));
-      const reportDocs = reportsSnapshot.docs.filter(doc => doc.data().articleId === articleId);
+      const reportDocs = reportsSnapshot.docs.filter(
+        (doc) => doc.data().articleId === articleId
+      );
       for (const reportDoc of reportDocs) {
         await deleteDoc(doc(db, "reports", reportDoc.id));
       }
@@ -107,33 +123,25 @@ export default function ReportedArticles({ navigation }) {
 
   const filteredArticles = reportedArticles.filter(
     (article) =>
-      (article.title?.toLowerCase() || "").includes(
+      (article.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (article.reportReasons?.toLowerCase() || "").includes(
         searchQuery.toLowerCase()
-      ) ||
-      (article.reportReasons?.toLowerCase() || "").includes(searchQuery.toLowerCase())
+      )
   );
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: isDarkTheme ? "#333" : "#f9f9f9" },
-      ]}
-    >
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-back" size={24} color={isDarkTheme ? "#fff" : "#000"} />
+    <View style={[styles.container, themeStyles.background]}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Icon name="arrow-back" size={24} color={themeStyles.text.color} />
       </TouchableOpacity>
-      <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
+      <Text style={[styles.header, themeStyles.text]}>
         {isThaiLanguage ? "บทความที่ถูกรายงาน" : "Reported Articles"}
       </Text>
       <TextInput
-        style={[
-          styles.searchInput,
-          {
-            backgroundColor: isDarkTheme ? "#444" : "#fff",
-            color: isDarkTheme ? "#fff" : "#000",
-          },
-        ]}
+        style={[styles.searchInput, themeStyles.inputBackground]}
         placeholder={isThaiLanguage ? "ค้นหาบทความ..." : "Search articles..."}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={searchQuery}
@@ -146,17 +154,12 @@ export default function ReportedArticles({ navigation }) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         renderItem={({ item }) => (
-          <View
-            style={[
-              styles.card,
-              { backgroundColor: isDarkTheme ? "#444" : "white" },
-            ]}
-          >
+          <View style={[styles.card, themeStyles.cardBackground]}>
             <TouchableOpacity
               style={styles.deleteIcon}
               onPress={() => handleDeleteReport(item.id)}
             >
-              <Icon name="close" size={20} color={isDarkTheme ? "#fff" : "#000"} />
+              <Icon name="close" size={20} color={themeStyles.text.color} />
             </TouchableOpacity>
             {item.images && item.images[0] ? (
               <Image source={{ uri: item.images[0] }} style={styles.image} />
@@ -165,10 +168,7 @@ export default function ReportedArticles({ navigation }) {
                 <Text style={styles.imagePlaceholderText}>No Image</Text>
               </View>
             )}
-            <Text
-              style={[styles.title, { color: isDarkTheme ? "#fff" : "#333" }]}
-              numberOfLines={4}
-            >
+            <Text style={[styles.title, themeStyles.text]} numberOfLines={4}>
               {item.title || "Untitled"}
             </Text>
             <Text
@@ -322,5 +322,35 @@ const styles = StyleSheet.create({
     color: "white",
     marginLeft: 5,
     fontFamily: "NotoSansThai-Regular",
+  },
+  light: {
+    background: {
+      backgroundColor: "#f0f0f0",
+    },
+    text: {
+      color: "#333333",
+    },
+    inputBackground: {
+      backgroundColor: "#ffffff",
+      color: "#333333",
+    },
+    cardBackground: {
+      backgroundColor: "#ffffff",
+    },
+  },
+  dark: {
+    background: {
+      backgroundColor: "#212121",
+    },
+    text: {
+      color: "#ffffff",
+    },
+    inputBackground: {
+      backgroundColor: "#2c2c2c",
+      color: "#ffffff",
+    },
+    cardBackground: {
+      backgroundColor: "#2c2c2c",
+    },
   },
 });

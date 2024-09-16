@@ -38,22 +38,32 @@ export default function Profile({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const fetchUserData = useCallback(async (currentUser) => {
-    if (currentUser) {
-      setUser(currentUser);
-      try {
-        const userDoc = await getDoc(doc(db, "Users", currentUser.uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          setUserData(data);
-          setImage(data.photoURL || null);
+  const theme = isDarkTheme ? styles.dark : styles.light;
+
+  const fetchUserData = useCallback(
+    async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        try {
+          const userDoc = await getDoc(doc(db, "Users", currentUser.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            setUserData(data);
+            setImage(data.photoURL || null);
+          }
+        } catch (error) {
+          console.error("Error fetching user data: ", error);
+          Alert.alert(
+            isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+            isThaiLanguage
+              ? "ไม่สามารถดึงข้อมูลผู้ใช้ได้"
+              : "Failed to fetch user data."
+          );
         }
-      } catch (error) {
-        console.error("Error fetching user data: ", error);
-        Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถดึงข้อมูลผู้ใช้ได้" : "Failed to fetch user data.");
       }
-    }
-  }, [isThaiLanguage]);
+    },
+    [isThaiLanguage]
+  );
 
   const fetchUserStatistics = useCallback(async () => {
     const user = auth.currentUser;
@@ -86,7 +96,12 @@ export default function Profile({ navigation }) {
         setDailyData(dailyDataArray);
       } catch (error) {
         console.error("Error fetching user statistics: ", error);
-        Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถดึงข้อมูลสถิติได้" : "Failed to fetch statistics.");
+        Alert.alert(
+          isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+          isThaiLanguage
+            ? "ไม่สามารถดึงข้อมูลสถิติได้"
+            : "Failed to fetch statistics."
+        );
       }
     }
   }, [isThaiLanguage]);
@@ -116,29 +131,29 @@ export default function Profile({ navigation }) {
       }
     } catch (error) {
       console.error("Error picking image: ", error);
-      Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถเลือกภาพได้" : "Failed to pick image.");
+      Alert.alert(
+        isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+        isThaiLanguage ? "ไม่สามารถเลือกภาพได้" : "Failed to pick image."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const chartConfig = {
-    backgroundColor: isDarkTheme ? "#1e1e1e" : "#f5f5f5",
-    backgroundGradientFrom: isDarkTheme ? "#1e1e1e" : "#f5f5f5",
-    backgroundGradientTo: isDarkTheme ? "#3e3e3e" : "#ffffff",
+    backgroundColor: theme.backgroundColor,
+    backgroundGradientFrom: theme.backgroundColor,
+    backgroundGradientTo: theme.cardBackgroundColor,
     decimalPlaces: 2,
-    color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`, // More vibrant color
-    labelColor: (opacity = 1) =>
-      isDarkTheme
-        ? `rgba(255, 255, 255, ${opacity})`
-        : `rgba(0, 0, 0, ${opacity})`,
+    color: (opacity = 1) => `rgba(255, 127, 80, ${opacity})`, // Coral
+    labelColor: (opacity = 1) => theme.textColor,
     style: {
       borderRadius: 16,
     },
     propsForDots: {
       r: "6",
       strokeWidth: "2",
-      stroke: "#ffa726",
+      stroke: theme.primaryColor,
     },
     propsForLabels: {
       fontSize: 12,
@@ -150,27 +165,18 @@ export default function Profile({ navigation }) {
     <ScrollView>
       <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
-        backgroundColor={isDarkTheme ? "#222" : "#f0f0f0"}
+        backgroundColor={theme.backgroundColor}
       />
-      <View
-        style={[
-          styles.container,
-          { backgroundColor: isDarkTheme ? "#222" : "#f0f0f0" },
-        ]}
-      >
+      <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
         <TouchableOpacity
           style={styles.settingsIcon}
           onPress={() => navigation.navigate("Settings")}
         >
-          <Icon
-            name="settings"
-            size={28}
-            color={isDarkTheme ? "#fff" : "#333"}
-          />
+          <Icon name="settings" size={28} color={theme.textColor} />
         </TouchableOpacity>
         <TouchableOpacity onPress={pickImage} style={styles.imageWrapper}>
           {loading ? (
-            <ActivityIndicator size="large" color="#ff7f50" />
+            <ActivityIndicator size="large" color={theme.primaryColor} />
           ) : (
             <Image
               style={styles.profileImage}
@@ -183,44 +189,26 @@ export default function Profile({ navigation }) {
             <Icon name="camera-alt" size={24} color="#fff" />
           </View>
         </TouchableOpacity>
-        <View
-          style={[
-            styles.infoContainer,
-            { backgroundColor: isDarkTheme ? "#333" : "#fff" },
-          ]}
-        >
-          <Icon name="person" size={20} color="#ff7f50" />
-          <Text
-            style={[styles.label, { color: isDarkTheme ? "#fff" : "#333" }]}
-          >
+        <View style={[styles.infoContainer, { backgroundColor: theme.cardBackgroundColor }]}>
+          <Icon name="person" size={20} color={theme.primaryColor} />
+          <Text style={[styles.label, { color: theme.textColor }]}>
             {isThaiLanguage ? "ชื่อผู้ใช้" : "Username"}
           </Text>
-          <Text
-            style={[styles.infoText, { color: isDarkTheme ? "#ccc" : "#555" }]}
-          >
+          <Text style={[styles.infoText, { color: theme.textColor }]}>
             {userData.username || "N/A"}
           </Text>
         </View>
-        <View
-          style={[
-            styles.infoContainer,
-            { backgroundColor: isDarkTheme ? "#333" : "#fff" },
-          ]}
-        >
-          <Icon name="email" size={20} color="#ff7f50" />
-          <Text
-            style={[styles.label, { color: isDarkTheme ? "#fff" : "#333" }]}
-          >
+        <View style={[styles.infoContainer, { backgroundColor: theme.cardBackgroundColor }]}>
+          <Icon name="email" size={20} color={theme.primaryColor} />
+          <Text style={[styles.label, { color: theme.textColor }]}>
             {isThaiLanguage ? "อีเมล" : "Email"}
           </Text>
-          <Text
-            style={[styles.infoText, { color: isDarkTheme ? "#ccc" : "#555" }]}
-          >
+          <Text style={[styles.infoText, { color: theme.textColor }]}>
             {userData.email || "N/A"}
           </Text>
         </View>
         <TouchableOpacity
-          style={styles.button}
+          style={[styles.button, { backgroundColor: "#ff7f50" }]}
           onPress={() => navigation.navigate("EditProfile")}
         >
           <Icon name="edit" size={20} color="#fff" />
@@ -230,8 +218,8 @@ export default function Profile({ navigation }) {
         </TouchableOpacity>
         <View style={styles.row}>
           <TouchableOpacity
-            style={styles.postButton}
-            onPress={() => navigation.navigate("ManageMyArticles")}
+            style={[styles.postButton, { backgroundColor: "#008AFF" }]}
+            onPress={() => navigation.navigate("MyArticles")}
           >
             <Icon name="grid-on" size={20} color="#fff" />
             <Text style={styles.buttonText}>
@@ -239,7 +227,7 @@ export default function Profile({ navigation }) {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.favoriteButton}
+            style={[styles.favoriteButton, { backgroundColor: "#F44336" }]}
             onPress={() => navigation.navigate("FavoriteArticles")}
           >
             <Icon name="favorite" size={20} color="#fff" />
@@ -249,17 +237,8 @@ export default function Profile({ navigation }) {
           </TouchableOpacity>
         </View>
         <View style={styles.graphContainer}>
-          <IconAntDesign
-            name="linechart"
-            size={24}
-            color={isDarkTheme ? "#fff" : "#333"}
-          />
-          <Text
-            style={[
-              styles.graphTitle,
-              { color: isDarkTheme ? "#fff" : "#333" },
-            ]}
-          >
+          <IconAntDesign name="linechart" size={24} color={theme.textColor} />
+          <Text style={[styles.graphTitle, { color: theme.textColor }]}>
             {isThaiLanguage
               ? "แคลอรี่ที่เผาผลาญตามเวลา"
               : "Calories Burned Over Time"}
@@ -272,7 +251,7 @@ export default function Profile({ navigation }) {
               datasets: [
                 {
                   data: dailyData.map((data) => data.calories),
-                  color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`, // More vibrant color
+                  color: (opacity = 1) => `rgba(255, 127, 80, ${opacity})`, // Coral
                   strokeWidth: 3, // Thicker line
                 },
               ],
@@ -316,13 +295,13 @@ const styles = StyleSheet.create({
     height: 150,
     borderRadius: 75,
     borderWidth: 2,
-    borderColor: "#ff7f50",
+    borderColor: "#ff7f50", // Coral
   },
   cameraIcon: {
     position: "absolute",
     bottom: 0,
     right: 0,
-    backgroundColor: "#ff7f50",
+    backgroundColor: "#ff7f50", // Coral
     borderRadius: 15,
     padding: 5,
   },
@@ -354,7 +333,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: "90%",
     height: 50,
-    backgroundColor: "#ff7f50",
     borderRadius: 8,
     marginBottom: 15,
     shadowColor: "#000",
@@ -381,7 +359,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: "48%",
     height: 50,
-    backgroundColor: "#ff7f50",
     borderRadius: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -395,7 +372,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: "48%",
     height: 50,
-    backgroundColor: "#ff7f50",
     borderRadius: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -423,5 +399,21 @@ const styles = StyleSheet.create({
     color: "#777",
     marginTop: 20,
     fontFamily: "NotoSansThai-Regular",
+  },
+  light: {
+    primaryColor: "#ff7f50",
+    secondaryColor: "#ffa07a",
+    backgroundColor: "#f7f7f7",
+    textColor: "#333333",
+    cardBackgroundColor: "#ffffff",
+    borderColor: "#ddd",
+  },
+  dark: {
+    primaryColor: "#ff7f50",
+    secondaryColor: "#ffa07a",
+    backgroundColor: "#1e1e1e",
+    textColor: "#ffffff",
+    cardBackgroundColor: "#2c2c2c",
+    borderColor: "#444",
   },
 });

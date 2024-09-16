@@ -26,6 +26,8 @@ export default function Register({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
+  const themeStyles = isDarkTheme ? styles.dark : styles.light;
+
   const handleSubmit = useCallback(async () => {
     if (!email || !username || !password || !confirmPassword) {
       Alert.alert(
@@ -50,9 +52,9 @@ export default function Register({ navigation }) {
       const uid = cred.user.uid;
 
       await setDoc(doc(db, "Users", uid), {
-        email: email,
-        username: username,
-        uid: uid,
+        email,
+        username,
+        uid,
       });
 
       Alert.alert(
@@ -72,21 +74,10 @@ export default function Register({ navigation }) {
   }, [email, username, password, confirmPassword, isThaiLanguage, navigation]);
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: isDarkTheme ? "#1a1a1a" : "#f0f0f0" },
-      ]}
-    >
+    <View style={[styles.container, themeStyles.background]}>
       <Image style={styles.logo} source={logo} />
       <TextInput
-        style={[
-          styles.input,
-          {
-            backgroundColor: isDarkTheme ? "#333" : "#fff",
-            color: isDarkTheme ? "#fff" : "#000",
-          },
-        ]}
+        style={[styles.input, themeStyles.inputBackground]}
         placeholder={isThaiLanguage ? "อีเมล" : "Email"}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={email}
@@ -95,34 +86,16 @@ export default function Register({ navigation }) {
         autoCapitalize="none"
       />
       <TextInput
-        style={[
-          styles.input,
-          {
-            backgroundColor: isDarkTheme ? "#333" : "#fff",
-            color: isDarkTheme ? "#fff" : "#000",
-          },
-        ]}
+        style={[styles.input, themeStyles.inputBackground]}
         placeholder={isThaiLanguage ? "ชื่อผู้ใช้" : "Username"}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={username}
         onChangeText={setUsername}
         autoCapitalize="none"
       />
-      <View
-        style={[
-          styles.passwordContainer,
-          {
-            backgroundColor: isDarkTheme ? "#333" : "#fff",
-          },
-        ]}
-      >
+      <View style={styles.passwordContainer}>
         <TextInput
-          style={[
-            styles.passwordInput,
-            {
-              color: isDarkTheme ? "#fff" : "#000",
-            },
-          ]}
+          style={[styles.passwordInput, themeStyles.inputBackground]}
           placeholder={isThaiLanguage ? "รหัสผ่าน" : "Password"}
           placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
           secureTextEntry={!showPassword}
@@ -134,25 +107,13 @@ export default function Register({ navigation }) {
           <Icon
             name={showPassword ? "visibility" : "visibility-off"}
             size={24}
-            color={isDarkTheme ? "#fff" : "#aaa"}
+            color={themeStyles.text.color}
           />
         </TouchableOpacity>
       </View>
-      <View
-        style={[
-          styles.passwordContainer,
-          {
-            backgroundColor: isDarkTheme ? "#333" : "#fff",
-          },
-        ]}
-      >
+      <View style={styles.passwordContainer}>
         <TextInput
-          style={[
-            styles.passwordInput,
-            {
-              color: isDarkTheme ? "#fff" : "#000",
-            },
-          ]}
+          style={[styles.passwordInput, themeStyles.inputBackground]}
           placeholder={isThaiLanguage ? "ยืนยันรหัสผ่าน" : "Confirm Password"}
           placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
           secureTextEntry={!showConfirmPassword}
@@ -166,7 +127,7 @@ export default function Register({ navigation }) {
           <Icon
             name={showConfirmPassword ? "visibility" : "visibility-off"}
             size={24}
-            color={isDarkTheme ? "#fff" : "#aaa"}
+            color={themeStyles.text.color}
           />
         </TouchableOpacity>
       </View>
@@ -254,5 +215,29 @@ const styles = StyleSheet.create({
   loginLink: {
     color: "#ff7f50",
     fontFamily: "NotoSansThai-Regular",
+  },
+  light: {
+    background: {
+      backgroundColor: "#f0f0f0",
+    },
+    text: {
+      color: "#333333",
+    },
+    inputBackground: {
+      backgroundColor: "#ffffff",
+      color: "#333333",
+    },
+  },
+  dark: {
+    background: {
+      backgroundColor: "#212121",
+    },
+    text: {
+      color: "#ffffff",
+    },
+    inputBackground: {
+      backgroundColor: "#2c2c2c",
+      color: "#ffffff",
+    },
   },
 });

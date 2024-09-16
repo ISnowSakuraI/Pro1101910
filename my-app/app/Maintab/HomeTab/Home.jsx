@@ -37,12 +37,16 @@ export default function Home({ navigation }) {
   }, []);
 
   const fetchArticles = useCallback(async () => {
-    const querySnapshot = await getDocs(collection(db, "articles"));
-    const articles = querySnapshot.docs.map((doc) => ({
-      ...doc.data(),
-      id: doc.id,
-    }));
-    setArticles(articles.slice(0, 4)); // Get the latest 4 articles
+    try {
+      const querySnapshot = await getDocs(collection(db, "articles"));
+      const articles = querySnapshot.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      }));
+      setArticles(articles.slice(0, 4)); // Get the latest 4 articles
+    } catch (error) {
+      console.error("Error fetching articles: ", error);
+    }
   }, []);
 
   useFocusEffect(
@@ -51,13 +55,10 @@ export default function Home({ navigation }) {
     }, [fetchArticles])
   );
 
+  const theme = isDarkTheme ? styles.dark : styles.light;
+
   return (
-    <ScrollView
-      style={[
-        styles.container,
-        { backgroundColor: isDarkTheme ? "#222" : "#f5f5f5" },
-      ]}
-    >
+    <ScrollView style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <SectionHeader title={isThaiLanguage ? "หมวดหมู่" : "Categories"} />
       <View style={styles.grid}>
         <CategoryItem
@@ -84,6 +85,11 @@ export default function Home({ navigation }) {
           icon="favorite"
           label={isThaiLanguage ? "คำนวณสุขภาพ" : "Health Calculator"}
           onPress={() => navigation.navigate("HealthCalculator")}
+        />
+        <CategoryItem
+          icon="restaurant-menu"
+          label={isThaiLanguage ? "วางแผนอาหาร" : "Food Planning"}
+          onPress={() => navigation.navigate("FoodStack")}
         />
         {isAdmin && (
           <CategoryItem
@@ -121,8 +127,9 @@ export default function Home({ navigation }) {
 
 const SectionHeader = React.memo(({ title }) => {
   const { isDarkTheme } = useTheme();
+  const theme = isDarkTheme ? styles.dark : styles.light;
   return (
-    <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
+    <Text style={[styles.header, { color: theme.textColor }]}>
       {title}
     </Text>
   );
@@ -130,13 +137,14 @@ const SectionHeader = React.memo(({ title }) => {
 
 const CategoryItem = React.memo(({ icon, label, onPress }) => {
   const { isDarkTheme } = useTheme();
+  const theme = isDarkTheme ? styles.dark : styles.light;
   return (
     <TouchableOpacity
-      style={[styles.item, { backgroundColor: isDarkTheme ? "#444" : "#fff" }]}
+      style={[styles.item, { backgroundColor: theme.cardBackgroundColor }]}
       onPress={onPress}
     >
-      <Icon name={icon} size={40} color="#ff7f50" style={styles.icon} />
-      <Text style={[styles.label, { color: isDarkTheme ? "#fff" : "#555" }]}>
+      <Icon name={icon} size={40} color={theme.primaryColor} style={styles.icon} />
+      <Text style={[styles.label, { color: theme.textColor }]}>
         {label}
       </Text>
     </TouchableOpacity>
@@ -145,36 +153,36 @@ const CategoryItem = React.memo(({ icon, label, onPress }) => {
 
 const ArticleItem = React.memo(({ article }) => {
   const { isDarkTheme } = useTheme();
+  const theme = isDarkTheme ? styles.dark : styles.light;
   const navigation = useNavigation();
 
   return (
     <TouchableOpacity
       style={[
         styles.articleItem,
-        { backgroundColor: isDarkTheme ? "#444" : "#fff" },
+        { backgroundColor: theme.cardBackgroundColor },
       ]}
       onPress={() =>
         navigation.navigate("ArticleDetail", { articleId: article.id })
       }
     >
       <View style={styles.imageContainer}>
-        {article.images.length === 1 ? (
+        {article.images && article.images.length === 1 ? (
           <Image
             source={{ uri: article.images[0] }}
             style={styles.fullArticleImage}
           />
         ) : (
-          article.images
-            .slice(0, 2)
-            .map((img, index) => (
-              <Image
-                key={index}
-                source={{ uri: img }}
-                style={styles.articleImage}
-              />
-            ))
+          article.images &&
+          article.images.slice(0, 2).map((img, index) => (
+            <Image
+              key={index}
+              source={{ uri: img }}
+              style={styles.articleImage}
+            />
+          ))
         )}
-        {article.images.length > 2 && (
+        {article.images && article.images.length > 2 && (
           <View style={styles.moreImagesOverlay}>
             <Text style={styles.moreImagesText}>
               +{article.images.length - 2}
@@ -183,7 +191,7 @@ const ArticleItem = React.memo(({ article }) => {
         )}
       </View>
       <Text
-        style={[styles.articleTitle, { color: isDarkTheme ? "#fff" : "#333" }]}
+        style={[styles.articleTitle, { color: theme.textColor }]}
         numberOfLines={2}
       >
         {article.title}
@@ -277,5 +285,21 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 16,
     marginTop: 5,
+  },
+  light: {
+    primaryColor: "#ff7f50",
+    secondaryColor: "#ffa07a",
+    backgroundColor: "#f0f0f0",
+    textColor: "#333333",
+    cardBackgroundColor: "#ffffff",
+    borderColor: "#ddd",
+  },
+  dark: {
+    primaryColor: "#ff7f50",
+    secondaryColor: "#ffa07a",
+    backgroundColor: "#212121",
+    textColor: "#ffffff",
+    cardBackgroundColor: "#2c2c2c",
+    borderColor: "#444",
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react'; 
 import { View, Text, StyleSheet, Image, ScrollView, FlatList, TouchableOpacity, Modal, Alert, TextInput, ActivityIndicator } from 'react-native';
 import { db, auth } from '../../../../firebase/Firebase';
 import { doc, getDoc, collection, query, where, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
@@ -27,6 +27,8 @@ export default function ArticleDetail({ route, navigation }) {
   const [customReason, setCustomReason] = useState("");
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
+
+  const themeStyles = isDarkTheme ? styles.dark : styles.light;
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -149,16 +151,16 @@ export default function ArticleDetail({ route, navigation }) {
   if (!article) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={isDarkTheme ? '#fff' : '#000'} />
-        <Text style={[styles.loadingText, { color: isDarkTheme ? '#fff' : '#000' }]}>{isThaiLanguage ? "กำลังโหลด..." : "Loading..."}</Text>
+        <ActivityIndicator size="large" color={themeStyles.text.color} />
+        <Text style={[styles.loadingText, themeStyles.text]}>{isThaiLanguage ? "กำลังโหลด..." : "Loading..."}</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDarkTheme ? '#333' : '#f5f5f5' }]}>
+    <ScrollView style={[styles.container, themeStyles.background]}>
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Icon name="arrow-left" size={28} color={isDarkTheme ? "#fff" : "#000"} />
+        <Icon name="arrow-left" size={28} color={themeStyles.text.color} />
       </TouchableOpacity>
       <FlatList
         data={article.images}
@@ -171,24 +173,24 @@ export default function ArticleDetail({ route, navigation }) {
         keyExtractor={(image, index) => index.toString()}
         showsHorizontalScrollIndicator={false}
       />
-      <Text style={[styles.title, { color: isDarkTheme ? '#fff' : '#333' }]}>{article.title}</Text>
-      <Text style={[styles.description, { color: isDarkTheme ? '#ccc' : '#555' }]}>{article.description}</Text>
-      <Text style={[styles.author, { color: isDarkTheme ? '#aaa' : '#777' }]}>{isThaiLanguage ? "โพสโดย" : "Posted by"}: {article.userName}</Text>
-      <Text style={[styles.date, { color: isDarkTheme ? '#aaa' : '#777' }]}>{isThaiLanguage ? "วันที่" : "Date"}: {formatDate(article.createdAt)}</Text>
+      <Text style={[styles.title, themeStyles.text]}>{article.title}</Text>
+      <Text style={[styles.description, themeStyles.text]}>{article.description}</Text>
+      <Text style={[styles.author, themeStyles.text]}>{isThaiLanguage ? "โพสโดย" : "Posted by"}: {article.userName}</Text>
+      <Text style={[styles.date, themeStyles.text]}>{isThaiLanguage ? "วันที่" : "Date"}: {formatDate(article.createdAt)}</Text>
       <View style={styles.likesContainer}>
-        <Icon name="heart" size={20} color="red" />
-        <Text style={[styles.likesText, { color: isDarkTheme ? '#aaa' : '#777' }]}>{likesCount} {isThaiLanguage ? "ถูกใจ" : "Likes"}</Text>
+        <Icon name="heart" size={20} color={"#F44336"} />
+        <Text style={[styles.likesText, themeStyles.text]}>{likesCount} {isThaiLanguage ? "ถูกใจ" : "Likes"}</Text>
       </View>
       <View style={styles.actionButtons}>
-        <TouchableOpacity onPress={toggleFavorite} style={[styles.compactButton, { backgroundColor: isLiked ? '#ff4d4d' : (isDarkTheme ? '#555' : '#eee') }]}>
-          <Icon name={isLiked ? "heart" : "heart-outline"} size={20} color={isLiked ? "#fff" : (isDarkTheme ? "#fff" : "#777")} />
-          <Text style={[styles.buttonText, { color: isLiked ? "#fff" : (isDarkTheme ? "#fff" : "#777") }]}>
+        <TouchableOpacity onPress={toggleFavorite} style={[styles.compactButton, { backgroundColor: isLiked ? "#F44336" : themeStyles.cardBackground.backgroundColor }]}>
+          <Icon name={isLiked ? "heart" : "heart-outline"} size={20} color={isLiked ? "#fff" : themeStyles.text.color} />
+          <Text style={[styles.buttonText, { color: isLiked ? "#fff" : themeStyles.text.color }]}>
             {isThaiLanguage ? "ถูกใจ" : "Like"}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={openReportModal} style={[styles.compactButton, { backgroundColor: isDarkTheme ? '#555' : '#eee' }]}>
-          <Icon name="alert-circle-outline" size={20} color="orange" />
-          <Text style={[styles.buttonText, { color: isDarkTheme ? "#fff" : "#777" }]}>
+        <TouchableOpacity onPress={openReportModal} style={[styles.compactButton, { backgroundColor: themeStyles.cardBackground.backgroundColor }]}>
+          <Icon name="alert-circle-outline" size={20} color={themeStyles.primaryColor} />
+          <Text style={[styles.buttonText, themeStyles.text]}>
             {isThaiLanguage ? "รายงาน" : "Report"}
           </Text>
         </TouchableOpacity>
@@ -204,38 +206,38 @@ export default function ArticleDetail({ route, navigation }) {
           backgroundColor="rgba(0, 0, 0, 0.9)"
         />
         <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
-          <Icon name="close" size={28} color={isDarkTheme ? '#fff' : '#000'} />
+          <Icon name="close" size={28} color={themeStyles.text.color} />
         </TouchableOpacity>
       </Modal>
 
       <Modal visible={reportModalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { backgroundColor: isDarkTheme ? "#333" : "#fff" }]}>
-            <Text style={[styles.modalTitle, { color: isDarkTheme ? "#fff" : "#000" }]}>
+          <View style={[styles.modalContent, themeStyles.cardBackground]}>
+            <Text style={[styles.modalTitle, themeStyles.text]}>
               {isThaiLanguage ? "เลือกเหตุผลในการรายงาน" : "Select Report Reasons"}
             </Text>
             {predefinedReasons.map((reason) => (
               <TouchableOpacity key={reason.id} style={styles.reasonButton} onPress={() => toggleReasonSelection(reason.text)}>
-                <Text style={[styles.reasonText, { color: isDarkTheme ? "#fff" : "#000" }]}>
+                <Text style={[styles.reasonText, themeStyles.text]}>
                   {isThaiLanguage ? translateReasonToThai(reason.text) : reason.text}
                 </Text>
                 {selectedReasons.includes(reason.text) && (
-                  <Icon name="check" size={20} color="green" />
+                  <Icon name="check" size={20} color={themeStyles.primaryColor} />
                 )}
               </TouchableOpacity>
             ))}
             <TextInput
-              style={[styles.customReasonInput, { backgroundColor: isDarkTheme ? "#444" : "#fff", color: isDarkTheme ? "#fff" : "#000" }]}
+              style={[styles.customReasonInput, themeStyles.cardBackground, themeStyles.text]}
               placeholder={isThaiLanguage ? "หรือใส่เหตุผลของคุณเอง..." : "Or enter your own reason..."}
               placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
               value={customReason}
               onChangeText={setCustomReason}
             />
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.submitButton} onPress={submitReport}>
+              <TouchableOpacity style={[styles.submitButton, { backgroundColor: "#00A047" }]} onPress={submitReport}>
                 <Text style={styles.submitButtonText}>{isThaiLanguage ? "ส่ง" : "Submit"}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.cancelButton} onPress={() => setReportModalVisible(false)}>
+              <TouchableOpacity style={[styles.cancelButton, { backgroundColor: "#f44336" }]} onPress={() => setReportModalVisible(false)}>
                 <Text style={styles.cancelButtonText}>{isThaiLanguage ? "ยกเลิก" : "Cancel"}</Text>
               </TouchableOpacity>
             </View>
@@ -357,7 +359,6 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   submitButton: {
-    backgroundColor: "#4CAF50",
     padding: 10,
     borderRadius: 5,
     flex: 1,
@@ -368,7 +369,6 @@ const styles = StyleSheet.create({
     color: "white",
   },
   cancelButton: {
-    backgroundColor: "#f44336",
     padding: 10,
     borderRadius: 5,
     flex: 1,
@@ -384,9 +384,28 @@ const styles = StyleSheet.create({
     right: 20,
     zIndex: 1,
   },
-  fullImage: {
-    width: '90%',
-    height: '70%',
-    borderRadius: 10,
+  light: {
+    background: {
+      backgroundColor: "#f0f0f0",
+    },
+    text: {
+      color: "#333333",
+    },
+    cardBackground: {
+      backgroundColor: "#ffffff",
+    },
+    primaryColor: "#ff7f50",
+  },
+  dark: {
+    background: {
+      backgroundColor: "#212121",
+    },
+    text: {
+      color: "#ffffff",
+    },
+    cardBackground: {
+      backgroundColor: "#2c2c2c",
+    },
+    primaryColor: "#ff7f50",
   },
 });

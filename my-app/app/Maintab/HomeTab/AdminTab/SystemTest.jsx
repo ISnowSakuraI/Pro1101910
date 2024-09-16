@@ -1,12 +1,28 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Alert, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import { auth, db, storage } from "../../../../firebase/Firebase";
-import { collection, getDocs, query, where, doc, setDoc, getDoc, deleteDoc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  doc,
+  setDoc,
+  getDoc,
+  deleteDoc,
+} from "firebase/firestore";
 import { ref, getDownloadURL } from "firebase/storage";
 import { useTheme } from "../../../ThemeContext";
 import { useLanguage } from "../../../LanguageContext";
-import Icon from 'react-native-vector-icons/MaterialIcons'; // Import the icon library
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 export default function SystemTest() {
   const [statuses, setStatuses] = useState({
@@ -19,6 +35,8 @@ export default function SystemTest() {
   const [loading, setLoading] = useState(false);
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
+
+  const themeStyles = isDarkTheme ? styles.dark : styles.light;
 
   const runTests = async () => {
     setLoading(true);
@@ -43,7 +61,9 @@ export default function SystemTest() {
         updateStatus("auth", "Success");
         Alert.alert(
           isThaiLanguage ? "การทดสอบสิทธิ์" : "Auth Test",
-          isThaiLanguage ? "การตรวจสอบสิทธิ์ทำงานได้ถูกต้อง" : "Authentication is working correctly"
+          isThaiLanguage
+            ? "การตรวจสอบสิทธิ์ทำงานได้ถูกต้อง"
+            : "Authentication is working correctly"
         );
       } else {
         updateStatus("auth", "No user logged in");
@@ -57,7 +77,11 @@ export default function SystemTest() {
       console.error("Auth Test Error:", error);
       Alert.alert(
         isThaiLanguage ? "การทดสอบสิทธิ์" : "Auth Test",
-        `${isThaiLanguage ? "การตรวจสอบสิทธิ์ล้มเหลว: " : "Authentication failed: "}${error.message}`
+        `${
+          isThaiLanguage
+            ? "การตรวจสอบสิทธิ์ล้มเหลว: "
+            : "Authentication failed: "
+        }${error.message}`
       );
     }
   };
@@ -70,13 +94,17 @@ export default function SystemTest() {
         updateStatus("db", "Success");
         Alert.alert(
           isThaiLanguage ? "การทดสอบฐานข้อมูล" : "Database Test",
-          isThaiLanguage ? "การเข้าถึงฐานข้อมูลทำงานได้ถูกต้อง" : "Database access is working correctly"
+          isThaiLanguage
+            ? "การเข้าถึงฐานข้อมูลทำงานได้ถูกต้อง"
+            : "Database access is working correctly"
         );
       } else {
         updateStatus("db", "No data found");
         Alert.alert(
           isThaiLanguage ? "การทดสอบฐานข้อมูล" : "Database Test",
-          isThaiLanguage ? "ไม่พบข้อมูลในฐานข้อมูล" : "No data found in the database"
+          isThaiLanguage
+            ? "ไม่พบข้อมูลในฐานข้อมูล"
+            : "No data found in the database"
         );
       }
     } catch (error) {
@@ -84,7 +112,11 @@ export default function SystemTest() {
       console.error("Database Test Error:", error);
       Alert.alert(
         isThaiLanguage ? "การทดสอบฐานข้อมูล" : "Database Test",
-        `${isThaiLanguage ? "การเข้าถึงฐานข้อมูลล้มเหลว: " : "Database access failed: "}${error.message}`
+        `${
+          isThaiLanguage
+            ? "การเข้าถึงฐานข้อมูลล้มเหลว: "
+            : "Database access failed: "
+        }${error.message}`
       );
     }
   };
@@ -96,14 +128,20 @@ export default function SystemTest() {
       updateStatus("storage", "Success");
       Alert.alert(
         isThaiLanguage ? "การทดสอบการจัดเก็บ" : "Storage Test",
-        isThaiLanguage ? "การเข้าถึงการจัดเก็บทำงานได้ถูกต้อง" : "Storage access is working correctly"
+        isThaiLanguage
+          ? "การเข้าถึงการจัดเก็บทำงานได้ถูกต้อง"
+          : "Storage access is working correctly"
       );
     } catch (error) {
       updateStatus("storage", "Failed");
       console.error("Storage Test Error:", error);
       Alert.alert(
         isThaiLanguage ? "การทดสอบการจัดเก็บ" : "Storage Test",
-        `${isThaiLanguage ? "การเข้าถึงการจัดเก็บล้มเหลว: " : "Storage access failed: "}${error.message}`
+        `${
+          isThaiLanguage
+            ? "การเข้าถึงการจัดเก็บล้มเหลว: "
+            : "Storage access failed: "
+        }${error.message}`
       );
     }
   };
@@ -115,13 +153,17 @@ export default function SystemTest() {
         updateStatus("network", "Success");
         Alert.alert(
           isThaiLanguage ? "การทดสอบการเชื่อมต่อ" : "Network Test",
-          isThaiLanguage ? "การเชื่อมต่ออินเทอร์เน็ตทำงานได้ถูกต้อง" : "Internet connection is working correctly"
+          isThaiLanguage
+            ? "การเชื่อมต่ออินเทอร์เน็ตทำงานได้ถูกต้อง"
+            : "Internet connection is working correctly"
         );
       } else {
         updateStatus("network", "Failed");
         Alert.alert(
           isThaiLanguage ? "การทดสอบการเชื่อมต่อ" : "Network Test",
-          isThaiLanguage ? "ไม่มีการเชื่อมต่ออินเทอร์เน็ต" : "No internet connection"
+          isThaiLanguage
+            ? "ไม่มีการเชื่อมต่ออินเทอร์เน็ต"
+            : "No internet connection"
         );
       }
     } catch (error) {
@@ -129,7 +171,9 @@ export default function SystemTest() {
       console.error("Network Test Error:", error);
       Alert.alert(
         isThaiLanguage ? "การทดสอบการเชื่อมต่อ" : "Network Test",
-        `${isThaiLanguage ? "การเชื่อมต่อล้มเหลว: " : "Network test failed: "}${error.message}`
+        `${
+          isThaiLanguage ? "การเชื่อมต่อล้มเหลว: " : "Network test failed: "
+        }${error.message}`
       );
     }
   };
@@ -144,22 +188,36 @@ export default function SystemTest() {
       if (docSnap.exists() && docSnap.data().message === testData.message) {
         updateStatus("dataExchange", "Success");
         Alert.alert(
-          isThaiLanguage ? "การทดสอบการแลกเปลี่ยนข้อมูล" : "Data Exchange Test",
-          isThaiLanguage ? "การส่งและรับข้อมูลทำงานได้ถูกต้อง" : "Data sending and receiving is working correctly"
+          isThaiLanguage
+            ? "การทดสอบการแลกเปลี่ยนข้อมูล"
+            : "Data Exchange Test",
+          isThaiLanguage
+            ? "การส่งและรับข้อมูลทำงานได้ถูกต้อง"
+            : "Data sending and receiving is working correctly"
         );
       } else {
         updateStatus("dataExchange", "Failed");
         Alert.alert(
-          isThaiLanguage ? "การทดสอบการแลกเปลี่ยนข้อมูล" : "Data Exchange Test",
-          isThaiLanguage ? "การส่งและรับข้อมูลล้มเหลว" : "Data sending and receiving failed"
+          isThaiLanguage
+            ? "การทดสอบการแลกเปลี่ยนข้อมูล"
+            : "Data Exchange Test",
+          isThaiLanguage
+            ? "การส่งและรับข้อมูลล้มเหลว"
+            : "Data sending and receiving failed"
         );
       }
     } catch (error) {
       updateStatus("dataExchange", "Failed");
       console.error("Data Exchange Test Error:", error);
       Alert.alert(
-        isThaiLanguage ? "การทดสอบการแลกเปลี่ยนข้อมูล" : "Data Exchange Test",
-        `${isThaiLanguage ? "การแลกเปลี่ยนข้อมูลล้มเหลว: " : "Data exchange failed: "}${error.message}`
+        isThaiLanguage
+          ? "การทดสอบการแลกเปลี่ยนข้อมูล"
+          : "Data Exchange Test",
+        `${
+          isThaiLanguage
+            ? "การแลกเปลี่ยนข้อมูลล้มเหลว: "
+            : "Data exchange failed: "
+        }${error.message}`
       );
     } finally {
       await deleteDoc(testDocRef);
@@ -167,8 +225,8 @@ export default function SystemTest() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: isDarkTheme ? "#333" : "#f0f0f0" }]}>
-      <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
+    <View style={[styles.container, themeStyles.background]}>
+      <Text style={[styles.header, themeStyles.text]}>
         {isThaiLanguage ? "การทดสอบระบบ" : "System Test"}
       </Text>
       <View style={styles.statusContainer}>
@@ -177,14 +235,20 @@ export default function SystemTest() {
             key={key}
             label={getLabel(key, isThaiLanguage)}
             status={status}
+            theme={themeStyles}
           />
         ))}
       </View>
       {loading ? (
-        <ActivityIndicator size="large" color="#007BFF" />
+        <ActivityIndicator size="large" color={themeStyles.primaryColor} />
       ) : (
-        <TouchableOpacity style={styles.button} onPress={runTests}>
-          <Text style={styles.buttonText}>{isThaiLanguage ? "เริ่มการทดสอบ" : "Start Test"}</Text>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: themeStyles.primaryColor }]}
+          onPress={runTests}
+        >
+          <Text style={styles.buttonText}>
+            {isThaiLanguage ? "เริ่มการทดสอบ" : "Start Test"}
+          </Text>
         </TouchableOpacity>
       )}
     </View>
@@ -197,16 +261,25 @@ const getLabel = (key, isThaiLanguage) => {
     db: isThaiLanguage ? "สถานะฐานข้อมูล" : "Database Status",
     storage: isThaiLanguage ? "สถานะการจัดเก็บ" : "Storage Status",
     network: isThaiLanguage ? "สถานะการเชื่อมต่อ" : "Network Status",
-    dataExchange: isThaiLanguage ? "สถานะการแลกเปลี่ยนข้อมูล" : "Data Exchange Status",
+    dataExchange: isThaiLanguage
+      ? "สถานะการแลกเปลี่ยนข้อมูล"
+      : "Data Exchange Status",
   };
   return labels[key];
 };
 
-const StatusItem = ({ label, status }) => (
-  <View style={styles.statusItem}>
-    <Text style={styles.statusLabel}>{label}:</Text>
-    <Icon name={getIconName(status)} size={24} color={getStatusColor(status)} style={styles.statusIcon} />
-    <Text style={[styles.statusValue, { color: getStatusColor(status) }]}>{status}</Text>
+const StatusItem = ({ label, status, theme }) => (
+  <View style={[styles.statusItem, theme.cardBackground]}>
+    <Text style={[styles.statusLabel, theme.text]}>{label}:</Text>
+    <Icon
+      name={getIconName(status)}
+      size={24}
+      color={getStatusColor(status)}
+      style={styles.statusIcon}
+    />
+    <Text style={[styles.statusValue, { color: getStatusColor(status) }]}>
+      {status}
+    </Text>
   </View>
 );
 
@@ -256,7 +329,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: "#fff",
     borderRadius: 10,
     marginBottom: 10,
     shadowColor: "#000",
@@ -276,7 +348,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   button: {
-    backgroundColor: "#007BFF",
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 10,
@@ -290,5 +361,29 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  light: {
+    background: {
+      backgroundColor: "#f0f0f0",
+    },
+    text: {
+      color: "#333333",
+    },
+    cardBackground: {
+      backgroundColor: "#ffffff",
+    },
+    primaryColor: "#ff7f50",
+  },
+  dark: {
+    background: {
+      backgroundColor: "#212121",
+    },
+    text: {
+      color: "#ffffff",
+    },
+    cardBackground: {
+      backgroundColor: "#2c2c2c",
+    },
+    primaryColor: "#ff7f50",
   },
 });

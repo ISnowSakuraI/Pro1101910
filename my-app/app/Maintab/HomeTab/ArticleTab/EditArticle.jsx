@@ -136,17 +136,17 @@ export default function EditArticle({ route, navigation }) {
     setModalVisible(true);
   };
 
+  const themeStyles = isDarkTheme ? styles.dark : styles.light;
+
   return (
-    <ScrollView
-      style={[
-        styles.container,
-        { backgroundColor: isDarkTheme ? "#333" : "#f9f9f9" },
-      ]}
-    >
-      <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
+    <ScrollView style={[styles.container, themeStyles.background]}>
+      <Text style={[styles.header, themeStyles.text]}>
         {isThaiLanguage ? "แก้ไขบทความ" : "Edit Article"}
       </Text>
-      <TouchableOpacity onPress={pickImage} style={styles.addImageButton}>
+      <TouchableOpacity
+        onPress={pickImage}
+        style={[styles.addImageButton, { backgroundColor: "#008AFF" }]}
+      >
         <Icon name="add-photo-alternate" size={24} color="white" />
         <Text style={styles.addImageText}>
           {isThaiLanguage ? "เพิ่มรูปภาพ" : "Add Images"}
@@ -170,10 +170,8 @@ export default function EditArticle({ route, navigation }) {
       <TextInput
         style={[
           styles.titleInput,
-          {
-            backgroundColor: isDarkTheme ? "#444" : "#fff",
-            color: isDarkTheme ? "#fff" : "#000",
-          },
+          themeStyles.cardBackground,
+          themeStyles.text,
         ]}
         value={title}
         onChangeText={setTitle}
@@ -184,10 +182,8 @@ export default function EditArticle({ route, navigation }) {
       <TextInput
         style={[
           styles.descriptionInput,
-          {
-            backgroundColor: isDarkTheme ? "#444" : "#fff",
-            color: isDarkTheme ? "#fff" : "#000",
-          },
+          themeStyles.cardBackground,
+          themeStyles.text,
         ]}
         value={description}
         onChangeText={setDescription}
@@ -196,7 +192,7 @@ export default function EditArticle({ route, navigation }) {
         multiline
       />
       <TouchableOpacity
-        style={styles.saveButton}
+        style={[styles.saveButton, { backgroundColor: "#00A047" }]}
         onPress={handleUpdateArticle}
         disabled={uploading}
       >
@@ -204,7 +200,7 @@ export default function EditArticle({ route, navigation }) {
           <ActivityIndicator size="small" color="#fff" />
         ) : (
           <Text style={styles.saveButtonText}>
-            {isThaiLanguage ? "บันทึก" : "SAVE"}
+            {isThaiLanguage ? "บันทึก" : "Save"}
           </Text>
         )}
       </TouchableOpacity>
@@ -286,7 +282,6 @@ const styles = StyleSheet.create({
   },
   addImageButton: {
     flexDirection: "row",
-    backgroundColor: "#2196F3",
     padding: 10,
     borderRadius: 5,
     alignItems: "center",
@@ -299,7 +294,6 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   saveButton: {
-    backgroundColor: "#4CAF50",
     padding: 15,
     borderRadius: 5,
     alignItems: "center",
@@ -325,5 +319,33 @@ const styles = StyleSheet.create({
     width: "90%",
     height: "70%",
     borderRadius: 10,
+  },
+  light: {
+    background: {
+      backgroundColor: "#f0f0f0",
+    },
+    text: {
+      color: "#333333",
+    },
+    cardBackground: {
+      backgroundColor: "#ffffff",
+    },
+    primaryBackground: {
+      backgroundColor: "#ff7f50",
+    },
+  },
+  dark: {
+    background: {
+      backgroundColor: "#212121",
+    },
+    text: {
+      color: "#ffffff",
+    },
+    cardBackground: {
+      backgroundColor: "#2c2c2c",
+    },
+    primaryBackground: {
+      backgroundColor: "#ff7f50",
+    },
   },
 });

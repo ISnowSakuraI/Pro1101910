@@ -32,6 +32,8 @@ export default function EditProfile({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
+  const theme = isDarkTheme ? styles.dark : styles.light;
+
   const fetchUserData = useCallback(async (currentUser) => {
     if (currentUser) {
       setUser(currentUser);
@@ -129,29 +131,17 @@ export default function EditProfile({ navigation }) {
 
   return (
     <Provider>
-      <View style={[{ backgroundColor: isDarkTheme ? "#222" : "#f0f0f0" }]}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Icon
-            name="arrow-back"
-            size={28}
-            color={isDarkTheme ? "#fff" : "#000"}
-          />
-        </TouchableOpacity>
-        <ScrollView
-          style={[{ backgroundColor: isDarkTheme ? "#222" : "#f0f0f0" }]}
-        >
+      <View style={{ backgroundColor: theme.backgroundColor }}>
+        <ScrollView style={{ backgroundColor: theme.backgroundColor }}>
           <View
             style={[
               styles.container,
-              { backgroundColor: isDarkTheme ? "#222" : "#f0f0f0" },
+              { backgroundColor: theme.backgroundColor },
             ]}
           >
             <TouchableOpacity onPress={pickImage} style={styles.imageWrapper}>
               {loading ? (
-                <ActivityIndicator size="large" color="#ff7f50" />
+                <ActivityIndicator size="large" color={theme.primaryColor} />
               ) : (
                 <Image
                   style={styles.profileImage}
@@ -160,57 +150,46 @@ export default function EditProfile({ navigation }) {
                   }}
                 />
               )}
-              <View style={styles.cameraIcon}>
+              <View
+                style={[
+                  styles.cameraIcon,
+                  { backgroundColor: theme.primaryColor },
+                ]}
+              >
                 <Icon name="camera-alt" size={24} color="#fff" />
               </View>
             </TouchableOpacity>
             <View
               style={[
                 styles.infoContainer,
-                { backgroundColor: isDarkTheme ? "#333" : "#fff" },
+                { backgroundColor: theme.cardBackgroundColor },
               ]}
             >
-              <Icon name="person" size={20} color="#ff7f50" />
-              <Text
-                style={[styles.label, { color: isDarkTheme ? "#fff" : "#333" }]}
-              >
+              <Icon name="person" size={20} color={theme.primaryColor} />
+              <Text style={[styles.label, { color: theme.textColor }]}>
                 {isThaiLanguage ? "ชื่อผู้ใช้" : "Username"}
               </Text>
-              <Text
-                style={[
-                  styles.infoText,
-                  { color: isDarkTheme ? "#ccc" : "#555" },
-                ]}
-              >
+              <Text style={[styles.infoText, { color: theme.textColor }]}>
                 {userData.username || "N/A"}
               </Text>
             </View>
             <View
               style={[
                 styles.infoContainer,
-                { backgroundColor: isDarkTheme ? "#333" : "#fff" },
+                { backgroundColor: theme.cardBackgroundColor },
               ]}
             >
-              <Icon name="email" size={20} color="#ff7f50" />
-              <Text
-                style={[styles.label, { color: isDarkTheme ? "#fff" : "#333" }]}
-              >
+              <Icon name="email" size={20} color={theme.primaryColor} />
+              <Text style={[styles.label, { color: theme.textColor }]}>
                 {isThaiLanguage ? "อีเมล" : "Email"}
               </Text>
-              <Text
-                style={[
-                  styles.infoText,
-                  { color: isDarkTheme ? "#ccc" : "#555" },
-                ]}
-              >
+              <Text style={[styles.infoText, { color: theme.textColor }]}>
                 {userData.email || "N/A"}
               </Text>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text
-                style={[styles.label, { color: isDarkTheme ? "#fff" : "#333" }]}
-              >
+              <Text style={[styles.label, { color: theme.textColor }]}>
                 {isThaiLanguage ? "เพศ" : "Gender"}
               </Text>
               <Menu
@@ -222,14 +201,11 @@ export default function EditProfile({ navigation }) {
                     mode="outlined"
                     style={[
                       styles.dropdownButton,
-                      { backgroundColor: isDarkTheme ? "#333" : "#fff" },
+                      { backgroundColor: theme.cardBackgroundColor },
                     ]}
                   >
                     <Text
-                      style={[
-                        styles.dropdownText,
-                        { color: isDarkTheme ? "#fff" : "#333" },
-                      ]}
+                      style={[styles.dropdownText, { color: theme.textColor }]}
                     >
                       {userData.gender ||
                         (isThaiLanguage ? "เลือกเพศ" : "Select Gender")}
@@ -263,9 +239,7 @@ export default function EditProfile({ navigation }) {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text
-                style={[styles.label, { color: isDarkTheme ? "#fff" : "#333" }]}
-              >
+              <Text style={[styles.label, { color: theme.textColor }]}>
                 {isThaiLanguage ? "วันเกิด" : "Birthday"}
               </Text>
               <TouchableOpacity onPress={() => setShowDatePicker(true)}>
@@ -273,8 +247,8 @@ export default function EditProfile({ navigation }) {
                   style={[
                     styles.input,
                     {
-                      backgroundColor: isDarkTheme ? "#333" : "#fff",
-                      color: isDarkTheme ? "#fff" : "#000",
+                      backgroundColor: theme.cardBackgroundColor,
+                      color: theme.textColor,
                     },
                   ]}
                   placeholder={
@@ -282,7 +256,7 @@ export default function EditProfile({ navigation }) {
                       ? "วันเกิด (YYYY-MM-DD)"
                       : "Birthday (YYYY-MM-DD)"
                   }
-                  placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+                  placeholderTextColor={theme.textColor}
                   value={userData.birthday || ""}
                   editable={false}
                 />
@@ -298,24 +272,19 @@ export default function EditProfile({ navigation }) {
             )}
             <View style={styles.inputRow}>
               <View style={styles.inputGroup2}>
-                <Text
-                  style={[
-                    styles.label,
-                    { color: isDarkTheme ? "#fff" : "#333" },
-                  ]}
-                >
+                <Text style={[styles.label, { color: theme.textColor }]}>
                   {isThaiLanguage ? "น้ำหนัก (กก.)" : "Weight (kg)"}
                 </Text>
                 <TextInput
                   style={[
                     styles.smallInput,
                     {
-                      backgroundColor: isDarkTheme ? "#333" : "#fff",
-                      color: isDarkTheme ? "#fff" : "#000",
+                      backgroundColor: theme.cardBackgroundColor,
+                      color: theme.textColor,
                     },
                   ]}
                   placeholder={isThaiLanguage ? "น้ำหนัก" : "Weight"}
-                  placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+                  placeholderTextColor={theme.textColor}
                   value={userData.weight || ""}
                   onChangeText={(text) =>
                     setUserData({ ...userData, weight: text })
@@ -324,24 +293,19 @@ export default function EditProfile({ navigation }) {
                 />
               </View>
               <View style={styles.inputGroup2}>
-                <Text
-                  style={[
-                    styles.label,
-                    { color: isDarkTheme ? "#fff" : "#333" },
-                  ]}
-                >
+                <Text style={[styles.label, { color: theme.textColor }]}>
                   {isThaiLanguage ? "ส่วนสูง (ซม.)" : "Height (cm)"}
                 </Text>
                 <TextInput
                   style={[
                     styles.smallInput,
                     {
-                      backgroundColor: isDarkTheme ? "#333" : "#fff",
-                      color: isDarkTheme ? "#fff" : "#000",
+                      backgroundColor: theme.cardBackgroundColor,
+                      color: theme.textColor,
                     },
                   ]}
                   placeholder={isThaiLanguage ? "ส่วนสูง" : "Height"}
-                  placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+                  placeholderTextColor={theme.textColor}
                   value={userData.height || ""}
                   onChangeText={(text) =>
                     setUserData({ ...userData, height: text })
@@ -350,7 +314,10 @@ export default function EditProfile({ navigation }) {
                 />
               </View>
             </View>
-            <TouchableOpacity style={styles.button} onPress={handleSaveProfile}>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "#00A047" }]}
+              onPress={handleSaveProfile}
+            >
               {loading ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
@@ -359,10 +326,17 @@ export default function EditProfile({ navigation }) {
                 </Text>
               )}
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleLogout}>
-              <Text style={styles.backText}>
-                {isThaiLanguage ? "ออกจากระบบ" : "Logout"}
-              </Text>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: "#F44336" }]}
+              onPress={handleLogout}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>
+                  {isThaiLanguage ? "ออกจากระบบ" : "Logout"}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -393,7 +367,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 0,
     right: 0,
-    backgroundColor: "#ff7f50",
     borderRadius: 15,
     padding: 5,
   },
@@ -464,10 +437,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     fontSize: 14,
   },
+  inputGroup2: {
+    width: "48%",
+  },
   button: {
     width: "90%",
     height: 50,
-    backgroundColor: "#ff7f50",
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
@@ -484,12 +459,24 @@ const styles = StyleSheet.create({
     fontFamily: "NotoSansThai-Regular",
   },
   backText: {
-    color: "#ff7f50",
     fontSize: 16,
     fontFamily: "NotoSansThai-Regular",
     marginBottom: 15,
   },
-  backButton: {
-    marginBottom: 10,
+  light: {
+    primaryColor: "#ff7f50",
+    secondaryColor: "#ffa07a",
+    backgroundColor: "#f0f0f0",
+    textColor: "#333333",
+    cardBackgroundColor: "#ffffff",
+    borderColor: "#ddd",
+  },
+  dark: {
+    primaryColor: "#ff7f50",
+    secondaryColor: "#ffa07a",
+    backgroundColor: "#212121",
+    textColor: "#ffffff",
+    cardBackgroundColor: "#2c2c2c",
+    borderColor: "#444",
   },
 });

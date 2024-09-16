@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -11,10 +11,11 @@ import * as Location from "expo-location";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db, auth } from "../../../firebase/Firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, doc, getDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { useTheme } from "../../ThemeContext";
 import { useLanguage } from "../../LanguageContext";
 import { useFocusEffect } from "@react-navigation/native";
+import { getDistance } from "geolib";
 
 export default function ExerciseTracker({ navigation }) {
   const [location, setLocation] = useState(null);
@@ -24,20 +25,48 @@ export default function ExerciseTracker({ navigation }) {
   const [calories, setCalories] = useState(0);
   const [tracking, setTracking] = useState(false);
   const [mode, setMode] = useState("walking");
+  const [userWeight, setUserWeight] = useState(70); // Default weight
   const mapRef = useRef(null);
   const startTimeRef = useRef(null);
   const locationSubscription = useRef(null);
+  const intervalRef = useRef(null);
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
+  const theme = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
+  const iconColor = useMemo(() => (isDarkTheme ? "#ffffff" : "#333333"), [isDarkTheme]);
+
   useEffect(() => {
     (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
+      const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        console.log("Permission to access location was denied");
         return;
       }
     })();
+
+    // Fetch user weight from Firebase
+    const fetchUserWeight = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDoc(doc(db, "Users", user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUserWeight(parseFloat(userData.weight)); // Set user weight
+        }
+      }
+    };
+
+    fetchUserWeight();
+
+    // Cleanup function to stop tracking when component unmounts
+    return () => {
+      if (locationSubscription.current) {
+        locationSubscription.current.remove();
+      }
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, []);
 
   useFocusEffect(
@@ -53,12 +82,15 @@ export default function ExerciseTracker({ navigation }) {
     setTime(0);
     setCalories(0);
     setTracking(false);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
   }, []);
 
   const startTracking = useCallback(async () => {
+    resetTracking();
     startTimeRef.current = new Date();
     setTracking(true);
-    resetTracking();
 
     if (locationSubscription.current) {
       locationSubscription.current.remove();
@@ -71,18 +103,24 @@ export default function ExerciseTracker({ navigation }) {
           setLocation(newLocation.coords);
           setRoute((prevRoute) => [...prevRoute, newLocation.coords]);
           calculateDistance(newLocation.coords);
-          updateTime();
           centerMap(newLocation.coords);
         }
       }
     );
-  }, [calculateDistance, updateTime, centerMap, resetTracking]);
+
+    intervalRef.current = setInterval(() => {
+      updateTime();
+    }, 1000);
+  }, [calculateDistance, centerMap, resetTracking]);
 
   const stopTracking = useCallback(async () => {
     setTracking(false);
     if (locationSubscription.current) {
       locationSubscription.current.remove();
       locationSubscription.current = null;
+    }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
     }
     const user = auth.currentUser;
     if (user) {
@@ -113,12 +151,10 @@ export default function ExerciseTracker({ navigation }) {
     (newCoords) => {
       if (route.length > 0) {
         const lastCoords = route[route.length - 1];
-        const dist = getDistanceFromLatLonInKm(
-          lastCoords.latitude,
-          lastCoords.longitude,
-          newCoords.latitude,
-          newCoords.longitude
-        );
+        const dist = getDistance(
+          { latitude: lastCoords.latitude, longitude: lastCoords.longitude },
+          { latitude: newCoords.latitude, longitude: newCoords.longitude }
+        ) / 1000; // Convert meters to kilometers
         setDistance((prevDistance) => prevDistance + dist);
         updateCalories(dist);
       }
@@ -128,38 +164,22 @@ export default function ExerciseTracker({ navigation }) {
 
   const updateCalories = useCallback(
     (dist) => {
-      const caloriesPerKm =
-        {
-          walking: 50,
-          running: 100,
-          cycling: 75,
-        }[mode] || 50;
-      setCalories((prevCalories) => prevCalories + dist * caloriesPerKm);
+      const caloriesPerKmPerKg = {
+        walking: 0.035,
+        running: 0.075,
+        cycling: 0.045,
+      }[mode] || 0.035;
+      const caloriesBurned = dist * userWeight * caloriesPerKmPerKg;
+      setCalories((prevCalories) => prevCalories + caloriesBurned);
     },
-    [mode]
+    [mode, userWeight]
   );
 
   const updateTime = useCallback(() => {
     const now = new Date();
-    const elapsedTime = Math.floor((now - startTimeRef.current) / 60000);
+    const elapsedTime = Math.floor((now - startTimeRef.current) / 1000);
     setTime(elapsedTime);
   }, []);
-
-  const getDistanceFromLatLonInKm = (lat1, lon1, lat2, lon2) => {
-    const R = 6371;
-    const dLat = deg2rad(lat2 - lat1);
-    const dLon = deg2rad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(deg2rad(lat1)) *
-        Math.cos(deg2rad(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  };
-
-  const deg2rad = (deg) => deg * (Math.PI / 180);
 
   const centerMap = useCallback((coords) => {
     if (mapRef.current && coords) {
@@ -176,47 +196,23 @@ export default function ExerciseTracker({ navigation }) {
   }, []);
 
   return (
-    <View
-      style={{ backgroundColor: isDarkTheme ? "#1e1e1e" : "#f5f5f5", flex: 1 }}
-    >
+    <View style={[{ flex: 1 }, theme.background]}>
       <FlatList
         data={[]}
         ListHeaderComponent={
           <>
-            <Text
-              style={[styles.header, { color: isDarkTheme ? "#fff" : "#000" }]}
-            >
+            <Text style={[styles.header, theme.text]}>
               {isThaiLanguage ? "ตัวติดตามการออกกำลังกาย" : "Exercise Tracker"}
             </Text>
-            <View
-              style={[
-                styles.statsContainer,
-                { backgroundColor: isDarkTheme ? "#2c2c2c" : "#fff" },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.statText,
-                  { color: isDarkTheme ? "#fff" : "#000" },
-                ]}
-              >
+            <View style={[styles.statsContainer, theme.cardBackground]}>
+              <Text style={[styles.statText, theme.text]}>
                 {isThaiLanguage ? "ระยะทาง" : "Distance"}: {distance.toFixed(2)}{" "}
                 Km
               </Text>
-              <Text
-                style={[
-                  styles.statText,
-                  { color: isDarkTheme ? "#fff" : "#000" },
-                ]}
-              >
-                {isThaiLanguage ? "เวลา" : "Time"}: {time} min
+              <Text style={[styles.statText, theme.text]}>
+                {isThaiLanguage ? "เวลา" : "Time"}: {time} sec
               </Text>
-              <Text
-                style={[
-                  styles.statText,
-                  { color: isDarkTheme ? "#fff" : "#000" },
-                ]}
-              >
+              <Text style={[styles.statText, theme.text]}>
                 {isThaiLanguage ? "แคลอรี่" : "Calories"}: {calories.toFixed(0)}{" "}
                 cal
               </Text>
@@ -225,11 +221,11 @@ export default function ExerciseTracker({ navigation }) {
               <Polyline
                 coordinates={route}
                 strokeWidth={5}
-                strokeColor="green"
+                strokeColor={theme.primaryColor}
               />
               {location && (
                 <Marker coordinate={location}>
-                  <Icon name="person-pin-circle" size={40} color="red" />
+                  <Icon name="person-pin-circle" size={40} color={theme.secondaryColor} />
                 </Marker>
               )}
             </MapView>
@@ -246,23 +242,12 @@ export default function ExerciseTracker({ navigation }) {
                         ? "directions-walk"
                         : activity === "running"
                         ? "directions-run"
-                        : "directions-bike" // Corrected icon name
+                        : "directions-bike"
                     }
                     size={24}
-                    color={
-                      mode === activity
-                        ? "#FF5722"
-                        : isDarkTheme
-                        ? "#fff"
-                        : "#000"
-                    }
+                    color={mode === activity ? theme.primaryColor : iconColor}
                   />
-                  <Text
-                    style={[
-                      styles.modeText,
-                      { color: isDarkTheme ? "#fff" : "#000" },
-                    ]}
-                  >
+                  <Text style={[styles.modeText, theme.text]}>
                     {isThaiLanguage
                       ? activity === "walking"
                         ? "เดิน"
@@ -275,16 +260,22 @@ export default function ExerciseTracker({ navigation }) {
               ))}
             </View>
             <TouchableOpacity
-              style={styles.locateButton}
+              style={[
+                styles.locateButton,
+                { backgroundColor: "#008AFF" },
+              ]}
               onPress={() => centerMap(location)}
             >
-              <Icon name="my-location" size={24} color="white" />
+              <Icon name="my-location" size={24} color={"#ffffff"} />
               <Text style={styles.locateButtonText}>
                 {isThaiLanguage ? "ค้นหาฉัน" : "Locate Me"}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.startButton}
+              style={[
+                styles.startButton,
+                { backgroundColor: tracking ? "#F44336" : "#00A047" },
+              ]}
               onPress={tracking ? stopTracking : startTracking}
             >
               <Icon
@@ -355,7 +346,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 12,
-    backgroundColor: "#2196F3",
     borderRadius: 8,
     margin: 10,
     shadowColor: "#000",
@@ -375,7 +365,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 12,
-    backgroundColor: "#FF5722",
     borderRadius: 8,
     margin: 10,
     shadowColor: "#000",
@@ -389,5 +378,31 @@ const styles = StyleSheet.create({
     fontFamily: "NotoSansThai-Regular",
     marginLeft: 5,
     fontSize: 16,
+  },
+  light: {
+    primaryColor: "#ff7f50",
+    secondaryColor: "#ffa07a",
+    background: {
+      backgroundColor: "#f0f0f0",
+    },
+    text: {
+      color: "#333333",
+    },
+    cardBackground: {
+      backgroundColor: "#ffffff",
+    },
+  },
+  dark: {
+    primaryColor: "#ff7f50",
+    secondaryColor: "#ffa07a",
+    background: {
+      backgroundColor: "#212121",
+    },
+    text: {
+      color: "#ffffff",
+    },
+    cardBackground: {
+      backgroundColor: "#2c2c2c",
+    },
   },
 });

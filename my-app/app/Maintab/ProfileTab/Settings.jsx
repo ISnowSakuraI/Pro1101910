@@ -18,6 +18,8 @@ export default function Settings({ navigation }) {
   const { isThaiLanguage, toggleLanguage } = useLanguage();
   const animatedValue = useRef(new Animated.Value(0)).current;
 
+  const theme = isDarkTheme ? styles.dark : styles.light;
+
   const handleBackPress = useCallback(() => {
     Animated.timing(animatedValue, {
       toValue: 1,
@@ -35,53 +37,34 @@ export default function Settings({ navigation }) {
   }, []);
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: isDarkTheme ? "#121212" : "#f7f7f7" },
-      ]}
-    >
+    <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
       <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-        <Icon
-          name="arrow-back"
-          size={28}
-          color={isDarkTheme ? "#ffffff" : "#333333"}
-        />
+        <Icon name="arrow-back" size={28} color={theme.textColor} />
       </TouchableOpacity>
-      <Text style={[styles.header, { color: isDarkTheme ? "#ffffff" : "#333333" }]}>
+      <Text style={[styles.header, { color: theme.textColor }]}>
         {isThaiLanguage ? "การตั้งค่า" : "Settings"}
       </Text>
-      <View
-        style={[
-          styles.setting,
-          { backgroundColor: isDarkTheme ? "#1f1f1f" : "#ffffff" },
-        ]}
-      >
-        <Text style={[styles.label, { color: isDarkTheme ? "#ffffff" : "#333333" }]}>
+      <View style={[styles.setting, { backgroundColor: theme.cardBackgroundColor }]}>
+        <Text style={[styles.label, { color: theme.textColor }]}>
           {isThaiLanguage ? "ธีมมืด" : "Dark Theme"}
         </Text>
         <Switch
           value={isDarkTheme}
           onValueChange={() => handleToggleSwitch(toggleTheme)}
-          trackColor={{ false: "#767577", true: "#81b0ff" }}
-          thumbColor={isDarkTheme ? "#f5dd4b" : "#f4f3f4"}
+          trackColor={{ false: "#767577", true: theme.secondaryColor }}
+          thumbColor={isDarkTheme ? theme.primaryColor : "#f4f3f4"}
           style={styles.switch}
         />
       </View>
-      <View
-        style={[
-          styles.setting,
-          { backgroundColor: isDarkTheme ? "#1f1f1f" : "#ffffff" },
-        ]}
-      >
-        <Text style={[styles.label, { color: isDarkTheme ? "#ffffff" : "#333333" }]}>
+      <View style={[styles.setting, { backgroundColor: theme.cardBackgroundColor }]}>
+        <Text style={[styles.label, { color: theme.textColor }]}>
           {isThaiLanguage ? "ภาษาไทย" : "Thai Language"}
         </Text>
         <Switch
           value={isThaiLanguage}
           onValueChange={() => handleToggleSwitch(toggleLanguage)}
-          trackColor={{ false: "#767577", true: "#81b0ff" }}
-          thumbColor={isThaiLanguage ? "#f5dd4b" : "#f4f3f4"}
+          trackColor={{ false: "#767577", true: theme.secondaryColor }}
+          thumbColor={isThaiLanguage ? theme.primaryColor : "#f4f3f4"}
           style={styles.switch}
         />
       </View>
@@ -123,5 +106,21 @@ const styles = StyleSheet.create({
   },
   switch: {
     transform: [{ scale: 1.1 }],
+  },
+  light: {
+    primaryColor: "#ff7f50", // Coral
+    secondaryColor: "#ffa07a", // Light Coral
+    backgroundColor: "#f0f0f0", // Light Gray for a softer white
+    textColor: "#333333", // Dark Gray for text
+    cardBackgroundColor: "#ffffff", // Pure White for cards
+    borderColor: "#ddd", // Light Gray for borders
+  },
+  dark: {
+    primaryColor: "#ff7f50", // Coral
+    secondaryColor: "#ffa07a", // Light Coral
+    backgroundColor: "#212121", // Dark Gray for a softer black
+    textColor: "#ffffff", // White for text
+    cardBackgroundColor: "#2c2c2c", // Darker Gray for cards
+    borderColor: "#444", // Dark Gray for borders
   },
 });

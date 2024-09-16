@@ -24,6 +24,8 @@ export default function Login({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
+  const themeStyles = isDarkTheme ? styles.dark : styles.light;
+
   const handleLogin = useCallback(async () => {
     if (!input || !password) {
       Alert.alert(
@@ -72,31 +74,20 @@ export default function Login({ navigation }) {
   }, [input, password, isThaiLanguage, navigation]);
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: isDarkTheme ? "#1a1a1a" : "#f0f0f0" },
-      ]}
-    >
+    <View style={[styles.container, themeStyles.background]}>
       <StatusBar
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
-        backgroundColor={isDarkTheme ? "#1a1a1a" : "#f0f0f0"}
+        backgroundColor={themeStyles.background.backgroundColor}
       />
       <TouchableOpacity
         style={styles.settingsIcon}
         onPress={() => navigation.navigate("Settings")}
       >
-        <Icon name="settings" size={24} color={isDarkTheme ? "#fff" : "#333"} />
+        <Icon name="settings" size={24} color={themeStyles.text.color} />
       </TouchableOpacity>
       <Image style={styles.logo} source={logo} />
       <TextInput
-        style={[
-          styles.input,
-          {
-            backgroundColor: isDarkTheme ? "#333" : "#fff",
-            color: isDarkTheme ? "#fff" : "#000",
-          },
-        ]}
+        style={[styles.input, themeStyles.inputBackground]}
         placeholder={isThaiLanguage ? "อีเมล / ชื่อผู้ใช้" : "Email / Username"}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={input}
@@ -106,13 +97,7 @@ export default function Login({ navigation }) {
       />
       <View style={styles.passwordContainer}>
         <TextInput
-          style={[
-            styles.passwordInput,
-            {
-              backgroundColor: isDarkTheme ? "#333" : "#fff",
-              color: isDarkTheme ? "#fff" : "#000",
-            },
-          ]}
+          style={[styles.passwordInput, themeStyles.inputBackground]}
           placeholder={isThaiLanguage ? "รหัสผ่าน" : "Password"}
           placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
           secureTextEntry={!showPassword}
@@ -128,7 +113,7 @@ export default function Login({ navigation }) {
           <Icon
             name={showPassword ? "visibility" : "visibility-off"}
             size={24}
-            color={isDarkTheme ? "#fff" : "#aaa"}
+            color={themeStyles.text.color}
           />
         </TouchableOpacity>
       </View>
@@ -176,7 +161,7 @@ const styles = StyleSheet.create({
   input: {
     width: "100%",
     height: 50,
-    borderRadius: 12, // Increased for a more modern look
+    borderRadius: 12,
     paddingHorizontal: 15,
     marginBottom: 15,
     borderColor: "#ddd",
@@ -192,7 +177,7 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     height: 50,
-    borderRadius: 12, // Increased for a more modern look
+    borderRadius: 12,
     paddingHorizontal: 15,
     borderColor: "#ddd",
     borderWidth: 1,
@@ -209,7 +194,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 50,
     backgroundColor: "#ff7f50",
-    borderRadius: 12, // Increased for a more modern look
+    borderRadius: 12,
     marginBottom: 15,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -235,5 +220,29 @@ const styles = StyleSheet.create({
   registerHighlight: {
     color: "#ff7f50",
     fontFamily: "NotoSansThai-Regular",
+  },
+  light: {
+    background: {
+      backgroundColor: "#f0f0f0",
+    },
+    text: {
+      color: "#333333",
+    },
+    inputBackground: {
+      backgroundColor: "#ffffff",
+      color: "#333333",
+    },
+  },
+  dark: {
+    background: {
+      backgroundColor: "#212121",
+    },
+    text: {
+      color: "#ffffff",
+    },
+    inputBackground: {
+      backgroundColor: "#2c2c2c",
+      color: "#ffffff",
+    },
   },
 });
