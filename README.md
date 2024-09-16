@@ -7,8 +7,8 @@ Follow these steps to set up the project on your local machine.
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) installed
-- Expo CLI installed globally
-- Firebase account and project set up 
+- Expo installed
+- [Firebase](https://firebase.google.com/) account and project set up 
 
 ### Steps
 
@@ -55,8 +55,8 @@ npx expo
 ### ข้อกำหนดเบื้องต้น
 
 - ติดตั้ง [Node.js](https://nodejs.org/)
-- ติดตั้ง Expo CLI ทั่วระบบ (Global)
-- มีบัญชีและโปรเจกต์ Firebase ที่ตั้งค่าไว้แล้ว
+- ติดตั้ง Expo
+- มีบัญชีและโปรเจกต์ [Firebase](https://firebase.google.com/)
 
 ### ขั้นตอน
 
