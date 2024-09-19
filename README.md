@@ -7,44 +7,53 @@ Follow these steps to set up the project on your local machine.
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) installed
-- Expo installed
-- [Firebase](https://firebase.google.com/) account and project set up 
+- Expo CLI installed globally (`npm install -g expo-cli`)
+- A [Firebase](https://firebase.google.com/) account and project set up
 
 ### Steps
 
 1. **Clone the Repository**
 
-```
-bash
-git clone https://github.com/ISnowSakuraI/Pro1101910.git
-cd Pro1101910
-```
+   Open your terminal and run the following commands:
+
+   ```bash
+   git clone https://github.com/ISnowSakuraI/Pro1101910.git
+   cd Pro1101910
+   ```
 
 2. **Install Dependencies**
 
    Run the following command to install the necessary dependencies:
 
-```
-bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
 3. **Set Up Firebase**
 
    - Create a Firebase project in the [Firebase Console](https://console.firebase.google.com/).
-   - Enable Firestore, Storage and Authentication.
+   - Enable Firestore, Storage, and Authentication in your Firebase project.
    - Copy your Firebase configuration and replace the existing configuration in `firebase/Firebase.js`.
 
-4. **Run the Project**
+4. **Prebuild the Project**
+
+   Run the following command to prebuild the project:
+
+   ```bash
+   npm run prebuild
+   ```
+
+5. **Run the Project**
 
    Start the Expo development server:
 
-```
-bash
-npx expo 
-```
+   ```bash
+   npx expo start
+   ```
 
    Use the Expo Go app on your mobile device to scan the QR code and run the app.
+
+---
 
 # Pro1101910
 
@@ -55,27 +64,27 @@ npx expo
 ### ข้อกำหนดเบื้องต้น
 
 - ติดตั้ง [Node.js](https://nodejs.org/)
-- ติดตั้ง Expo
+- ติดตั้ง Expo CLI (`npm install -g expo-cli`)
 - มีบัญชีและโปรเจกต์ [Firebase](https://firebase.google.com/)
 
 ### ขั้นตอน
 
 1. **โคลน Repository**
 
-```
-bash
-git clone https://github.com/ISnowSakuraI/Pro1101910.git
-cd Pro1101910
-```
+   เปิดเทอร์มินัลและรันคำสั่งต่อไปนี้:
+
+   ```bash
+   git clone https://github.com/ISnowSakuraI/Pro1101910.git
+   cd Pro1101910
+   ```
 
 2. **ติดตั้ง Dependencies**
 
    รันคำสั่งต่อไปนี้เพื่อติดตั้ง dependencies ที่จำเป็น:
 
-```
-bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
 3. **ตั้งค่า Firebase**
 
@@ -83,13 +92,20 @@ npm install
    - เปิดใช้งาน Firestore, Storage และ Authentication
    - คัดลอกการตั้งค่า Firebase ของคุณมาแทนที่ไฟล์ `firebase/Firebase.js`.
 
-4. **รันโปรเจกต์**
+4. **Prebuild โปรเจกต์**
+
+   รันคำสั่งต่อไปนี้เพื่อ prebuild โปรเจกต์:
+
+   ```bash
+   npm run prebuild
+   ```
+
+5. **รันโปรเจกต์**
 
    เริ่มการทำงานของเซิร์ฟเวอร์ Expo:
 
-```
-bash
-npx expo 
-```
+   ```bash
+   npx expo start
+   ```
 
    ใช้แอป Expo Go บนอุปกรณ์มือถือของคุณเพื่อสแกน QR code และรันแอป
