@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert,
   Modal,
+  Animated,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useFocusEffect } from "@react-navigation/native";
@@ -51,6 +52,7 @@ export default function ArticleList({ navigation }) {
   const [expandedDescriptions, setExpandedDescriptions] = useState({});
   const [imageViewerVisible, setImageViewerVisible] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
+  const [favoriteAnimations, setFavoriteAnimations] = useState({});
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
@@ -135,6 +137,24 @@ export default function ArticleList({ navigation }) {
           await setDoc(favoriteDocRef, { userId: user.uid, articleId });
           setFavorites([...favorites, articleId]);
         }
+
+        // Animate the favorite icon
+        const animation = favoriteAnimations[articleId] || new Animated.Value(1);
+        Animated.sequence([
+          Animated.timing(animation, {
+            toValue: 1.5,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(animation, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ]).start();
+
+        setFavoriteAnimations((prev) => ({ ...prev, [articleId]: animation }));
+
         // Refresh articles and favorites after toggling
         await fetchArticles();
         await fetchFavorites();
@@ -142,7 +162,7 @@ export default function ArticleList({ navigation }) {
         console.error("Error toggling favorite: ", error);
       }
     }
-  }, [favorites, fetchArticles, fetchFavorites]);
+  }, [favorites, fetchArticles, fetchFavorites, favoriteAnimations]);
 
   const openReportModal = (articleId) => {
     setSelectedArticleId(articleId);
@@ -343,15 +363,23 @@ export default function ArticleList({ navigation }) {
                 onPress={() => toggleFavorite(item.id)}
                 style={styles.favoriteButton}
               >
-                <Icon
-                  name={
-                    favorites.includes(item.id)
-                      ? "favorite"
-                      : "favorite-border"
-                  }
-                  size={24}
-                  color={favorites.includes(item.id) ? "#f44336" : "gray"}
-                />
+                <Animated.View
+                  style={{
+                    transform: [
+                      { scale: favoriteAnimations[item.id] || new Animated.Value(1) },
+                    ],
+                  }}
+                >
+                  <Icon
+                    name={
+                      favorites.includes(item.id)
+                        ? "favorite"
+                        : "favorite-border"
+                    }
+                    size={24}
+                    color={favorites.includes(item.id) ? "#f44336" : "gray"}
+                  />
+                </Animated.View>
               </TouchableOpacity>
             </View>
           )}

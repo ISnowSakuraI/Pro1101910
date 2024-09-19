@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Alert } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Alert, RefreshControl } from "react-native";
 import { db, auth } from "../../../../firebase/Firebase";
 import { collection, query, where, getDocs, deleteDoc, doc } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
@@ -8,32 +8,38 @@ import { useLanguage } from "../../../LanguageContext";
 
 export default function MyMenus({ navigation }) {
   const [menus, setMenus] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  useEffect(() => {
-    const fetchUserMenus = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        try {
-          const q = query(
-            collection(db, "menus"),
-            where("userId", "==", user.uid)
-          );
-          const querySnapshot = await getDocs(q);
-          const userMenus = querySnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setMenus(userMenus);
-        } catch (error) {
-          console.error("Error fetching user menus: ", error);
-        }
+  const fetchUserMenus = useCallback(async () => {
+    const user = auth.currentUser;
+    if (user) {
+      try {
+        const q = query(
+          collection(db, "menus"),
+          where("userId", "==", user.uid)
+        );
+        const querySnapshot = await getDocs(q);
+        const userMenus = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setMenus(userMenus);
+      } catch (error) {
+        console.error("Error fetching user menus: ", error);
       }
-    };
-
-    fetchUserMenus();
+    }
   }, []);
+
+  useEffect(() => {
+    fetchUserMenus();
+  }, [fetchUserMenus]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchUserMenus().then(() => setRefreshing(false));
+  }, [fetchUserMenus]);
 
   const handleDeleteMenu = async (menuId) => {
     try {
@@ -93,6 +99,9 @@ export default function MyMenus({ navigation }) {
             </View>
           </View>
         )}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       />
     </View>
   );

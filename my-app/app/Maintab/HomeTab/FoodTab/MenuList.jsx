@@ -17,6 +17,7 @@ import { useTheme } from "../../../ThemeContext";
 import { useLanguage } from "../../../LanguageContext";
 import { useFocusEffect } from "@react-navigation/native";
 import { useMenu } from "../../../MenuContext";
+import moment from "moment";
 
 export default function MenuList({ navigation }) {
   const [menus, setMenus] = useState([]);
@@ -45,9 +46,19 @@ export default function MenuList({ navigation }) {
           const userDocRef = doc(db, "Users", data.userId);
           const userDoc = await getDoc(userDocRef);
           const username = userDoc.exists() ? userDoc.data().username : "Unknown";
-          return { ...data, id: menuDoc.id, username };
+
+          // Fetch likes count
+          const likesQuery = query(
+            collection(db, "Favorites"),
+            where("menuId", "==", menuDoc.id)
+          );
+          const likesSnapshot = await getDocs(likesQuery);
+          const likesCount = likesSnapshot.size;
+
+          return { ...data, id: menuDoc.id, username, likes: likesCount };
         })
       );
+      menuList.sort((a, b) => b.createdAt - a.createdAt);
       setMenus(menuList);
     } catch (error) {
       console.error("Error fetching menus: ", error);
@@ -115,29 +126,42 @@ export default function MenuList({ navigation }) {
       const favoriteRef = doc(db, "Favorites", `${user.uid}_${menuId}`);
       const isFavorite = favoriteMenus.includes(menuId);
 
-      if (isFavorite) {
-        await deleteDoc(favoriteRef);
-        setFavoriteMenus(favoriteMenus.filter((id) => id !== menuId));
-      } else {
-        await setDoc(favoriteRef, { userId: user.uid, menuId });
-        setFavoriteMenus([...favoriteMenus, menuId]);
+      try {
+        if (isFavorite) {
+          await deleteDoc(favoriteRef);
+          setFavoriteMenus(favoriteMenus.filter((id) => id !== menuId));
+        } else {
+          await setDoc(favoriteRef, { userId: user.uid, menuId });
+          setFavoriteMenus([...favoriteMenus, menuId]);
+        }
+
+        // Update the likes count in the menus state
+        setMenus((prevMenus) =>
+          prevMenus.map((menu) =>
+            menu.id === menuId
+              ? { ...menu, likes: isFavorite ? menu.likes - 1 : menu.likes + 1 }
+              : menu
+          )
+        );
+
+        const animation = favoriteAnimations[menuId] || new Animated.Value(1);
+        Animated.sequence([
+          Animated.timing(animation, {
+            toValue: 1.5,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(animation, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ]).start();
+
+        setFavoriteAnimations((prev) => ({ ...prev, [menuId]: animation }));
+      } catch (error) {
+        console.error("Error toggling favorite: ", error);
       }
-
-      const animation = favoriteAnimations[menuId] || new Animated.Value(1);
-      Animated.sequence([
-        Animated.timing(animation, {
-          toValue: 1.5,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(animation, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
-
-      setFavoriteAnimations((prev) => ({ ...prev, [menuId]: animation }));
     }
   };
 
@@ -232,6 +256,12 @@ export default function MenuList({ navigation }) {
               </Text>
               <Text style={[styles.menuCreator, { color: isDarkTheme ? "#ccc" : "#666" }]}>
                 {isThaiLanguage ? "โดย" : "by"} {item.username}
+              </Text>
+              <Text style={[styles.menuDate, { color: isDarkTheme ? "#ccc" : "#666" }]}>
+                {moment(item.createdAt.toDate()).format('DD/MM/YYYY HH:mm')}
+              </Text>
+              <Text style={[styles.menuLikes, { color: isDarkTheme ? "#ccc" : "#666" }]}>
+                {item.likes} {isThaiLanguage ? "ถูกใจ" : "Likes"}
               </Text>
               <TouchableOpacity
                 style={styles.detailsButton}
@@ -377,6 +407,14 @@ const styles = StyleSheet.create({
   },
   menuCreator: {
     fontSize: 14,
+    marginBottom: 5,
+  },
+  menuDate: {
+    fontSize: 12,
+    marginBottom: 5,
+  },
+  menuLikes: {
+    fontSize: 12,
     marginBottom: 5,
   },
   detailsButton: {

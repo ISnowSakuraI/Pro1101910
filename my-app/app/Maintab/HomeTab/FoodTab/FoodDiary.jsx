@@ -27,49 +27,83 @@ import { useLanguage } from "../../../LanguageContext";
 import { useFocusEffect } from "@react-navigation/native";
 import { useMenu } from "../../../MenuContext";
 
-const MealItem = React.memo(({ item, mealType, themeStyles, isThaiLanguage, toggleFavorite, handleDeleteMenu, handleImagePress, favoriteAnimations, favorites, navigation }) => (
-  <View style={[styles.mealItem, themeStyles.cardBackground]}>
-    <TouchableOpacity onPress={() => handleDeleteMenu(mealType, item.id)} style={styles.deleteButton}>
-      <Icon name="close" size={20} color="#ff7f50" />
-    </TouchableOpacity>
-    <TouchableOpacity onPress={() => handleImagePress(item.images?.[0])}>
-      {item.images && item.images[0] ? (
-        <Image source={{ uri: item.images[0] }} style={styles.mealImage} />
-      ) : (
-        <View style={styles.placeholderImage} />
-      )}
-    </TouchableOpacity>
-    <View style={styles.mealDetails}>
-      <Text style={[styles.mealText, themeStyles.text]}>
-        {item.name || (isThaiLanguage ? "ไม่มีชื่อ" : "No Name")}
-      </Text>
-      <Text style={[styles.mealCreator, { color: themeStyles.text.color }]}>
-        {isThaiLanguage ? "โดย" : "by"} {item.username || "Unknown"}
-      </Text>
+const MealItem = React.memo(
+  ({
+    item,
+    mealType,
+    themeStyles,
+    isThaiLanguage,
+    toggleFavorite,
+    handleDeleteMenu,
+    handleImagePress,
+    favoriteAnimations,
+    favorites,
+    navigation,
+  }) => (
+    <View style={[styles.mealItem, themeStyles.cardBackground]}>
       <TouchableOpacity
-        style={styles.detailsButton}
-        onPress={() => navigation.navigate("MenuDetail", { menuId: item.menuId })}
+        onPress={() => handleDeleteMenu(mealType, item.id)}
+        style={styles.deleteButton}
       >
-        <Icon name="book-open-outline" size={16} color="#fff" style={{ marginRight: 5 }} />
-        <Text style={styles.detailsButtonText}>
-          {isThaiLanguage ? "รายละเอียด" : "Details"}
+        <Icon name="close" size={20} color="#ff7f50" />
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => handleImagePress(item.images?.[0])}>
+        {item.images && item.images[0] ? (
+          <Image source={{ uri: item.images[0] }} style={styles.mealImage} />
+        ) : (
+          <View style={styles.placeholderImage} />
+        )}
+      </TouchableOpacity>
+      <View style={styles.mealDetails}>
+        <Text style={[styles.mealText, themeStyles.text]}>
+          {item.name || (isThaiLanguage ? "ไม่มีชื่อ" : "No Name")}
         </Text>
+        <Text style={[styles.mealCreator, { color: themeStyles.text.color }]}>
+          {isThaiLanguage ? "โดย" : "by"} {item.username || "Unknown"}
+        </Text>
+        <TouchableOpacity
+          style={styles.detailsButton}
+          onPress={() =>
+            navigation.navigate("MenuDetail", { menuId: item.menuId })
+          }
+        >
+          <Icon
+            name="book-open-outline"
+            size={16}
+            color="#fff"
+            style={{ marginRight: 5 }}
+          />
+          <Text style={styles.detailsButtonText}>
+            {isThaiLanguage ? "รายละเอียด" : "Details"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+      <TouchableOpacity
+        style={styles.favoriteIcon}
+        onPress={() => toggleFavorite(item.menuId)}
+      >
+        <Animated.View
+          style={{
+            transform: [{ scale: favoriteAnimations[item.menuId] || 1 }],
+          }}
+        >
+          <Icon
+            name={favorites.includes(item.menuId) ? "heart" : "heart-outline"}
+            size={24}
+            color={favorites.includes(item.menuId) ? "#F44336" : "grey"}
+          />
+        </Animated.View>
       </TouchableOpacity>
     </View>
-    <TouchableOpacity style={styles.favoriteIcon} onPress={() => toggleFavorite(item.menuId)}>
-      <Animated.View style={{ transform: [{ scale: favoriteAnimations[item.menuId] || 1 }] }}>
-        <Icon
-          name={favorites.includes(item.menuId) ? "heart" : "heart-outline"}
-          size={24}
-          color={favorites.includes(item.menuId) ? "#F44336" : "grey"}
-        />
-      </Animated.View>
-    </TouchableOpacity>
-  </View>
-));
+  )
+);
 
 export default function FoodDiary({ navigation }) {
-  const [meals, setMeals] = useState({ morning: [], afternoon: [], evening: [] });
+  const [meals, setMeals] = useState({
+    morning: [],
+    afternoon: [],
+    evening: [],
+  });
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [favorites, setFavorites] = useState([]);
@@ -79,7 +113,10 @@ export default function FoodDiary({ navigation }) {
   const { isThaiLanguage } = useLanguage();
   const { setOnSelectMenu } = useMenu();
 
-  const themeStyles = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
+  const themeStyles = useMemo(
+    () => (isDarkTheme ? styles.dark : styles.light),
+    [isDarkTheme]
+  );
 
   const fetchMeals = useCallback(async () => {
     const user = auth.currentUser;
@@ -102,7 +139,9 @@ export default function FoodDiary({ navigation }) {
               const menuData = menuDoc.exists() ? menuDoc.data() : {};
               const userDocRef = doc(db, "Users", menuData.userId);
               const userDoc = await getDoc(userDocRef);
-              const username = userDoc.exists() ? userDoc.data().username : "Unknown";
+              const username = userDoc.exists()
+                ? userDoc.data().username
+                : "Unknown";
               return { ...data, ...menuData, id: mealDoc.id, username };
             })
           );
@@ -228,7 +267,7 @@ export default function FoodDiary({ navigation }) {
       <View style={styles.headerButtons}>
         <HeaderButton
           icon="account-circle"
-          text={isThaiLanguage ? "เมนูของฉัน" : "My Menus"}
+          text={isThaiLanguage ? "เมนูของฉัน" : "My Menu"}
           onPress={() => navigation.navigate("MyMenus")}
           style={styles.myMenusButton}
         />
@@ -246,14 +285,28 @@ export default function FoodDiary({ navigation }) {
         />
       </View>
       {[
-        { label: isThaiLanguage ? "เช้า" : "Morning", key: "morning", icon: "weather-sunset-up" },
-        { label: isThaiLanguage ? "กลางวัน" : "Afternoon", key: "afternoon", icon: "weather-sunny" },
-        { label: isThaiLanguage ? "เย็น" : "Evening", key: "evening", icon: "weather-sunset-down" },
+        {
+          label: isThaiLanguage ? "เช้า" : "Morning",
+          key: "morning",
+          icon: "weather-sunset-up",
+        },
+        {
+          label: isThaiLanguage ? "กลางวัน" : "Afternoon",
+          key: "afternoon",
+          icon: "weather-sunny",
+        },
+        {
+          label: isThaiLanguage ? "เย็น" : "Evening",
+          key: "evening",
+          icon: "weather-sunset-down",
+        },
       ].map((meal) => (
         <View key={meal.key} style={styles.mealContainer}>
           <View style={styles.mealHeader}>
             <Icon name={meal.icon} size={24} color="#ff7f50" />
-            <Text style={[styles.mealTitle, themeStyles.text]}>{meal.label}</Text>
+            <Text style={[styles.mealTitle, themeStyles.text]}>
+              {meal.label}
+            </Text>
           </View>
           {meals[meal.key].map((item, idx) => (
             <MealItem
@@ -270,8 +323,16 @@ export default function FoodDiary({ navigation }) {
               navigation={navigation}
             />
           ))}
-          <TouchableOpacity style={styles.button} onPress={() => handleAddMenu(meal.key)}>
-            <Icon name="plus-circle-outline" size={16} color="#fff" style={{ marginRight: 5 }} />
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => handleAddMenu(meal.key)}
+          >
+            <Icon
+              name="plus-circle-outline"
+              size={16}
+              color="#fff"
+              style={{ marginRight: 5 }}
+            />
             <Text style={styles.buttonText}>
               {isThaiLanguage ? "เพิ่มเมนู" : "Add Menu"}
             </Text>
@@ -279,12 +340,21 @@ export default function FoodDiary({ navigation }) {
         </View>
       ))}
 
-      <Modal visible={imageModalVisible} transparent={true} animationType="fade">
+      <Modal
+        visible={imageModalVisible}
+        transparent={true}
+        animationType="fade"
+      >
         <View style={styles.modalContainer}>
-          <TouchableOpacity style={styles.modalCloseButton} onPress={() => setImageModalVisible(false)}>
+          <TouchableOpacity
+            style={styles.modalCloseButton}
+            onPress={() => setImageModalVisible(false)}
+          >
             <Icon name="close" size={30} color="#fff" />
           </TouchableOpacity>
-          {selectedImage && <Image source={{ uri: selectedImage }} style={styles.fullImage} />}
+          {selectedImage && (
+            <Image source={{ uri: selectedImage }} style={styles.fullImage} />
+          )}
         </View>
       </Modal>
     </ScrollView>

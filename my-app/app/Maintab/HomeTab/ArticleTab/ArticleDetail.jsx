@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'; 
-import { View, Text, StyleSheet, Image, ScrollView, FlatList, TouchableOpacity, Modal, Alert, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, FlatList, TouchableOpacity, Modal, Alert, TextInput, ActivityIndicator, Animated } from 'react-native';
 import { db, auth } from '../../../../firebase/Firebase';
 import { doc, getDoc, collection, query, where, getDocs, setDoc, deleteDoc } from 'firebase/firestore';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -25,6 +25,7 @@ export default function ArticleDetail({ route, navigation }) {
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [selectedReasons, setSelectedReasons] = useState([]);
   const [customReason, setCustomReason] = useState("");
+  const [likeAnimation] = useState(new Animated.Value(1));
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
@@ -92,6 +93,20 @@ export default function ArticleDetail({ route, navigation }) {
           setLikesCount(likesCount + 1);
         }
         setIsLiked(!isLiked);
+
+        // Animate the like icon
+        Animated.sequence([
+          Animated.timing(likeAnimation, {
+            toValue: 1.5,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(likeAnimation, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ]).start();
       } catch (error) {
         console.error("Error toggling favorite: ", error);
       }
@@ -181,18 +196,14 @@ export default function ArticleDetail({ route, navigation }) {
         <Icon name="heart" size={20} color={"#F44336"} />
         <Text style={[styles.likesText, themeStyles.text]}>{likesCount} {isThaiLanguage ? "ถูกใจ" : "Likes"}</Text>
       </View>
-      <View style={styles.actionButtons}>
-        <TouchableOpacity onPress={toggleFavorite} style={[styles.compactButton, { backgroundColor: isLiked ? "#F44336" : themeStyles.cardBackground.backgroundColor }]}>
-          <Icon name={isLiked ? "heart" : "heart-outline"} size={20} color={isLiked ? "#fff" : themeStyles.text.color} />
-          <Text style={[styles.buttonText, { color: isLiked ? "#fff" : themeStyles.text.color }]}>
-            {isThaiLanguage ? "ถูกใจ" : "Like"}
-          </Text>
+      <View style={styles.actionIcons}>
+        <TouchableOpacity onPress={toggleFavorite} style={styles.iconButton}>
+          <Animated.View style={{ transform: [{ scale: likeAnimation }] }}>
+            <Icon name={isLiked ? "heart" : "heart-outline"} size={28} color={isLiked ? "#F44336" : themeStyles.text.color} />
+          </Animated.View>
         </TouchableOpacity>
-        <TouchableOpacity onPress={openReportModal} style={[styles.compactButton, { backgroundColor: themeStyles.cardBackground.backgroundColor }]}>
-          <Icon name="alert-circle-outline" size={20} color={themeStyles.primaryColor} />
-          <Text style={[styles.buttonText, themeStyles.text]}>
-            {isThaiLanguage ? "รายงาน" : "Report"}
-          </Text>
+        <TouchableOpacity onPress={openReportModal} style={styles.iconButton}>
+          <Icon name="alert-circle-outline" size={28} color={themeStyles.primaryColor} />
         </TouchableOpacity>
       </View>
 
@@ -299,23 +310,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 5,
   },
-  actionButtons: {
+  actionIcons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 20,
+    paddingHorizontal: 20,
   },
-  compactButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 10,
-    borderRadius: 5,
-    marginHorizontal: 5,
-  },
-  buttonText: {
-    marginLeft: 5,
-    fontSize: 14,
+  iconButton: {
+    marginHorizontal: 20,
   },
   modalContainer: {
     flex: 1,
