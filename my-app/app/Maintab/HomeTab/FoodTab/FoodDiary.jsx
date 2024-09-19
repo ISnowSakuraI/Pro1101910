@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -25,13 +25,51 @@ import {
 import { useTheme } from "../../../ThemeContext";
 import { useLanguage } from "../../../LanguageContext";
 import { useFocusEffect } from "@react-navigation/native";
+import { useMenu } from "../../../MenuContext";
+
+const MealItem = React.memo(({ item, mealType, themeStyles, isThaiLanguage, toggleFavorite, handleDeleteMenu, handleImagePress, favoriteAnimations, favorites, navigation }) => (
+  <View style={[styles.mealItem, themeStyles.cardBackground]}>
+    <TouchableOpacity onPress={() => handleDeleteMenu(mealType, item.id)} style={styles.deleteButton}>
+      <Icon name="close" size={20} color="#ff7f50" />
+    </TouchableOpacity>
+    <TouchableOpacity onPress={() => handleImagePress(item.images?.[0])}>
+      {item.images && item.images[0] ? (
+        <Image source={{ uri: item.images[0] }} style={styles.mealImage} />
+      ) : (
+        <View style={styles.placeholderImage} />
+      )}
+    </TouchableOpacity>
+    <View style={styles.mealDetails}>
+      <Text style={[styles.mealText, themeStyles.text]}>
+        {item.name || (isThaiLanguage ? "ไม่มีชื่อ" : "No Name")}
+      </Text>
+      <Text style={[styles.mealCreator, { color: themeStyles.text.color }]}>
+        {isThaiLanguage ? "โดย" : "by"} {item.username || "Unknown"}
+      </Text>
+      <TouchableOpacity
+        style={styles.detailsButton}
+        onPress={() => navigation.navigate("MenuDetail", { menuId: item.menuId })}
+      >
+        <Icon name="book-open-outline" size={16} color="#fff" style={{ marginRight: 5 }} />
+        <Text style={styles.detailsButtonText}>
+          {isThaiLanguage ? "รายละเอียด" : "Details"}
+        </Text>
+      </TouchableOpacity>
+    </View>
+    <TouchableOpacity style={styles.favoriteIcon} onPress={() => toggleFavorite(item.menuId)}>
+      <Animated.View style={{ transform: [{ scale: favoriteAnimations[item.menuId] || 1 }] }}>
+        <Icon
+          name={favorites.includes(item.menuId) ? "heart" : "heart-outline"}
+          size={24}
+          color={favorites.includes(item.menuId) ? "#F44336" : "grey"}
+        />
+      </Animated.View>
+    </TouchableOpacity>
+  </View>
+));
 
 export default function FoodDiary({ navigation }) {
-  const [meals, setMeals] = useState({
-    morning: [],
-    afternoon: [],
-    evening: [],
-  });
+  const [meals, setMeals] = useState({ morning: [], afternoon: [], evening: [] });
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [favorites, setFavorites] = useState([]);
@@ -39,6 +77,9 @@ export default function FoodDiary({ navigation }) {
 
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
+  const { setOnSelectMenu } = useMenu();
+
+  const themeStyles = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
 
   const fetchMeals = useCallback(async () => {
     const user = auth.currentUser;
@@ -59,11 +100,9 @@ export default function FoodDiary({ navigation }) {
               const menuDocRef = doc(db, "menus", data.menuId);
               const menuDoc = await getDoc(menuDocRef);
               const menuData = menuDoc.exists() ? menuDoc.data() : {};
-              const userDocRef = doc(db, "Users", data.userId);
+              const userDocRef = doc(db, "Users", menuData.userId);
               const userDoc = await getDoc(userDocRef);
-              const username = userDoc.exists()
-                ? userDoc.data().username
-                : "Unknown";
+              const username = userDoc.exists() ? userDoc.data().username : "Unknown";
               return { ...data, ...menuData, id: mealDoc.id, username };
             })
           );
@@ -100,38 +139,35 @@ export default function FoodDiary({ navigation }) {
   );
 
   const handleAddMenu = (meal) => {
-    navigation.navigate("MenuList", {
-      onSelectMenu: async (selectedMenus = []) => {
-        const user = auth.currentUser;
-        if (user) {
-          try {
-            const newMenus = selectedMenus.map((selectedMenu) => ({
-              userId: user.uid,
-              mealType: meal,
-              menuId: selectedMenu.id,
-              addedAt: new Date(),
-            }));
+    setOnSelectMenu(() => async (selectedMenus = []) => {
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const newMenus = (selectedMenus || []).map((selectedMenu) => ({
+            userId: user.uid,
+            mealType: meal,
+            menuId: selectedMenu.id,
+            addedAt: new Date(),
+          }));
 
-            const addedMenus = await Promise.all(
-              newMenus.map(async (newMenu) => {
-                const docRef = await addDoc(
-                  collection(db, "FoodDiary"),
-                  newMenu
-                );
-                return { ...newMenu, id: docRef.id };
-              })
-            );
+          const addedMenus = await Promise.all(
+            newMenus.map(async (newMenu) => {
+              const docRef = await addDoc(collection(db, "FoodDiary"), newMenu);
+              return { ...newMenu, id: docRef.id };
+            })
+          );
 
-            setMeals((prevMeals) => ({
-              ...prevMeals,
-              [meal]: [...prevMeals[meal], ...addedMenus],
-            }));
-          } catch (error) {
-            console.error("Error adding menus to Food Diary: ", error);
-          }
+          setMeals((prevMeals) => ({
+            ...prevMeals,
+            [meal]: [...prevMeals[meal], ...addedMenus],
+          }));
+        } catch (error) {
+          console.error("Error adding menus to Food Diary: ", error);
         }
-      },
+      }
     });
+
+    navigation.navigate("MenuList");
   };
 
   const handleDeleteMenu = async (mealType, menuId) => {
@@ -166,7 +202,6 @@ export default function FoodDiary({ navigation }) {
         setFavorites([...favorites, menuId]);
       }
 
-      // Trigger animation
       const animation = favoriteAnimations[menuId] || new Animated.Value(1);
       Animated.sequence([
         Animated.timing(animation, {
@@ -185,171 +220,58 @@ export default function FoodDiary({ navigation }) {
     }
   };
 
-  const themeStyles = isDarkTheme ? styles.dark : styles.light;
-
   return (
     <ScrollView style={[styles.container, themeStyles.background]}>
       <Text style={[styles.title, themeStyles.text]}>
         {isThaiLanguage ? "วางแผนอาหาร" : "Food Planning"}
       </Text>
       <View style={styles.headerButtons}>
-        <TouchableOpacity
-          style={styles.myMenusButton}
+        <HeaderButton
+          icon="account-circle"
+          text={isThaiLanguage ? "เมนูของฉัน" : "My Menus"}
           onPress={() => navigation.navigate("MyMenus")}
-        >
-          <Icon
-            name="account-circle"
-            size={20}
-            color="#fff"
-            style={{ marginRight: 5 }}
-          />
-          <Text style={styles.myMenusButtonText}>
-            {isThaiLanguage ? "เมนูของฉัน" : "My Menus"}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.favoriteButton}
+          style={styles.myMenusButton}
+        />
+        <HeaderButton
+          icon="heart"
+          text={isThaiLanguage ? "เมนูที่ชอบ" : "Favorite Menus"}
           onPress={() => navigation.navigate("FavoriteMenus")}
-        >
-          <Icon
-            name="heart"
-            size={20}
-            color="#fff"
-            style={{ marginRight: 5 }}
-          />
-          <Text style={styles.favoriteButtonText}>
-            {isThaiLanguage ? "เมนูที่ชอบ" : "Favorite Menus"}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.addButton}
+          style={styles.favoriteButton}
+        />
+        <HeaderButton
+          icon="plus-circle"
+          text={isThaiLanguage ? "เพิ่มเมนู" : "Add Menu"}
           onPress={() => navigation.navigate("AddMenu")}
-        >
-          <Icon
-            name="plus-circle"
-            size={20}
-            color="#fff"
-            style={{ marginRight: 5 }}
-          />
-          <Text style={styles.addButtonText}>
-            {isThaiLanguage ? "เพิ่มเมนู" : "Add Menu"}
-          </Text>
-        </TouchableOpacity>
+          style={styles.addButton}
+        />
       </View>
       {[
-        {
-          label: isThaiLanguage ? "เช้า" : "Morning",
-          key: "morning",
-          icon: "weather-sunset-up",
-        },
-        {
-          label: isThaiLanguage ? "กลางวัน" : "Afternoon",
-          key: "afternoon",
-          icon: "weather-sunny",
-        },
-        {
-          label: isThaiLanguage ? "เย็น" : "Evening",
-          key: "evening",
-          icon: "weather-sunset-down",
-        },
+        { label: isThaiLanguage ? "เช้า" : "Morning", key: "morning", icon: "weather-sunset-up" },
+        { label: isThaiLanguage ? "กลางวัน" : "Afternoon", key: "afternoon", icon: "weather-sunny" },
+        { label: isThaiLanguage ? "เย็น" : "Evening", key: "evening", icon: "weather-sunset-down" },
       ].map((meal) => (
         <View key={meal.key} style={styles.mealContainer}>
           <View style={styles.mealHeader}>
             <Icon name={meal.icon} size={24} color="#ff7f50" />
-            <Text style={[styles.mealTitle, themeStyles.text]}>
-              {meal.label}
-            </Text>
+            <Text style={[styles.mealTitle, themeStyles.text]}>{meal.label}</Text>
           </View>
           {meals[meal.key].map((item, idx) => (
-            <View
+            <MealItem
               key={idx}
-              style={[styles.mealItem, themeStyles.cardBackground]}
-            >
-              <TouchableOpacity
-                onPress={() => handleDeleteMenu(meal.key, item.id)}
-                style={styles.deleteButton}
-              >
-                <Icon name="close" size={20} color="#ff7f50" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => handleImagePress(item.images?.[0])}
-              >
-                {item.images && item.images[0] ? (
-                  <Image
-                    source={{ uri: item.images[0] }}
-                    style={styles.mealImage}
-                  />
-                ) : (
-                  <View style={styles.placeholderImage} />
-                )}
-              </TouchableOpacity>
-              <View style={styles.mealDetails}>
-                <Text style={[styles.mealText, themeStyles.text]}>
-                  {item.name || (isThaiLanguage ? "ไม่มีชื่อ" : "No Name")}
-                </Text>
-                <Text
-                  style={[
-                    styles.mealCreator,
-                    { color: isDarkTheme ? "#ccc" : "#666" },
-                  ]}
-                >
-                  {isThaiLanguage ? "โดย" : "by"} {item.username || "Unknown"}
-                </Text>
-                <TouchableOpacity
-                  style={styles.detailsButton}
-                  onPress={() => {
-                    console.log(
-                      "Navigating to MenuDetail with menuId:",
-                      item.menuId
-                    );
-                    navigation.navigate("MenuDetail", { menuId: item.menuId });
-                  }}
-                >
-                  <Icon
-                    name="book-open-outline"
-                    size={16}
-                    color="#fff"
-                    style={{ marginRight: 5 }}
-                  />
-                  <Text style={styles.detailsButtonText}>
-                    {isThaiLanguage ? "รายละเอียด" : "Details"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <TouchableOpacity
-                style={styles.favoriteIcon}
-                onPress={() => toggleFavorite(item.menuId)}
-              >
-                <Animated.View
-                  style={{
-                    transform: [
-                      { scale: favoriteAnimations[item.menuId] || 1 },
-                    ],
-                  }}
-                >
-                  <Icon
-                    name={
-                      favorites.includes(item.menuId)
-                        ? "heart"
-                        : "heart-outline"
-                    }
-                    size={24}
-                    color={favorites.includes(item.menuId) ? "#F44336" : "grey"}
-                  />
-                </Animated.View>
-              </TouchableOpacity>
-            </View>
-          ))}
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => handleAddMenu(meal.key)}
-          >
-            <Icon
-              name="plus-circle-outline"
-              size={16}
-              color="#fff"
-              style={{ marginRight: 5 }}
+              item={item}
+              mealType={meal.key}
+              themeStyles={themeStyles}
+              isThaiLanguage={isThaiLanguage}
+              toggleFavorite={toggleFavorite}
+              handleDeleteMenu={handleDeleteMenu}
+              handleImagePress={handleImagePress}
+              favoriteAnimations={favoriteAnimations}
+              favorites={favorites}
+              navigation={navigation}
             />
+          ))}
+          <TouchableOpacity style={styles.button} onPress={() => handleAddMenu(meal.key)}>
+            <Icon name="plus-circle-outline" size={16} color="#fff" style={{ marginRight: 5 }} />
             <Text style={styles.buttonText}>
               {isThaiLanguage ? "เพิ่มเมนู" : "Add Menu"}
             </Text>
@@ -357,26 +279,24 @@ export default function FoodDiary({ navigation }) {
         </View>
       ))}
 
-      <Modal
-        visible={imageModalVisible}
-        transparent={true}
-        animationType="fade"
-      >
+      <Modal visible={imageModalVisible} transparent={true} animationType="fade">
         <View style={styles.modalContainer}>
-          <TouchableOpacity
-            style={styles.modalCloseButton}
-            onPress={() => setImageModalVisible(false)}
-          >
+          <TouchableOpacity style={styles.modalCloseButton} onPress={() => setImageModalVisible(false)}>
             <Icon name="close" size={30} color="#fff" />
           </TouchableOpacity>
-          {selectedImage && (
-            <Image source={{ uri: selectedImage }} style={styles.fullImage} />
-          )}
+          {selectedImage && <Image source={{ uri: selectedImage }} style={styles.fullImage} />}
         </View>
       </Modal>
     </ScrollView>
   );
 }
+
+const HeaderButton = ({ icon, text, onPress, style }) => (
+  <TouchableOpacity style={style} onPress={onPress}>
+    <Icon name={icon} size={20} color="#fff" style={{ marginRight: 5 }} />
+    <Text style={styles.myMenusButtonText}>{text}</Text>
+  </TouchableOpacity>
+);
 
 const styles = StyleSheet.create({
   container: {
@@ -392,15 +312,23 @@ const styles = StyleSheet.create({
   },
   headerButtons: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
     marginBottom: 20,
   },
   myMenusButton: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#00A047",
-    padding: 10,
-    borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    flex: 1,
+    marginHorizontal: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
   myMenusButtonText: {
     color: "#fff",
@@ -411,25 +339,31 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#F44336",
-    padding: 10,
-    borderRadius: 5,
-  },
-  favoriteButtonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontFamily: "NotoSansThai-Regular",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    flex: 1,
+    marginHorizontal: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
   addButton: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#008AFF",
-    padding: 10,
-    borderRadius: 5,
-  },
-  addButtonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontFamily: "NotoSansThai-Regular",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    flex: 1,
+    marginHorizontal: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
   mealContainer: {
     marginBottom: 20,

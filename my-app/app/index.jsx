@@ -1,6 +1,7 @@
 import React from "react";
 import { ThemeProvider } from "../app/ThemeContext";
 import { LanguageProvider } from "../app/LanguageContext";
+import { MenuProvider } from "../app/MenuContext"; // Import the MenuProvider
 import MainNavigator from "../app/Maintab/MainIndex";
 import { useFonts } from "expo-font";
 
@@ -15,7 +16,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <MainNavigator />
+        <MenuProvider>
+          <MainNavigator />
+        </MenuProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

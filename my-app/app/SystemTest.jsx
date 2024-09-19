@@ -6,33 +6,37 @@ import {
   Alert,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
-import { auth, db, storage } from "../../../../firebase/Firebase";
+import { auth, db, storage } from "../firebase/Firebase";
 import {
   collection,
   getDocs,
   query,
-  where,
   doc,
   setDoc,
   getDoc,
   deleteDoc,
 } from "firebase/firestore";
 import { ref, getDownloadURL } from "firebase/storage";
-import { useTheme } from "../../../ThemeContext";
-import { useLanguage } from "../../../LanguageContext";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useTheme } from "./ThemeContext";
+import { useLanguage } from "./LanguageContext";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import commitData from "../scripts/commit-sha.json";
 
-export default function SystemTest() {
+export default function SystemTest({ navigation }) {
   const [statuses, setStatuses] = useState({
     auth: "Pending",
     db: "Pending",
     storage: "Pending",
     network: "Pending",
     dataExchange: "Pending",
+    updateCheck: "Pending",
   });
   const [loading, setLoading] = useState(false);
+  const [dataExchangeTime, setDataExchangeTime] = useState(null);
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
@@ -40,14 +44,18 @@ export default function SystemTest() {
 
   const runTests = async () => {
     setLoading(true);
-    await Promise.all([
-      testAuth(),
-      testFirestore(),
-      testStorage(),
-      testNetwork(),
-      testDataExchange(),
-    ]);
-    setLoading(false);
+    try {
+      await testAuth();
+      await testFirestore();
+      await testStorage();
+      await testNetwork();
+      await testDataExchange();
+      await testUpdateCheck();
+    } catch (error) {
+      console.error("Error during tests:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateStatus = (key, status) => {
@@ -55,23 +63,19 @@ export default function SystemTest() {
   };
 
   const testAuth = async () => {
+    const originalUser = auth.currentUser;
+    const email = "testuser@example.com";
+    const password = "testpassword";
+
     try {
-      const user = auth.currentUser;
-      if (user) {
-        updateStatus("auth", "Success");
-        Alert.alert(
-          isThaiLanguage ? "การทดสอบสิทธิ์" : "Auth Test",
-          isThaiLanguage
-            ? "การตรวจสอบสิทธิ์ทำงานได้ถูกต้อง"
-            : "Authentication is working correctly"
-        );
-      } else {
-        updateStatus("auth", "No user logged in");
-        Alert.alert(
-          isThaiLanguage ? "การทดสอบสิทธิ์" : "Auth Test",
-          isThaiLanguage ? "ไม่มีผู้ใช้เข้าสู่ระบบ" : "No user is logged in"
-        );
-      }
+      await signInWithEmailAndPassword(auth, email, password);
+      updateStatus("auth", "Success");
+      Alert.alert(
+        isThaiLanguage ? "การทดสอบสิทธิ์" : "Auth Test",
+        isThaiLanguage
+          ? "การเชื่อมต่อกับ Firebase Authentication ทำงานได้ถูกต้อง"
+          : "Connection to Firebase Authentication is working correctly"
+      );
     } catch (error) {
       updateStatus("auth", "Failed");
       console.error("Auth Test Error:", error);
@@ -79,34 +83,53 @@ export default function SystemTest() {
         isThaiLanguage ? "การทดสอบสิทธิ์" : "Auth Test",
         `${
           isThaiLanguage
-            ? "การตรวจสอบสิทธิ์ล้มเหลว: "
-            : "Authentication failed: "
+            ? "การเชื่อมต่อกับ Firebase Authentication ล้มเหลว: "
+            : "Connection to Firebase Authentication failed: "
         }${error.message}`
       );
+    } finally {
+      await auth.signOut();
+      if (originalUser) {
+        try {
+          const originalEmail = originalUser.email;
+          const originalPassword = "originalUserPassword"; // Replace with actual password
+          await signInWithEmailAndPassword(
+            auth,
+            originalEmail,
+            originalPassword
+          );
+          console.log("Signed back in with the original user.");
+        } catch (error) {
+          console.error("Error signing back in with the original user:", error);
+        }
+      }
     }
   };
 
   const testFirestore = async () => {
     try {
-      const q = query(collection(db, "Users"), where("role", "==", "admin"));
-      const querySnapshot = await getDocs(q);
-      if (!querySnapshot.empty) {
-        updateStatus("db", "Success");
-        Alert.alert(
-          isThaiLanguage ? "การทดสอบฐานข้อมูล" : "Database Test",
-          isThaiLanguage
-            ? "การเข้าถึงฐานข้อมูลทำงานได้ถูกต้อง"
-            : "Database access is working correctly"
-        );
-      } else {
-        updateStatus("db", "No data found");
-        Alert.alert(
-          isThaiLanguage ? "การทดสอบฐานข้อมูล" : "Database Test",
-          isThaiLanguage
-            ? "ไม่พบข้อมูลในฐานข้อมูล"
-            : "No data found in the database"
-        );
+      const collections = ["Users", "FoodDiary", "reports", "articles"];
+      for (const collectionName of collections) {
+        const q = query(collection(db, collectionName));
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+          updateStatus("db", "No data found in " + collectionName);
+          Alert.alert(
+            isThaiLanguage ? "การทดสอบฐานข้อมูล" : "Database Test",
+            isThaiLanguage
+              ? `ไม่พบข้อมูลในคอลเลกชัน ${collectionName}`
+              : `No data found in collection ${collectionName}`
+          );
+          return;
+        }
       }
+      updateStatus("db", "Success");
+      Alert.alert(
+        isThaiLanguage ? "การทดสอบฐานข้อมูล" : "Database Test",
+        isThaiLanguage
+          ? "การเข้าถึงฐานข้อมูลทำงานได้ถูกต้อง"
+          : "Database access is working correctly"
+      );
     } catch (error) {
       updateStatus("db", "Failed");
       console.error("Database Test Error:", error);
@@ -183,8 +206,13 @@ export default function SystemTest() {
     const testData = { message: "Hello, Firestore!" };
 
     try {
+      const startTime = Date.now();
       await setDoc(testDocRef, testData);
       const docSnap = await getDoc(testDocRef);
+      const endTime = Date.now();
+      const timeTaken = endTime - startTime;
+      setDataExchangeTime(timeTaken);
+
       if (docSnap.exists() && docSnap.data().message === testData.message) {
         updateStatus("dataExchange", "Success");
         Alert.alert(
@@ -192,8 +220,8 @@ export default function SystemTest() {
             ? "การทดสอบการแลกเปลี่ยนข้อมูล"
             : "Data Exchange Test",
           isThaiLanguage
-            ? "การส่งและรับข้อมูลทำงานได้ถูกต้อง"
-            : "Data sending and receiving is working correctly"
+            ? `การส่งและรับข้อมูลทำงานได้ถูกต้อง ใช้เวลา ${timeTaken} มิลลิวินาที`
+            : `Data sending and receiving is working correctly. Time taken: ${timeTaken} ms`
         );
       } else {
         updateStatus("dataExchange", "Failed");
@@ -224,10 +252,60 @@ export default function SystemTest() {
     }
   };
 
+  const testUpdateCheck = async () => {
+    try {
+      const response = await fetch(
+        "https://api.github.com/repos/ISnowSakuraI/Pro1101910/commits/main"
+      );
+      const data = await response.json();
+      const latestCommitSha = data.sha;
+
+      const currentCommitSha = commitData.commitSha;
+
+      if (latestCommitSha === currentCommitSha) {
+        updateStatus("updateCheck", "Up to Date");
+        Alert.alert(
+          isThaiLanguage ? "การตรวจสอบการอัปเดต" : "Update Check",
+          isThaiLanguage
+            ? "แอปพลิเคชันเป็นเวอร์ชันล่าสุด"
+            : "The application is up to date"
+        );
+      } else {
+        updateStatus("updateCheck", "Update Available");
+        Alert.alert(
+          isThaiLanguage ? "การตรวจสอบการอัปเดต" : "Update Check",
+          isThaiLanguage
+            ? "มีการอัปเดตใหม่พร้อมใช้งาน"
+            : "A new update is available"
+        );
+      }
+    } catch (error) {
+      updateStatus("updateCheck", "Failed");
+      console.error("Update Check Error:", error);
+      Alert.alert(
+        isThaiLanguage ? "การตรวจสอบการอัปเดต" : "Update Check",
+        `${
+          isThaiLanguage
+            ? "การตรวจสอบการอัปเดตล้มเหลว: "
+            : "Update check failed: "
+        }${error.message}`
+      );
+    }
+  };
+
   return (
-    <View style={[styles.container, themeStyles.background]}>
+    <ScrollView contentContainerStyle={[styles.container, themeStyles.background]}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Icon name="arrow-back" size={24} color={themeStyles.text.color} />
+      </TouchableOpacity>
       <Text style={[styles.header, themeStyles.text]}>
         {isThaiLanguage ? "การทดสอบระบบ" : "System Test"}
+      </Text>
+      <Text style={[styles.versionInfo, themeStyles.text]}>
+        {isThaiLanguage ? "เวอร์ชัน: " : "Version: "} {commitData.commitSha}
       </Text>
       <View style={styles.statusContainer}>
         {Object.entries(statuses).map(([key, status]) => (
@@ -235,6 +313,7 @@ export default function SystemTest() {
             key={key}
             label={getLabel(key, isThaiLanguage)}
             status={status}
+            description={getDescription(key, isThaiLanguage, dataExchangeTime)}
             theme={themeStyles}
           />
         ))}
@@ -251,7 +330,7 @@ export default function SystemTest() {
           </Text>
         </TouchableOpacity>
       )}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -264,30 +343,62 @@ const getLabel = (key, isThaiLanguage) => {
     dataExchange: isThaiLanguage
       ? "สถานะการแลกเปลี่ยนข้อมูล"
       : "Data Exchange Status",
+    updateCheck: isThaiLanguage
+      ? "สถานะการตรวจสอบการอัปเดต"
+      : "Update Check Status",
   };
   return labels[key];
 };
 
-const StatusItem = ({ label, status, theme }) => (
+const getDescription = (key, isThaiLanguage, dataExchangeTime) => {
+  const descriptions = {
+    auth: isThaiLanguage
+      ? "ตรวจสอบการเชื่อมต่อกับ Firebase Authentication โดยใช้ข้อมูลผู้ใช้ทดสอบ"
+      : "Check connection to Firebase Authentication using test user credentials",
+    db: isThaiLanguage
+      ? "ตรวจสอบการเข้าถึงฐานข้อมูล Firestore โดยตรวจสอบคอลเลกชันต่างๆ"
+      : "Check Firestore database access by verifying multiple collections",
+    storage: isThaiLanguage
+      ? "ตรวจสอบการเข้าถึง Firebase Storage โดยพยายามดาวน์โหลดรูปภาพตัวอย่าง"
+      : "Check Firebase Storage access by attempting to download a sample image",
+    network: isThaiLanguage
+      ? "ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตของอุปกรณ์"
+      : "Check the device's internet connection",
+    dataExchange: isThaiLanguage
+      ? `ทดสอบการส่งและรับข้อมูลกับ Firestore โดยการสร้างและลบเอกสารทดสอบ ใช้เวลา ${dataExchangeTime} มิลลิวินาที`
+      : `Test data sending and receiving with Firestore by creating and deleting a test document. Time taken: ${dataExchangeTime} ms`,
+    updateCheck: isThaiLanguage
+      ? "ตรวจสอบว่าแอปเป็นเวอร์ชันล่าสุดโดยเปรียบเทียบ SHA ของ commit ปัจจุบันกับ GitHub"
+      : "Check if the app is up to date by comparing the current commit SHA with GitHub",
+  };
+  return descriptions[key];
+};
+
+const StatusItem = ({ label, status, description, theme }) => (
   <View style={[styles.statusItem, theme.cardBackground]}>
-    <Text style={[styles.statusLabel, theme.text]}>{label}:</Text>
-    <Icon
-      name={getIconName(status)}
-      size={24}
-      color={getStatusColor(status)}
-      style={styles.statusIcon}
-    />
-    <Text style={[styles.statusValue, { color: getStatusColor(status) }]}>
-      {status}
-    </Text>
+    <View style={styles.statusHeader}>
+      <Text style={[styles.statusLabel, theme.text]}>{label}:</Text>
+      <Icon
+        name={getIconName(status)}
+        size={24}
+        color={getStatusColor(status)}
+        style={styles.statusIcon}
+      />
+      <Text style={[styles.statusValue, { color: getStatusColor(status) }]}>
+        {status}
+      </Text>
+    </View>
+    <Text style={[styles.statusDescription, theme.text]}>{description}</Text>
   </View>
 );
 
 const getIconName = (status) => {
   switch (status) {
     case "Success":
+    case "Up to Date":
       return "check-circle";
     case "Failed":
+    case "Update Available":
       return "error";
     case "Pending":
     default:
@@ -298,8 +409,10 @@ const getIconName = (status) => {
 const getStatusColor = (status) => {
   switch (status) {
     case "Success":
+    case "Up to Date":
       return "green";
     case "Failed":
+    case "Update Available":
       return "red";
     case "Pending":
     default:
@@ -309,7 +422,7 @@ const getStatusColor = (status) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
@@ -317,16 +430,17 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 30,
+    marginBottom: 10,
+  },
+  versionInfo: {
+    fontSize: 16,
+    marginBottom: 20,
   },
   statusContainer: {
     width: "100%",
     marginBottom: 30,
   },
   statusItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,
@@ -337,6 +451,11 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
+  statusHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   statusLabel: {
     fontSize: 16,
   },
@@ -346,6 +465,10 @@ const styles = StyleSheet.create({
   statusValue: {
     fontSize: 16,
     fontWeight: "bold",
+  },
+  statusDescription: {
+    fontSize: 14,
+    marginTop: 5,
   },
   button: {
     paddingVertical: 15,
@@ -361,6 +484,11 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  backButton: {
+    position: "absolute",
+    top: 20,
+    left: 20,
   },
   light: {
     background: {

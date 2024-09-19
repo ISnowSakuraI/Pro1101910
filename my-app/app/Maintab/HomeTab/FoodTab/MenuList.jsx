@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   Animated,
+  TextInput,
 } from "react-native";
 import { db, auth } from "../../../../firebase/Firebase";
 import { collection, getDocs, doc, getDoc, query, where, setDoc, deleteDoc } from "firebase/firestore";
@@ -15,8 +16,9 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useTheme } from "../../../ThemeContext";
 import { useLanguage } from "../../../LanguageContext";
 import { useFocusEffect } from "@react-navigation/native";
+import { useMenu } from "../../../MenuContext";
 
-export default function MenuList({ navigation, route }) {
+export default function MenuList({ navigation }) {
   const [menus, setMenus] = useState([]);
   const [selectedMenus, setSelectedMenus] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -24,7 +26,8 @@ export default function MenuList({ navigation, route }) {
   const [showFavoriteMenus, setShowFavoriteMenus] = useState(false);
   const [favoriteMenus, setFavoriteMenus] = useState([]);
   const [favoriteAnimations, setFavoriteAnimations] = useState({});
-  const { onSelectMenu } = route.params;
+  const [searchQuery, setSearchQuery] = useState("");
+  const { onSelectMenu } = useMenu();
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
@@ -92,7 +95,9 @@ export default function MenuList({ navigation, route }) {
     const selectedMenuObjects = menus.filter((menu) =>
       selectedMenus.includes(menu.id)
     );
-    onSelectMenu(selectedMenuObjects);
+    if (onSelectMenu) {
+      onSelectMenu(selectedMenuObjects || []);
+    }
     navigation.goBack();
   };
 
@@ -118,7 +123,6 @@ export default function MenuList({ navigation, route }) {
         setFavoriteMenus([...favoriteMenus, menuId]);
       }
 
-      // Trigger animation
       const animation = favoriteAnimations[menuId] || new Animated.Value(1);
       Animated.sequence([
         Animated.timing(animation, {
@@ -137,15 +141,17 @@ export default function MenuList({ navigation, route }) {
     }
   };
 
-  const filteredMenus = showFavoriteMenus
-    ? menus.filter((menu) => favoriteMenus.includes(menu.id))
-    : menus;
+  const filteredMenus = menus.filter((menu) => {
+    const matchesSearch = menu.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const isFavorite = showFavoriteMenus ? favoriteMenus.includes(menu.id) : true;
+    return matchesSearch && isFavorite;
+  });
 
   const themeStyles = isDarkTheme ? styles.dark : styles.light;
 
   return (
     <View style={[styles.container, themeStyles.background]}>
-      <Text style={[styles.title, themeStyles.text]}>
+      <Text style={[styles.title, { color: isDarkTheme ? "#fff" : "#000" }]}>
         {isThaiLanguage ? "รวมเมนู" : "Menu List"}
       </Text>
       <View style={styles.filterContainer}>
@@ -190,6 +196,13 @@ export default function MenuList({ navigation, route }) {
           </Text>
         </TouchableOpacity>
       </View>
+      <TextInput
+        style={[styles.searchBar, { color: isDarkTheme ? "#fff" : "#000" }]}
+        placeholder={isThaiLanguage ? "ค้นหาเมนู" : "Search Menus"}
+        placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
       <FlatList
         data={filteredMenus}
         keyExtractor={(item) => item.id}
@@ -214,10 +227,10 @@ export default function MenuList({ navigation, route }) {
               <View style={styles.placeholderImage} />
             )}
             <View style={styles.menuDetails}>
-              <Text style={[styles.menuName, themeStyles.text]}>
+              <Text style={[styles.menuName, { color: isDarkTheme ? "#fff" : "#000" }]}>
                 {item.name}
               </Text>
-              <Text style={[styles.menuCreator, themeStyles.subtext]}>
+              <Text style={[styles.menuCreator, { color: isDarkTheme ? "#ccc" : "#666" }]}>
                 {isThaiLanguage ? "โดย" : "by"} {item.username}
               </Text>
               <TouchableOpacity
@@ -309,7 +322,7 @@ const styles = StyleSheet.create({
   filterContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 20,
+    marginBottom: 10,
   },
   filterButton: {
     flexDirection: "row",
@@ -317,7 +330,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#ff7f50",
     padding: 10,
-    borderRadius: 10,
+    borderRadius: 20,
     flex: 1,
     marginHorizontal: 5,
   },
@@ -325,6 +338,14 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     fontWeight: "bold",
+  },
+  searchBar: {
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    marginBottom: 20,
   },
   menuItem: {
     flexDirection: "row",
@@ -405,22 +426,10 @@ const styles = StyleSheet.create({
     background: {
       backgroundColor: "#f9f9f9",
     },
-    text: {
-      color: "#333",
-    },
-    subtext: {
-      color: "#666",
-    },
   },
   dark: {
     background: {
       backgroundColor: "#333",
-    },
-    text: {
-      color: "#fff",
-    },
-    subtext: {
-      color: "#ccc",
     },
   },
 });

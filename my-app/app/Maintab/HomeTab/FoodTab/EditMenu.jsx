@@ -74,7 +74,7 @@ export default function EditMenu({ route, navigation }) {
 
   const handleSaveChanges = async () => {
     if (!name || !description || !instructions || ingredients.some(ing => !ing.name || !ing.amount)) {
-      Alert.alert("Error", "Please fill in all fields.");
+      Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "กรุณากรอกข้อมูลให้ครบทุกช่อง" : "Please fill in all fields.");
       return;
     }
 
@@ -101,11 +101,11 @@ export default function EditMenu({ route, navigation }) {
         instructions,
       });
 
-      Alert.alert("Success", "Menu updated successfully!");
+      Alert.alert(isThaiLanguage ? "สำเร็จ" : "Success", isThaiLanguage ? "อัปเดตเมนูเรียบร้อยแล้ว!" : "Menu updated successfully!");
       navigation.goBack();
     } catch (error) {
       console.error("Error updating menu: ", error);
-      Alert.alert("Error", "Failed to update menu. Please try again.");
+      Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถอัปเดตเมนูได้ กรุณาลองใหม่อีกครั้ง" : "Failed to update menu. Please try again.");
     }
   };
 
@@ -137,9 +137,9 @@ export default function EditMenu({ route, navigation }) {
         style={styles.backButton}
         onPress={() => navigation.goBack()}
       >
-        <Icon name="arrow-back" size={24} color={themeStyles.text.color} />
+        <Icon name="arrow-back" size={24} color={isDarkTheme ? "#fff" : "#000"} />
       </TouchableOpacity>
-      <Text style={[styles.title, themeStyles.text]}>
+      <Text style={[styles.title, { color: isDarkTheme ? "#fff" : "#000" }]}>
         {isThaiLanguage ? "แก้ไขเมนู" : "Edit Menu"}
       </Text>
       <TouchableOpacity onPress={pickImages} style={styles.addImageButton}>
@@ -156,33 +156,33 @@ export default function EditMenu({ route, navigation }) {
         ))}
       </View>
       <TextInput
-        style={[styles.input, themeStyles.cardBackground]}
+        style={[styles.input, themeStyles.cardBackground, { color: isDarkTheme ? "#fff" : "#000" }]}
         placeholder={isThaiLanguage ? "ชื่อเมนู" : "Menu Name"}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={name}
         onChangeText={setName}
       />
       <TextInput
-        style={[styles.input, themeStyles.cardBackground]}
+        style={[styles.input, themeStyles.cardBackground, { color: isDarkTheme ? "#fff" : "#000" }]}
         placeholder={isThaiLanguage ? "คำอธิบาย" : "Description"}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={description}
         onChangeText={setDescription}
       />
-      <Text style={[styles.sectionTitle, themeStyles.text]}>
+      <Text style={[styles.sectionTitle, { color: isDarkTheme ? "#fff" : "#000" }]}>
         {isThaiLanguage ? "ส่วนผสม" : "Ingredients"}
       </Text>
       {ingredients.map((ingredient, index) => (
         <View key={index} style={styles.ingredientRow}>
           <TextInput
-            style={[styles.ingredientInput, themeStyles.cardBackground]}
+            style={[styles.ingredientInput, themeStyles.cardBackground, { color: isDarkTheme ? "#fff" : "#000" }]}
             placeholder={isThaiLanguage ? "ชื่อส่วนผสม" : "Ingredient Name"}
             placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
             value={ingredient.name}
             onChangeText={(text) => handleIngredientChange(index, "name", text)}
           />
           <TextInput
-            style={[styles.ingredientInput, themeStyles.cardBackground]}
+            style={[styles.ingredientInput, themeStyles.cardBackground, { color: isDarkTheme ? "#fff" : "#000" }]}
             placeholder={isThaiLanguage ? "ปริมาณ" : "Amount"}
             placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
             value={ingredient.amount}
@@ -200,7 +200,7 @@ export default function EditMenu({ route, navigation }) {
         </Text>
       </TouchableOpacity>
       <TextInput
-        style={[styles.textArea, themeStyles.cardBackground]}
+        style={[styles.textArea, themeStyles.cardBackground, { color: isDarkTheme ? "#fff" : "#000" }]}
         placeholder={isThaiLanguage ? "วิธีทำ" : "Instructions"}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={instructions}
@@ -351,9 +351,6 @@ const styles = StyleSheet.create({
     background: {
       backgroundColor: "#f5f5f5",
     },
-    text: {
-      color: "#333",
-    },
     cardBackground: {
       backgroundColor: "#fff",
     },
@@ -362,11 +359,8 @@ const styles = StyleSheet.create({
     background: {
       backgroundColor: "#333",
     },
-    text: {
-      color: "#fff",
-    },
     cardBackground: {
-      backgroundColor: "#555",
+      backgroundColor: "#444",
     },
   },
 });

@@ -9,7 +9,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest --watchAll",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "prebuild": "node ./scripts/getCommitSha.js",
+    "build": "expo build"
   },
   "jest": {
     "preset": "jest-expo"
@@ -48,6 +50,7 @@
     "react-native-image-picker": "^7.1.2",
     "react-native-image-viewing": "^0.2.2",
     "react-native-image-zoom-viewer": "^3.0.1",
+    "react-native-keychain": "^8.2.0",
     "react-native-maps": "1.18.0",
     "react-native-modal-datetime-picker": "^18.0.0",
     "react-native-paper": "^5.12.5",

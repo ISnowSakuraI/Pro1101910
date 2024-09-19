@@ -79,12 +79,20 @@ export default function Login({ navigation }) {
         barStyle={isDarkTheme ? "light-content" : "dark-content"}
         backgroundColor={themeStyles.background.backgroundColor}
       />
-      <TouchableOpacity
-        style={styles.settingsIcon}
-        onPress={() => navigation.navigate("Settings")}
-      >
-        <Icon name="settings" size={24} color={themeStyles.text.color} />
-      </TouchableOpacity>
+      <View style={styles.topIcons}>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => navigation.navigate("Settings")}
+        >
+          <Icon name="settings" size={24} color={themeStyles.text.color} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => navigation.navigate("SystemTest")}
+        >
+          <Icon name="build" size={24} color={themeStyles.text.color} />
+        </TouchableOpacity>
+      </View>
       <Image style={styles.logo} source={logo} />
       <TextInput
         style={[styles.input, themeStyles.inputBackground]}
@@ -147,11 +155,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
   },
-  settingsIcon: {
+  topIcons: {
     position: "absolute",
     top: 20,
     right: 20,
+    flexDirection: "row",
     zIndex: 1,
+  },
+  iconButton: {
+    marginLeft: 10,
   },
   logo: {
     width: 150,

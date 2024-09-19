@@ -20,7 +20,6 @@ import UserStatistics from "./HomeTab/UserStatistics";
 import HealthCalculator from "./HomeTab/HealthCalculator";
 import ManageArticles from "./HomeTab/AdminTab/ManageArticles";
 import ReportedArticles from "./HomeTab/AdminTab/ReportedArticles";
-import SystemTest from "./HomeTab/AdminTab/SystemTest";
 import ArticleList from "./HomeTab/ArticleTab/ArticleList";
 import AddArticle from "./HomeTab/ArticleTab/AddArticle";
 import MyArticles from "./HomeTab/ArticleTab/MyArticles";
@@ -34,6 +33,7 @@ import MenuDetail from "./HomeTab/FoodTab/MenuDetail";
 import MyMenus from "./HomeTab/FoodTab/MyMenus";
 import EditMenu from "./HomeTab/FoodTab/EditMenu";
 import FavoriteMenus from "./HomeTab/FoodTab/FavoriteMenus";
+import SystemTest from "../SystemTest";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -44,6 +44,7 @@ export default function MainNavigator() {
       <Stack.Screen name="AuthStack" component={AuthStack} options={{ headerShown: false }} />
       <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
       <Stack.Screen name="Settings" component={Settings} options={{ headerShown: false }} />
+      <Stack.Screen name="SystemTest" component={SystemTest} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
@@ -118,6 +119,9 @@ function HomeStack() {
       <Stack.Screen name="ExerciseTracker" component={ExerciseTracker} options={{ headerShown: false }} />
       <Stack.Screen name="UserStatistics" component={UserStatistics} options={{ headerShown: false }} />
       <Stack.Screen name="AdminStack" component={AdminStack} options={{ headerShown: false }} />
+      <Stack.Screen name="ManageArticles" component={ManageArticles} options={{ headerShown: false }} />
+      <Stack.Screen name="ReportedArticles" component={ReportedArticles} options={{ headerShown: false }} />
+      <Stack.Screen name="SystemTest" component={SystemTest} options={{ headerShown: false }} />
       <Stack.Screen name="HealthCalculator" component={HealthCalculator} options={{ headerShown: false }} />
       <Stack.Screen name="FoodStack" component={FoodStack} options={{ headerShown: false }} />
     </Stack.Navigator>
@@ -143,7 +147,6 @@ function AdminStack() {
     <Stack.Navigator initialRouteName="ManageArticles">
       <Stack.Screen name="ManageArticles" component={ManageArticles} options={{ headerShown: false }} />
       <Stack.Screen name="ReportedArticles" component={ReportedArticles} options={{ headerShown: false }} />
-      <Stack.Screen name="SystemTest" component={SystemTest} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

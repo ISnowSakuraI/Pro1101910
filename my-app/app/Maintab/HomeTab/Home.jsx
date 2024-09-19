@@ -98,13 +98,6 @@ export default function Home({ navigation }) {
             onPress={() => navigation.navigate("ManageArticles")}
           />
         )}
-        {isAdmin && (
-          <CategoryItem
-            icon="build"
-            label={isThaiLanguage ? "ทดสอบระบบ" : "System Test"}
-            onPress={() => navigation.navigate("SystemTest")}
-          />
-        )}
       </View>
 
       <SectionHeader
