@@ -61,6 +61,9 @@ const MealItem = React.memo(
         <Text style={[styles.mealCreator, { color: themeStyles.text.color }]}>
           {isThaiLanguage ? "โดย" : "by"} {item.username || "Unknown"}
         </Text>
+        <Text style={[styles.mealCalories, { color: themeStyles.text.color }]}>
+          {isThaiLanguage ? "แคลอรี่" : "Calories"}: {item.calories || 0}
+        </Text>
         <TouchableOpacity
           style={styles.detailsButton}
           onPress={() =>
@@ -259,6 +262,16 @@ export default function FoodDiary({ navigation }) {
     }
   };
 
+  const calculateMealCalories = (mealType) => {
+    return meals[mealType].reduce((total, item) => total + (item.calories || 0), 0);
+  };
+
+  const recommendedCalories = {
+    morning: 500,   // Recommended calories for breakfast
+    afternoon: 700, // Recommended calories for lunch
+    evening: 700,   // Recommended calories for dinner
+  };
+
   return (
     <ScrollView style={[styles.container, themeStyles.background]}>
       <Text style={[styles.title, themeStyles.text]}>
@@ -306,6 +319,9 @@ export default function FoodDiary({ navigation }) {
             <Icon name={meal.icon} size={24} color="#ff7f50" />
             <Text style={[styles.mealTitle, themeStyles.text]}>
               {meal.label}
+            </Text>
+            <Text style={[styles.mealCalories, themeStyles.text]}>
+              {isThaiLanguage ? "แคลอรี่รวม" : "Total Calories"}: {calculateMealCalories(meal.key)} / {recommendedCalories[meal.key]}
             </Text>
           </View>
           {meals[meal.key].map((item, idx) => (
@@ -441,11 +457,12 @@ const styles = StyleSheet.create({
   mealHeader: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 10,
   },
   mealTitle: {
     fontSize: 20,
-    marginLeft: 10,
+    marginLeft: 0,
     fontFamily: "NotoSansThai-Regular",
   },
   mealItem: {
@@ -489,6 +506,10 @@ const styles = StyleSheet.create({
     fontFamily: "NotoSansThai-Regular",
   },
   mealCreator: {
+    fontSize: 14,
+    fontFamily: "NotoSansThai-Regular",
+  },
+  mealCalories: {
     fontSize: 14,
     fontFamily: "NotoSansThai-Regular",
   },

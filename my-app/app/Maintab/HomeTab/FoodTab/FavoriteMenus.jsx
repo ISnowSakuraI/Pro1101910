@@ -35,7 +35,14 @@ export default function FavoriteMenus({ navigation }) {
               const data = favDoc.data();
               const menuDocRef = doc(db, "menus", data.menuId);
               const menuDoc = await getDoc(menuDocRef);
-              return menuDoc.exists() ? { ...menuDoc.data(), id: menuDoc.id } : null;
+              if (menuDoc.exists()) {
+                const menuData = menuDoc.data();
+                const userDocRef = doc(db, "Users", menuData.userId);
+                const userDoc = await getDoc(userDocRef);
+                const username = userDoc.exists() ? userDoc.data().username : "Unknown";
+                return { ...menuData, id: menuDoc.id, username };
+              }
+              return null;
             })
           );
           setFavorites(favoriteMenus.filter((menu) => menu !== null));
@@ -63,7 +70,11 @@ export default function FavoriteMenus({ navigation }) {
         const menuDocRef = doc(db, "menus", menuId);
         const menuDoc = await getDoc(menuDocRef);
         if (menuDoc.exists()) {
-          setFavorites([...favorites, { ...menuDoc.data(), id: menuId }]);
+          const menuData = menuDoc.data();
+          const userDocRef = doc(db, "Users", menuData.userId);
+          const userDoc = await getDoc(userDocRef);
+          const username = userDoc.exists() ? userDoc.data().username : "Unknown";
+          setFavorites([...favorites, { ...menuData, id: menuId, username }]);
         }
       }
 
@@ -106,6 +117,12 @@ export default function FavoriteMenus({ navigation }) {
             <View style={styles.menuDetails}>
               <Text style={[styles.menuName, themeStyles.text]}>
                 {item.name}
+              </Text>
+              <Text style={[styles.menuInfo, themeStyles.text]}>
+                {isThaiLanguage ? "โดย" : "by"} {item.username}
+              </Text>
+              <Text style={[styles.menuInfo, themeStyles.text]}>
+                {isThaiLanguage ? "แคลอรี่" : "Calories"}: {item.calories || 0}
               </Text>
               <TouchableOpacity
                 style={styles.detailsButton}
@@ -196,6 +213,10 @@ const styles = StyleSheet.create({
   menuName: {
     fontSize: 18,
     fontWeight: "bold",
+    fontFamily: "NotoSansThai-Regular",
+  },
+  menuInfo: {
+    fontSize: 14,
     fontFamily: "NotoSansThai-Regular",
   },
   detailsButton: {

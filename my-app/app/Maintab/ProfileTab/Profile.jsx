@@ -161,6 +161,9 @@ export default function Profile({ navigation }) {
     },
   };
 
+  // Get the last 4 data points
+  const lastFourData = dailyData.slice(-4);
+
   return (
     <ScrollView>
       <StatusBar
@@ -244,21 +247,21 @@ export default function Profile({ navigation }) {
               : "Calories Burned Over Time"}
           </Text>
         </View>
-        {dailyData.length > 0 ? (
+        {lastFourData.length > 0 ? (
           <LineChart
             data={{
-              labels: dailyData.map((data) => data.date),
+              labels: lastFourData.map((data) => data.date),
               datasets: [
                 {
-                  data: dailyData.map((data) => data.calories),
+                  data: lastFourData.map((data) => data.calories),
                   color: (opacity = 1) => `rgba(255, 127, 80, ${opacity})`, // Coral
                   strokeWidth: 3, // Thicker line
                 },
               ],
               legend: [isThaiLanguage ? "แคลอรี่ (cal)" : "Calories (cal)"],
             }}
-            width={Dimensions.get("window").width - 40} // Adjusted width
-            height={220}
+            width={Dimensions.get("window").width - 20} // Adjusted width
+            height={250} // Slightly taller chart
             yAxisSuffix=" cal"
             chartConfig={chartConfig}
             style={styles.chart}
@@ -392,6 +395,11 @@ const styles = StyleSheet.create({
   chart: {
     marginVertical: 8,
     borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   noDataText: {
     textAlign: "center",

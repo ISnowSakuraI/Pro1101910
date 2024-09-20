@@ -10,6 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { Picker } from '@react-native-picker/picker';
 import { db, auth, storage } from "../../../../firebase/Firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -17,14 +18,26 @@ import * as ImagePicker from "expo-image-picker";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import { useTheme } from "../../../ThemeContext";
 import { useLanguage } from "../../../LanguageContext";
+import translate from 'google-translate-api-x';
+
+const translateToEnglish = async (text) => {
+  try {
+    const res = await translate(text, { from: 'th', to: 'en' });
+    return res.text;
+  } catch (error) {
+    console.error("Translation error: ", error);
+    return text;
+  }
+};
 
 export default function AddMenu({ navigation }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [images, setImages] = useState([]);
-  const [ingredients, setIngredients] = useState([{ name: "", amount: "" }]);
+  const [ingredients, setIngredients] = useState([{ name: "", amount: "", unit: "g" }]);
   const [instructions, setInstructions] = useState("");
   const [loading, setLoading] = useState(false);
+  const [calories, setCalories] = useState(null);
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
@@ -45,9 +58,39 @@ export default function AddMenu({ navigation }) {
     }
   };
 
+  const fetchCalories = async (ingredient) => {
+    try {
+      const response = await fetch(`https://api.edamam.com/api/nutrition-data?app_id=31ef3024&app_key=9e81114be629a33766a4d71739dfbad2&ingr=${encodeURIComponent(ingredient)}`);
+      const data = await response.json();
+      return data.calories || 0;
+    } catch (error) {
+      console.error("Error fetching calorie data: ", error);
+      return 0;
+    }
+  };
+
+  const calculateTotalCalories = async () => {
+    let totalCalories = 0;
+    for (const ingredient of ingredients) {
+      try {
+        const translatedName = await translateToEnglish(ingredient.name);
+        const ingredientDescription = `${ingredient.amount} ${ingredient.unit} ${translatedName}`;
+        const calories = await fetchCalories(ingredientDescription);
+        totalCalories += calories;
+      } catch (error) {
+        console.error("Error calculating calories for ingredient:", ingredient.name, error);
+      }
+    }
+    setCalories(totalCalories);
+    Alert.alert(
+      isThaiLanguage ? "คำนวณแคลอรี่แล้ว" : "Calories Calculated",
+      `${isThaiLanguage ? "แคลอรี่ทั้งหมด" : "Total Calories"}: ${totalCalories}`
+    );
+  };
+
   const handleAddMenu = async () => {
     if (!name || !description || !instructions || ingredients.some(ing => !ing.name || !ing.amount)) {
-      Alert.alert("Error", "Please fill in all fields.");
+      Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "กรุณากรอกข้อมูลให้ครบทุกช่อง" : "Please fill in all fields.");
       return;
     }
 
@@ -55,45 +98,43 @@ export default function AddMenu({ navigation }) {
     if (!user) return;
 
     setLoading(true);
-    const imageUrls = [];
-    for (const image of images) {
-      try {
+
+    try {
+      await calculateTotalCalories();
+
+      const imageUrls = [];
+      for (const image of images) {
         const response = await fetch(image);
         const blob = await response.blob();
         const storageRef = ref(storage, `menus/${user.uid}/${Date.now()}`);
         await uploadBytes(storageRef, blob);
         const imageUrl = await getDownloadURL(storageRef);
         imageUrls.push(imageUrl);
-      } catch (error) {
-        console.error("Error uploading image: ", error);
-        Alert.alert("Error", "Failed to upload image. Please try again.");
-        setLoading(false);
-        return;
       }
-    }
 
-    try {
       await addDoc(collection(db, "menus"), {
         name,
         description,
         images: imageUrls,
         ingredients,
         instructions,
+        calories,
         userId: user.uid,
         createdAt: serverTimestamp(),
       });
-      Alert.alert("Success", "Menu added successfully!");
+
+      Alert.alert(isThaiLanguage ? "สำเร็จ" : "Success", isThaiLanguage ? "เพิ่มเมนูเรียบร้อยแล้ว!" : "Menu added successfully!");
       navigation.goBack();
     } catch (error) {
       console.error("Error adding menu: ", error);
-      Alert.alert("Error", "Failed to add menu. Please try again.");
+      Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ไม่สามารถเพิ่มเมนูได้ กรุณาลองใหม่อีกครั้ง" : "Failed to add menu. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleAddIngredient = () => {
-    setIngredients([...ingredients, { name: "", amount: "" }]);
+    setIngredients([...ingredients, { name: "", amount: "", unit: "g" }]);
   };
 
   const handleRemoveIngredient = (index) => {
@@ -132,14 +173,14 @@ export default function AddMenu({ navigation }) {
         ))}
       </View>
       <TextInput
-        style={[styles.input, themeStyles.cardBackground]}
+        style={[styles.input, themeStyles.cardBackground, { color: themeStyles.text.color }]}
         placeholder={isThaiLanguage ? "ชื่อเมนู" : "Menu Name"}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={name}
         onChangeText={setName}
       />
       <TextInput
-        style={[styles.input, themeStyles.cardBackground]}
+        style={[styles.input, themeStyles.cardBackground, { color: themeStyles.text.color }]}
         placeholder={isThaiLanguage ? "คำอธิบาย" : "Description"}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={description}
@@ -151,19 +192,32 @@ export default function AddMenu({ navigation }) {
       {ingredients.map((ingredient, index) => (
         <View key={index} style={styles.ingredientRow}>
           <TextInput
-            style={[styles.ingredientInput, themeStyles.cardBackground]}
+            style={[styles.ingredientInput, themeStyles.cardBackground, { color: themeStyles.text.color }]}
             placeholder={isThaiLanguage ? "ชื่อส่วนผสม" : "Ingredient Name"}
             placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
             value={ingredient.name}
             onChangeText={(text) => handleIngredientChange(index, "name", text)}
           />
           <TextInput
-            style={[styles.ingredientInput, themeStyles.cardBackground]}
-            placeholder={isThaiLanguage ? "ปริมาณ" : "Amount"}
+            style={[styles.ingredientInput, themeStyles.cardBackground, { color: themeStyles.text.color }]}
+            placeholder={isThaiLanguage ? "จำนวน" : "Amount"}
             placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
             value={ingredient.amount}
             onChangeText={(text) => handleIngredientChange(index, "amount", text)}
           />
+          <Picker
+            selectedValue={ingredient.unit}
+            style={[styles.unitPicker, { color: themeStyles.text.color }]}
+            onValueChange={(itemValue) => handleIngredientChange(index, "unit", itemValue)}
+          >
+            <Picker.Item label={isThaiLanguage ? "กรัม" : "g"} value="g" />
+            <Picker.Item label={isThaiLanguage ? "กิโลกรัม" : "kg"} value="kg" />
+            <Picker.Item label={isThaiLanguage ? "มิลลิลิตร" : "ml"} value="ml" />
+            <Picker.Item label={isThaiLanguage ? "ลิตร" : "l"} value="l" />
+            <Picker.Item label={isThaiLanguage ? "ถ้วย" : "cup"} value="cup" />
+            <Picker.Item label={isThaiLanguage ? "ช้อนโต๊ะ" : "tbsp"} value="tbsp" />
+            <Picker.Item label={isThaiLanguage ? "ช้อนชา" : "tsp"} value="tsp" />
+          </Picker>
           <TouchableOpacity onPress={() => handleRemoveIngredient(index)}>
             <Icon name="remove-circle" size={24} color="red" />
           </TouchableOpacity>
@@ -176,13 +230,25 @@ export default function AddMenu({ navigation }) {
         </Text>
       </TouchableOpacity>
       <TextInput
-        style={[styles.textArea, themeStyles.cardBackground]}
+        style={[styles.textArea, themeStyles.cardBackground, { color: themeStyles.text.color }]}
         placeholder={isThaiLanguage ? "วิธีทำ" : "Instructions"}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={instructions}
         onChangeText={setInstructions}
         multiline
       />
+      <View style={styles.calorieRow}>
+        <TouchableOpacity style={styles.calculateButton} onPress={calculateTotalCalories}>
+          <Text style={styles.calculateButtonText}>
+            {isThaiLanguage ? "คำนวณแคลอรี่" : "Calculate Calories"}
+          </Text>
+        </TouchableOpacity>
+        {calories !== null && (
+          <Text style={[styles.calorieText, themeStyles.text]}>
+            {isThaiLanguage ? `แคลอรี่: ${calories}` : `Calories: ${calories}`}
+          </Text>
+        )}
+      </View>
       <TouchableOpacity style={styles.saveButton} onPress={handleAddMenu} disabled={loading}>
         {loading ? (
           <ActivityIndicator size="small" color="#fff" />
@@ -286,6 +352,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 5,
   },
+  unitPicker: {
+    height: 40,
+    width: 140,
+    marginRight: 5,
+  },
   addIngredientButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -294,6 +365,29 @@ const styles = StyleSheet.create({
   addIngredientText: {
     marginLeft: 5,
     color: "#4CAF50",
+    fontFamily: "NotoSansThai-Regular",
+  },
+  calorieRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  calculateButton: {
+    backgroundColor: "#4CAF50",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    flex: 1,
+    marginRight: 10,
+  },
+  calculateButtonText: {
+    color: "white",
+    fontFamily: "NotoSansThai-Regular",
+    fontSize: 16,
+  },
+  calorieText: {
+    fontSize: 16,
     fontFamily: "NotoSansThai-Regular",
   },
   light: {

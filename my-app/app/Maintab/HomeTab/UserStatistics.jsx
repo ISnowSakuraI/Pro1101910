@@ -74,9 +74,15 @@ export default function UserStatistics() {
         fontSize: 12,
         fontFamily: "NotoSansThai-Regular",
       },
+      propsForBackgroundLines: {
+        strokeDasharray: "", // solid background lines
+      },
     }),
     [isDarkTheme]
   );
+
+  // Get the last 4 data points
+  const lastFourData = dailyData.slice(-4);
 
   return (
     <ScrollView
@@ -88,13 +94,13 @@ export default function UserStatistics() {
       <Text style={[styles.header, { color: isDarkTheme ? "#fff" : "#333" }]}>
         {isThaiLanguage ? "สถิติผู้ใช้" : "User Statistics"}
       </Text>
-      {dailyData.length > 0 ? (
+      {lastFourData.length > 0 ? (
         <>
           <GraphSection
             title={isThaiLanguage ? "ระยะทางตามเวลา" : "Distance Over Time"}
             icon="run"
-            data={dailyData.map((data) => data.distance)}
-            labels={dailyData.map((data) => data.date)}
+            data={lastFourData.map((data) => data.distance)}
+            labels={lastFourData.map((data) => data.date)}
             legend={isThaiLanguage ? "ระยะทาง (กม.)" : "Distance (Km)"}
             yAxisSuffix={isThaiLanguage ? " กม." : " Km"}
             chartConfig={chartConfig}
@@ -106,8 +112,8 @@ export default function UserStatistics() {
                 : "Calories Burned Over Time"
             }
             icon="fire"
-            data={dailyData.map((data) => data.calories)}
-            labels={dailyData.map((data) => data.date)}
+            data={lastFourData.map((data) => data.calories)}
+            labels={lastFourData.map((data) => data.date)}
             legend={isThaiLanguage ? "แคลอรี่ (แคล)" : "Calories (cal)"}
             yAxisSuffix={isThaiLanguage ? " แคล" : " cal"}
             chartConfig={chartConfig}
@@ -159,8 +165,8 @@ const GraphSection = ({
           ],
           legend: [legend],
         }}
-        width={Dimensions.get("window").width - 40}
-        height={220}
+        width={Dimensions.get("window").width - 20} // Wider chart
+        height={250} // Slightly taller chart
         yAxisSuffix={yAxisSuffix}
         chartConfig={chartConfig}
         style={styles.chart}

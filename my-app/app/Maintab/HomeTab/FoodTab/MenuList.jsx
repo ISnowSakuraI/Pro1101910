@@ -263,6 +263,9 @@ export default function MenuList({ navigation }) {
               <Text style={[styles.menuLikes, { color: isDarkTheme ? "#ccc" : "#666" }]}>
                 {item.likes} {isThaiLanguage ? "ถูกใจ" : "Likes"}
               </Text>
+              <Text style={[styles.menuCalories, { color: isDarkTheme ? "#ccc" : "#666" }]}>
+                {isThaiLanguage ? "แคลอรี่" : "Calories"}: {item.calories || 0}
+              </Text>
               <TouchableOpacity
                 style={styles.detailsButton}
                 onPress={() =>
@@ -414,6 +417,10 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   menuLikes: {
+    fontSize: 12,
+    marginBottom: 5,
+  },
+  menuCalories: {
     fontSize: 12,
     marginBottom: 5,
   },
