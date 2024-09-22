@@ -18,7 +18,7 @@ import Schedule from "./HomeTab/Schedule";
 import ExerciseTracker from "./HomeTab/ExerciseTracker";
 import UserStatistics from "./HomeTab/UserStatistics";
 import HealthCalculator from "./HomeTab/HealthCalculator";
-import ManageArticles from "./HomeTab/AdminTab/ManageArticles";
+import ManageContent from "./HomeTab/AdminTab/ManageContent";
 import ReportedArticles from "./HomeTab/AdminTab/ReportedArticles";
 import ArticleList from "./HomeTab/ArticleTab/ArticleList";
 import AddArticle from "./HomeTab/ArticleTab/AddArticle";
@@ -115,11 +115,12 @@ function HomeStack() {
       <Stack.Screen name="HomeScreen" component={Home} options={{ headerShown: false }} />
       <Stack.Screen name="Schedule" component={Schedule} options={{ headerShown: false }} />
       <Stack.Screen name="ArticleStack" component={ArticleStack} options={{ headerShown: false }} />
+      <Stack.Screen name="MenuDetail" component={MenuDetail} options={{ headerShown: false }} />
       <Stack.Screen name="ArticleDetail" component={ArticleDetail} options={{ headerShown: false }} />
       <Stack.Screen name="ExerciseTracker" component={ExerciseTracker} options={{ headerShown: false }} />
       <Stack.Screen name="UserStatistics" component={UserStatistics} options={{ headerShown: false }} />
       <Stack.Screen name="AdminStack" component={AdminStack} options={{ headerShown: false }} />
-      <Stack.Screen name="ManageArticles" component={ManageArticles} options={{ headerShown: false }} />
+      <Stack.Screen name="ManageContent" component={ManageContent} options={{ headerShown: false }} />
       <Stack.Screen name="ReportedArticles" component={ReportedArticles} options={{ headerShown: false }} />
       <Stack.Screen name="SystemTest" component={SystemTest} options={{ headerShown: false }} />
       <Stack.Screen name="HealthCalculator" component={HealthCalculator} options={{ headerShown: false }} />
@@ -144,9 +145,11 @@ function ProfileStack() {
 
 function AdminStack() {
   return (
-    <Stack.Navigator initialRouteName="ManageArticles">
-      <Stack.Screen name="ManageArticles" component={ManageArticles} options={{ headerShown: false }} />
+    <Stack.Navigator initialRouteName="ManageContent">
+      <Stack.Screen name="ManageContent" component={ManageContent} options={{ headerShown: false }} />
       <Stack.Screen name="ReportedArticles" component={ReportedArticles} options={{ headerShown: false }} />
+      <Stack.Screen name="MenuDetail" component={MenuDetail} options={{ headerShown: false }} />
+      <Stack.Screen name="ArticleDetail" component={ArticleDetail} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

@@ -95,7 +95,7 @@ export default function Home({ navigation }) {
           <CategoryItem
             icon="manage-accounts"
             label={isThaiLanguage ? "จัดการบทความ" : "Manage Articles"}
-            onPress={() => navigation.navigate("ManageArticles")}
+            onPress={() => navigation.navigate("ManageContent")}
           />
         )}
       </View>
