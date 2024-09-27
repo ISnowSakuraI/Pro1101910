@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -27,7 +27,7 @@ export default function ManageContent({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const themeStyles = isDarkTheme ? styles.dark : styles.light;
+  const themeStyles = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -105,30 +105,47 @@ export default function ManageContent({ navigation }) {
     }
   }, [fetchArticles, fetchMenus, fetchUsernames, isAdmin, isManagingArticles]);
 
-  const handleDeleteContent = async (contentId, type) => {
-    try {
-      await deleteDoc(doc(db, type, contentId));
-      if (type === "articles") {
-        setArticles(articles.filter((article) => article.id !== contentId));
-      } else {
-        setMenus(menus.filter((menu) => menu.id !== contentId));
-      }
-      Alert.alert(
-        isThaiLanguage ? "สำเร็จ" : "Success",
-        isThaiLanguage
-          ? `${type === "articles" ? "ลบบทความ" : "ลบเมนู"}เรียบร้อยแล้ว!`
-          : `${type === "articles" ? "Article" : "Menu"} deleted successfully!`
-      );
-    } catch (error) {
-      console.error(`Error deleting ${type}: `, error);
-      Alert.alert(
-        isThaiLanguage ? "ข้อผิดพลาด" : "Error",
-        isThaiLanguage
-          ? `ไม่สามารถลบ${type === "articles" ? "บทความ" : "เมนู"}ได้ กรุณาลองใหม่อีกครั้ง.`
-          : `Failed to delete ${type === "articles" ? "article" : "menu"}. Please try again.`
-      );
-    }
-  };
+  const handleDeleteContent = useCallback(async (contentId, type) => {
+    Alert.alert(
+      isThaiLanguage ? "ยืนยันการลบ" : "Confirm Deletion",
+      isThaiLanguage
+        ? `คุณแน่ใจหรือไม่ว่าต้องการลบ${type === "articles" ? "บทความ" : "เมนู"}นี้?`
+        : `Are you sure you want to delete this ${type === "articles" ? "article" : "menu"}?`,
+      [
+        {
+          text: isThaiLanguage ? "ยกเลิก" : "Cancel",
+          style: "cancel",
+        },
+        {
+          text: isThaiLanguage ? "ลบ" : "Delete",
+          onPress: async () => {
+            try {
+              await deleteDoc(doc(db, type, contentId));
+              if (type === "articles") {
+                setArticles((prevArticles) => prevArticles.filter((article) => article.id !== contentId));
+              } else {
+                setMenus((prevMenus) => prevMenus.filter((menu) => menu.id !== contentId));
+              }
+              Alert.alert(
+                isThaiLanguage ? "สำเร็จ" : "Success",
+                isThaiLanguage
+                  ? `${type === "articles" ? "ลบบทความ" : "ลบเมนู"}เรียบร้อยแล้ว!`
+                  : `${type === "articles" ? "Article" : "Menu"} deleted successfully!`
+              );
+            } catch (error) {
+              console.error(`Error deleting ${type}: `, error);
+              Alert.alert(
+                isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+                isThaiLanguage
+                  ? `ไม่สามารถลบ${type === "articles" ? "บทความ" : "เมนู"}ได้ กรุณาลองใหม่อีกครั้ง.`
+                  : `Failed to delete ${type === "articles" ? "article" : "menu"}. Please try again.`
+              );
+            }
+          },
+        },
+      ]
+    );
+  }, [isThaiLanguage]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -150,9 +167,11 @@ export default function ManageContent({ navigation }) {
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
-  const filteredContent = (isManagingArticles ? articles : menus).filter((content) =>
-    (isManagingArticles ? content.title : content.name)?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredContent = useMemo(() => {
+    return (isManagingArticles ? articles : menus).filter((content) =>
+      (isManagingArticles ? content.title : content.name)?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [articles, menus, searchQuery, isManagingArticles]);
 
   if (!isAdmin) {
     return null; // Render nothing if not admin

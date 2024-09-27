@@ -94,14 +94,20 @@ export default function AddMenu({ navigation }) {
       return;
     }
 
+    if (calories === null) {
+      Alert.alert(
+        isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+        isThaiLanguage ? "กรุณาคำนวณแคลอรี่ก่อนอัพโหลด" : "Please calculate calories before uploading."
+      );
+      return;
+    }
+
     const user = auth.currentUser;
     if (!user) return;
 
     setLoading(true);
 
     try {
-      await calculateTotalCalories();
-
       const imageUrls = [];
       for (const image of images) {
         const response = await fetch(image);

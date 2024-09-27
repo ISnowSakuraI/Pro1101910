@@ -1,7 +1,7 @@
 import React from "react";
 import { ThemeProvider } from "../app/ThemeContext";
 import { LanguageProvider } from "../app/LanguageContext";
-import { MenuProvider } from "../app/MenuContext"; // Import the MenuProvider
+import { MenuProvider } from "../app/MenuContext";
 import MainNavigator from "../app/Maintab/MainIndex";
 import { useFonts } from "expo-font";
 

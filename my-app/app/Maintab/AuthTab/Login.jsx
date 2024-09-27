@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   Text,
   View,
@@ -24,7 +24,7 @@ export default function Login({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const themeStyles = isDarkTheme ? styles.dark : styles.light;
+  const themeStyles = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
 
   const handleLogin = useCallback(async () => {
     if (!input || !password) {
@@ -73,6 +73,10 @@ export default function Login({ navigation }) {
     }
   }, [input, password, isThaiLanguage, navigation]);
 
+  const toggleShowPassword = useCallback(() => {
+    setShowPassword((prev) => !prev);
+  }, []);
+
   return (
     <View style={[styles.container, themeStyles.background]}>
       <StatusBar
@@ -116,7 +120,7 @@ export default function Login({ navigation }) {
         />
         <TouchableOpacity
           style={styles.eyeIcon}
-          onPress={() => setShowPassword(!showPassword)}
+          onPress={toggleShowPassword}
         >
           <Icon
             name={showPassword ? "visibility" : "visibility-off"}

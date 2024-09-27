@@ -29,6 +29,18 @@ export default function ForgotPassword({ navigation }) {
       );
       return;
     }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      Alert.alert(
+        isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+        isThaiLanguage
+          ? "รูปแบบอีเมลไม่ถูกต้อง"
+          : "Invalid email format"
+      );
+      return;
+    }
+
     try {
       await sendPasswordResetEmail(auth, email);
       Alert.alert(
@@ -39,13 +51,13 @@ export default function ForgotPassword({ navigation }) {
       );
       setRequestSent(true);
     } catch (error) {
+      console.error(error);
       Alert.alert(
         isThaiLanguage ? "ข้อผิดพลาด" : "Error",
         isThaiLanguage
           ? "เกิดข้อผิดพลาดในการส่งอีเมลรีเซ็ตรหัสผ่าน"
           : "An error occurred while sending the password reset email"
       );
-      console.error(error);
     }
   }, [email, isThaiLanguage]);
 
@@ -71,7 +83,7 @@ export default function ForgotPassword({ navigation }) {
         placeholder={isThaiLanguage ? "อีเมล" : "Email"}
         placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
         value={email}
-        onChange={(e) => setEmail(e.nativeEvent.text)}
+        onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}

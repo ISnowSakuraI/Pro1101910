@@ -6,6 +6,7 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
+  TextInput,
   Animated,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
@@ -16,6 +17,8 @@ import { useLanguage } from "../../../LanguageContext";
 
 export default function FavoriteMenus({ navigation }) {
   const [favorites, setFavorites] = useState([]);
+  const [filteredFavorites, setFilteredFavorites] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [favoriteAnimations, setFavoriteAnimations] = useState({});
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
@@ -26,7 +29,7 @@ export default function FavoriteMenus({ navigation }) {
       if (user) {
         try {
           const q = query(
-            collection(db, "Favorites"),
+            collection(db, "FavoriteMenus"),
             where("userId", "==", user.uid)
           );
           const querySnapshot = await getDocs(q);
@@ -45,7 +48,9 @@ export default function FavoriteMenus({ navigation }) {
               return null;
             })
           );
-          setFavorites(favoriteMenus.filter((menu) => menu !== null));
+          const validMenus = favoriteMenus.filter((menu) => menu !== null);
+          setFavorites(validMenus);
+          setFilteredFavorites(validMenus);
         } catch (error) {
           console.error("Error fetching favorite menus: ", error);
         }
@@ -58,13 +63,14 @@ export default function FavoriteMenus({ navigation }) {
   const toggleFavorite = async (menuId) => {
     const user = auth.currentUser;
     if (user) {
-      const favoriteRef = doc(db, "Favorites", `${user.uid}_${menuId}`);
+      const favoriteRef = doc(db, "FavoriteMenus", `${user.uid}_${menuId}`);
       const favoriteDoc = await getDoc(favoriteRef);
       const isFavorite = favoriteDoc.exists();
 
       if (isFavorite) {
         await deleteDoc(favoriteRef);
         setFavorites(favorites.filter((menu) => menu.id !== menuId));
+        setFilteredFavorites(filteredFavorites.filter((menu) => menu.id !== menuId));
       } else {
         await setDoc(favoriteRef, { userId: user.uid, menuId });
         const menuDocRef = doc(db, "menus", menuId);
@@ -74,7 +80,9 @@ export default function FavoriteMenus({ navigation }) {
           const userDocRef = doc(db, "Users", menuData.userId);
           const userDoc = await getDoc(userDocRef);
           const username = userDoc.exists() ? userDoc.data().username : "Unknown";
-          setFavorites([...favorites, { ...menuData, id: menuId, username }]);
+          const newFavorite = { ...menuData, id: menuId, username };
+          setFavorites([...favorites, newFavorite]);
+          setFilteredFavorites([...filteredFavorites, newFavorite]);
         }
       }
 
@@ -97,6 +105,18 @@ export default function FavoriteMenus({ navigation }) {
     }
   };
 
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    if (query) {
+      const filtered = favorites.filter((menu) =>
+        menu.name.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredFavorites(filtered);
+    } else {
+      setFilteredFavorites(favorites);
+    }
+  };
+
   const themeStyles = isDarkTheme ? styles.dark : styles.light;
 
   return (
@@ -104,8 +124,15 @@ export default function FavoriteMenus({ navigation }) {
       <Text style={[styles.title, themeStyles.text]}>
         {isThaiLanguage ? "เมนูที่ชอบ" : "Favorite Menus"}
       </Text>
+      <TextInput
+        style={[styles.searchInput, themeStyles.cardBackground, { color: themeStyles.text.color }]}
+        placeholder={isThaiLanguage ? "ค้นหาเมนู" : "Search Menus"}
+        placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+        value={searchQuery}
+        onChangeText={handleSearch}
+      />
       <FlatList
-        data={favorites}
+        data={filteredFavorites}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={[styles.menuItem, themeStyles.cardBackground]}>
@@ -181,6 +208,14 @@ const styles = StyleSheet.create({
     fontFamily: "NotoSansThai-Regular",
     marginBottom: 20,
     textAlign: "center",
+  },
+  searchInput: {
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 20,
+    paddingHorizontal: 10,
   },
   menuItem: {
     flexDirection: "row",

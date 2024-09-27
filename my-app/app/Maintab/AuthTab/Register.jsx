@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   Text,
   View,
@@ -26,7 +26,7 @@ export default function Register({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const themeStyles = isDarkTheme ? styles.dark : styles.light;
+  const themeStyles = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
 
   const handleSubmit = useCallback(async () => {
     if (!email || !username || !password || !confirmPassword) {
@@ -73,6 +73,14 @@ export default function Register({ navigation }) {
     }
   }, [email, username, password, confirmPassword, isThaiLanguage, navigation]);
 
+  const toggleShowPassword = useCallback(() => {
+    setShowPassword((prev) => !prev);
+  }, []);
+
+  const toggleShowConfirmPassword = useCallback(() => {
+    setShowConfirmPassword((prev) => !prev);
+  }, []);
+
   return (
     <View style={[styles.container, themeStyles.background]}>
       <Image style={styles.logo} source={logo} />
@@ -103,7 +111,7 @@ export default function Register({ navigation }) {
           onChangeText={setPassword}
           autoCapitalize="none"
         />
-        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+        <TouchableOpacity onPress={toggleShowPassword}>
           <Icon
             name={showPassword ? "visibility" : "visibility-off"}
             size={24}
@@ -121,9 +129,7 @@ export default function Register({ navigation }) {
           onChangeText={setConfirmPassword}
           autoCapitalize="none"
         />
-        <TouchableOpacity
-          onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-        >
+        <TouchableOpacity onPress={toggleShowConfirmPassword}>
           <Icon
             name={showConfirmPassword ? "visibility" : "visibility-off"}
             size={24}

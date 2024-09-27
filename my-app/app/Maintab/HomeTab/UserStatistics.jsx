@@ -102,7 +102,6 @@ export default function UserStatistics() {
             data={lastFourData.map((data) => data.distance)}
             labels={lastFourData.map((data) => data.date)}
             legend={isThaiLanguage ? "ระยะทาง (กม.)" : "Distance (Km)"}
-            yAxisSuffix={isThaiLanguage ? " กม." : " Km"}
             chartConfig={chartConfig}
           />
           <GraphSection
@@ -115,7 +114,6 @@ export default function UserStatistics() {
             data={lastFourData.map((data) => data.calories)}
             labels={lastFourData.map((data) => data.date)}
             legend={isThaiLanguage ? "แคลอรี่ (แคล)" : "Calories (cal)"}
-            yAxisSuffix={isThaiLanguage ? " แคล" : " cal"}
             chartConfig={chartConfig}
           />
         </>

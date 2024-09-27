@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   Text,
   View,
@@ -32,7 +32,7 @@ export default function EditProfile({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const theme = isDarkTheme ? styles.dark : styles.light;
+  const theme = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
 
   const fetchUserData = useCallback(async (currentUser) => {
     if (currentUser) {
@@ -61,21 +61,38 @@ export default function EditProfile({ navigation }) {
   );
 
   const pickImage = async () => {
-    try {
-      let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 1,
-      });
+    Alert.alert(
+      isThaiLanguage ? "ยืนยันการเปลี่ยนรูปภาพ" : "Confirm Image Change",
+      isThaiLanguage
+        ? "คุณต้องการเปลี่ยนรูปภาพโปรไฟล์หรือไม่?"
+        : "Do you want to change your profile picture?",
+      [
+        {
+          text: isThaiLanguage ? "ยกเลิก" : "Cancel",
+          style: "cancel",
+        },
+        {
+          text: isThaiLanguage ? "ตกลง" : "OK",
+          onPress: async () => {
+            try {
+              let result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 1,
+              });
 
-      if (!result.canceled) {
-        setImage(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error("Error picking image: ", error);
-      Alert.alert("Error", "Failed to pick image.");
-    }
+              if (!result.canceled) {
+                setImage(result.assets[0].uri);
+              }
+            } catch (error) {
+              console.error("Error picking image: ", error);
+              Alert.alert("Error", "Failed to pick image.");
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleSaveProfile = async () => {
@@ -127,6 +144,13 @@ export default function EditProfile({ navigation }) {
       console.error("Error logging out: ", error);
       Alert.alert("Error", "Failed to log out.");
     }
+  };
+
+  const getGenderDisplay = (gender) => {
+    if (isThaiLanguage) {
+      return gender === "Male" ? "ชาย" : "หญิง";
+    }
+    return gender;
   };
 
   return (
@@ -207,7 +231,7 @@ export default function EditProfile({ navigation }) {
                     <Text
                       style={[styles.dropdownText, { color: theme.textColor }]}
                     >
-                      {userData.gender ||
+                      {getGenderDisplay(userData.gender) ||
                         (isThaiLanguage ? "เลือกเพศ" : "Select Gender")}
                     </Text>
                   </Button>
@@ -218,7 +242,7 @@ export default function EditProfile({ navigation }) {
                   onPress={() => {
                     setUserData({
                       ...userData,
-                      gender: isThaiLanguage ? "ชาย" : "Male",
+                      gender: "Male",
                     });
                     setMenuVisible(false);
                   }}
@@ -229,7 +253,7 @@ export default function EditProfile({ navigation }) {
                   onPress={() => {
                     setUserData({
                       ...userData,
-                      gender: isThaiLanguage ? "หญิง" : "Female",
+                      gender: "Female",
                     });
                     setMenuVisible(false);
                   }}
@@ -287,7 +311,7 @@ export default function EditProfile({ navigation }) {
                   placeholderTextColor={theme.textColor}
                   value={userData.weight || ""}
                   onChangeText={(text) =>
-                    setUserData({ ...userData, weight: text })
+                    setUserData({ ...userData, weight: text.replace(/[^0-9]/g, '') })
                   }
                   keyboardType="numeric"
                 />
@@ -308,7 +332,7 @@ export default function EditProfile({ navigation }) {
                   placeholderTextColor={theme.textColor}
                   value={userData.height || ""}
                   onChangeText={(text) =>
-                    setUserData({ ...userData, height: text })
+                    setUserData({ ...userData, height: text.replace(/[^0-9]/g, '') })
                   }
                   keyboardType="numeric"
                 />

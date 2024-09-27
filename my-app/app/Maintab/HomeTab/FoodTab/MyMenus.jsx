@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, Alert, RefreshControl } from "react-native";
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Image, TextInput, RefreshControl } from "react-native";
 import { db, auth } from "../../../../firebase/Firebase";
 import { collection, query, where, getDocs, deleteDoc, doc } from "firebase/firestore";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
@@ -8,6 +8,8 @@ import { useLanguage } from "../../../LanguageContext";
 
 export default function MyMenus({ navigation }) {
   const [menus, setMenus] = useState([]);
+  const [filteredMenus, setFilteredMenus] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
@@ -26,6 +28,7 @@ export default function MyMenus({ navigation }) {
           ...doc.data(),
         }));
         setMenus(userMenus);
+        setFilteredMenus(userMenus);
       } catch (error) {
         console.error("Error fetching user menus: ", error);
       }
@@ -45,10 +48,21 @@ export default function MyMenus({ navigation }) {
     try {
       await deleteDoc(doc(db, "menus", menuId));
       setMenus((prevMenus) => prevMenus.filter((menu) => menu.id !== menuId));
-      Alert.alert(isThaiLanguage ? "สำเร็จ" : "Success", isThaiLanguage ? "ลบเมนูสำเร็จ!" : "Menu deleted successfully!");
+      setFilteredMenus((prevMenus) => prevMenus.filter((menu) => menu.id !== menuId));
     } catch (error) {
       console.error("Error deleting menu: ", error);
-      Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "ลบเมนูไม่สำเร็จ กรุณาลองอีกครั้ง." : "Failed to delete menu. Please try again.");
+    }
+  };
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    if (query) {
+      const filtered = menus.filter((menu) =>
+        menu.name.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredMenus(filtered);
+    } else {
+      setFilteredMenus(menus);
     }
   };
 
@@ -59,8 +73,15 @@ export default function MyMenus({ navigation }) {
       <Text style={[styles.title, themeStyles.text]}>
         {isThaiLanguage ? "เมนูของฉัน" : "My Menus"}
       </Text>
+      <TextInput
+        style={[styles.searchInput, themeStyles.cardBackground, { color: themeStyles.text.color }]}
+        placeholder={isThaiLanguage ? "ค้นหาเมนู" : "Search Menus"}
+        placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+        value={searchQuery}
+        onChangeText={handleSearch}
+      />
       <FlatList
-        data={menus}
+        data={filteredMenus}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={[styles.menuItem, themeStyles.cardBackground]}>
@@ -117,6 +138,14 @@ const styles = StyleSheet.create({
     fontFamily: "NotoSansThai-Regular",
     marginBottom: 20,
     textAlign: "center",
+  },
+  searchInput: {
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 20,
+    paddingHorizontal: 10,
   },
   menuItem: {
     flexDirection: "row",

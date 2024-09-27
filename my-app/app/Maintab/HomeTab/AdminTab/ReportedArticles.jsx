@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -23,7 +23,7 @@ export default function ReportedArticles({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const themeStyles = isDarkTheme ? styles.dark : styles.light;
+  const themeStyles = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
 
   const fetchReportedArticles = useCallback(async () => {
     try {
@@ -66,68 +66,104 @@ export default function ReportedArticles({ navigation }) {
     fetchReportedArticles();
   }, [fetchReportedArticles]);
 
-  const handleDeleteArticle = async (articleId) => {
-    try {
-      await deleteDoc(doc(db, "articles", articleId));
-      setReportedArticles(
-        reportedArticles.filter((article) => article.id !== articleId)
-      );
-      Alert.alert(
-        isThaiLanguage ? "สำเร็จ" : "Success",
-        isThaiLanguage
-          ? "ลบบทความเรียบร้อยแล้ว!"
-          : "Article deleted successfully!"
-      );
-    } catch (error) {
-      console.error("Error deleting article: ", error);
-      Alert.alert(
-        isThaiLanguage ? "ข้อผิดพลาด" : "Error",
-        isThaiLanguage
-          ? "ไม่สามารถลบบทความได้ กรุณาลองใหม่อีกครั้ง."
-          : "Failed to delete article. Please try again."
-      );
-    }
-  };
+  const handleDeleteArticle = useCallback(async (articleId) => {
+    Alert.alert(
+      isThaiLanguage ? "ยืนยันการลบ" : "Confirm Deletion",
+      isThaiLanguage
+        ? "คุณแน่ใจหรือไม่ว่าต้องการลบบทความนี้?"
+        : "Are you sure you want to delete this article?",
+      [
+        {
+          text: isThaiLanguage ? "ยกเลิก" : "Cancel",
+          style: "cancel",
+        },
+        {
+          text: isThaiLanguage ? "ลบ" : "Delete",
+          onPress: async () => {
+            try {
+              await deleteDoc(doc(db, "articles", articleId));
+              setReportedArticles((prevArticles) =>
+                prevArticles.filter((article) => article.id !== articleId)
+              );
+              Alert.alert(
+                isThaiLanguage ? "สำเร็จ" : "Success",
+                isThaiLanguage
+                  ? "ลบบทความเรียบร้อยแล้ว!"
+                  : "Article deleted successfully!"
+              );
+            } catch (error) {
+              console.error("Error deleting article: ", error);
+              Alert.alert(
+                isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+                isThaiLanguage
+                  ? "ไม่สามารถลบบทความได้ กรุณาลองใหม่อีกครั้ง."
+                  : "Failed to delete article. Please try again."
+              );
+            }
+          },
+        },
+      ]
+    );
+  }, [isThaiLanguage]);
 
-  const handleDeleteReport = async (articleId) => {
-    try {
-      const reportsSnapshot = await getDocs(collection(db, "reports"));
-      const reportDocs = reportsSnapshot.docs.filter(
-        (doc) => doc.data().articleId === articleId
-      );
-      for (const reportDoc of reportDocs) {
-        await deleteDoc(doc(db, "reports", reportDoc.id));
-      }
-      fetchReportedArticles();
-      Alert.alert(
-        isThaiLanguage ? "สำเร็จ" : "Success",
-        isThaiLanguage
-          ? "ลบรีพอร์ตเรียบร้อยแล้ว!"
-          : "Report deleted successfully!"
-      );
-    } catch (error) {
-      console.error("Error deleting report: ", error);
-      Alert.alert(
-        isThaiLanguage ? "ข้อผิดพลาด" : "Error",
-        isThaiLanguage
-          ? "ไม่สามารถลบรีพอร์ตได้ กรุณาลองใหม่อีกครั้ง."
-          : "Failed to delete report. Please try again."
-      );
-    }
-  };
+  const handleDeleteReport = useCallback(async (articleId) => {
+    Alert.alert(
+      isThaiLanguage ? "ยืนยันการลบ" : "Confirm Deletion",
+      isThaiLanguage
+        ? "คุณแน่ใจหรือไม่ว่าต้องการลบรีพอร์ตนี้?"
+        : "Are you sure you want to delete this report?",
+      [
+        {
+          text: isThaiLanguage ? "ยกเลิก" : "Cancel",
+          style: "cancel",
+        },
+        {
+          text: isThaiLanguage ? "ลบ" : "Delete",
+          onPress: async () => {
+            try {
+              const reportsSnapshot = await getDocs(collection(db, "reports"));
+              const reportDocs = reportsSnapshot.docs.filter(
+                (doc) => doc.data().articleId === articleId
+              );
+              for (const reportDoc of reportDocs) {
+                await deleteDoc(doc(db, "reports", reportDoc.id));
+              }
+              fetchReportedArticles();
+              Alert.alert(
+                isThaiLanguage ? "สำเร็จ" : "Success",
+                isThaiLanguage
+                  ? "ลบรีพอร์ตเรียบร้อยแล้ว!"
+                  : "Report deleted successfully!"
+              );
+            } catch (error) {
+              console.error("Error deleting report: ", error);
+              Alert.alert(
+                isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+                isThaiLanguage
+                  ? "ไม่สามารถลบรีพอร์ตได้ กรุณาลองใหม่อีกครั้ง."
+                  : "Failed to delete report. Please try again."
+              );
+            }
+          },
+        },
+      ]
+    );
+  }, [isThaiLanguage]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchReportedArticles().then(() => setRefreshing(false));
   }, [fetchReportedArticles]);
 
-  const filteredArticles = reportedArticles.filter(
-    (article) =>
-      (article.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-      (article.reportReasons?.toLowerCase() || "").includes(
-        searchQuery.toLowerCase()
-      )
-  );
+  const filteredArticles = useMemo(() => {
+    return reportedArticles.filter(
+      (article) =>
+        (article.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (article.reportReasons?.toLowerCase() || "").includes(
+          searchQuery.toLowerCase()
+        )
+    );
+  }, [reportedArticles, searchQuery]);
 
   return (
     <View style={[styles.container, themeStyles.background]}>

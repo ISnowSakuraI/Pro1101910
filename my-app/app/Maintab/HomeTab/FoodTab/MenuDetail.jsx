@@ -66,7 +66,7 @@ export default function MenuDetail({ route, navigation }) {
       </Text>
       {menu.ingredients.map((ingredient, index) => (
         <Text key={index} style={[styles.ingredient, themeStyles.subtext]}>
-          {ingredient.name}: {ingredient.amount}
+          {ingredient.name}: {ingredient.amount} {ingredient.unit}
         </Text>
       ))}
       <Text style={[styles.sectionTitle, themeStyles.text]}>

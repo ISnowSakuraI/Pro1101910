@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -18,7 +18,7 @@ export default function Settings({ navigation }) {
   const { isThaiLanguage, toggleLanguage } = useLanguage();
   const animatedValue = useRef(new Animated.Value(0)).current;
 
-  const theme = isDarkTheme ? styles.dark : styles.light;
+  const theme = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
 
   const handleBackPress = useCallback(() => {
     Animated.timing(animatedValue, {
@@ -51,8 +51,8 @@ export default function Settings({ navigation }) {
         <Switch
           value={isDarkTheme}
           onValueChange={() => handleToggleSwitch(toggleTheme)}
-          trackColor={{ false: "#767577", true: theme.secondaryColor }}
-          thumbColor={isDarkTheme ? theme.primaryColor : "#f4f3f4"}
+          trackColor={{ false: "#767577", true: theme.primaryColor }}
+          thumbColor={isDarkTheme ? theme.secondaryColor : "#f4f3f4"}
           style={styles.switch}
         />
       </View>
@@ -63,8 +63,8 @@ export default function Settings({ navigation }) {
         <Switch
           value={isThaiLanguage}
           onValueChange={() => handleToggleSwitch(toggleLanguage)}
-          trackColor={{ false: "#767577", true: theme.secondaryColor }}
-          thumbColor={isThaiLanguage ? theme.primaryColor : "#f4f3f4"}
+          trackColor={{ false: "#767577", true: theme.primaryColor }}
+          thumbColor={isThaiLanguage ? theme.secondaryColor : "#f4f3f4"}
           style={styles.switch}
         />
       </View>
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   switch: {
-    transform: [{ scale: 1.1 }],
+    transform: [{ scale: 1.2 }], // Slightly larger for better touch targets
   },
   light: {
     primaryColor: "#ff7f50", // Coral

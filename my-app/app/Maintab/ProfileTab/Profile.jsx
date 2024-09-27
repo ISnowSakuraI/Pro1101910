@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   Text,
   View,
@@ -11,8 +11,8 @@ import {
   StatusBar,
   Alert,
 } from "react-native";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../../../firebase/Firebase";
+import { onAuthStateChanged, updateProfile } from "firebase/auth";
+import { auth, db, storage } from "../../../firebase/Firebase";
 import {
   doc,
   getDoc,
@@ -20,7 +20,9 @@ import {
   getDocs,
   query,
   where,
+  setDoc,
 } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -38,7 +40,7 @@ export default function Profile({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const theme = isDarkTheme ? styles.dark : styles.light;
+  const theme = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
 
   const fetchUserData = useCallback(
     async (currentUser) => {
@@ -117,30 +119,69 @@ export default function Profile({ navigation }) {
   );
 
   const pickImage = async () => {
-    setLoading(true);
-    try {
-      let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 1,
-      });
+    Alert.alert(
+      isThaiLanguage ? "ยืนยันการเปลี่ยนรูปภาพ" : "Confirm Image Change",
+      isThaiLanguage
+        ? "คุณต้องการเปลี่ยนรูปภาพโปรไฟล์หรือไม่?"
+        : "Do you want to change your profile picture?",
+      [
+        {
+          text: isThaiLanguage ? "ยกเลิก" : "Cancel",
+          style: "cancel",
+        },
+        {
+          text: isThaiLanguage ? "ตกลง" : "OK",
+          onPress: async () => {
+            setLoading(true);
+            try {
+              let result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 1,
+              });
 
-      if (!result.canceled) {
-        setImage(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error("Error picking image: ", error);
-      Alert.alert(
-        isThaiLanguage ? "ข้อผิดพลาด" : "Error",
-        isThaiLanguage ? "ไม่สามารถเลือกภาพได้" : "Failed to pick image."
-      );
-    } finally {
-      setLoading(false);
-    }
+              if (!result.canceled) {
+                const uri = result.assets[0].uri;
+                const response = await fetch(uri);
+                const blob = await response.blob();
+                const storageRef = ref(storage, `profilePictures/${user.uid}`);
+                await uploadBytes(storageRef, blob);
+                const photoURL = await getDownloadURL(storageRef);
+
+                // Update user profile in Firebase Authentication
+                await updateProfile(user, { photoURL });
+
+                // Update user document in Firestore
+                await setDoc(doc(db, "Users", user.uid), {
+                  ...userData,
+                  photoURL,
+                });
+
+                setImage(photoURL);
+                Alert.alert(
+                  isThaiLanguage ? "สำเร็จ" : "Success",
+                  isThaiLanguage
+                    ? "อัปเดตรูปโปรไฟล์เรียบร้อยแล้ว"
+                    : "Profile picture updated successfully."
+                );
+              }
+            } catch (error) {
+              console.error("Error picking image: ", error);
+              Alert.alert(
+                isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+                isThaiLanguage ? "ไม่สามารถเลือกภาพได้" : "Failed to pick image."
+              );
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
-  const chartConfig = {
+  const chartConfig = useMemo(() => ({
     backgroundColor: theme.backgroundColor,
     backgroundGradientFrom: theme.backgroundColor,
     backgroundGradientTo: theme.cardBackgroundColor,
@@ -159,10 +200,10 @@ export default function Profile({ navigation }) {
       fontSize: 12,
       fontFamily: "NotoSansThai-Regular",
     },
-  };
+  }), [theme]);
 
   // Get the last 4 data points
-  const lastFourData = dailyData.slice(-4);
+  const lastFourData = useMemo(() => dailyData.slice(-4), [dailyData]);
 
   return (
     <ScrollView>
@@ -262,7 +303,6 @@ export default function Profile({ navigation }) {
             }}
             width={Dimensions.get("window").width - 20} // Adjusted width
             height={250} // Slightly taller chart
-            yAxisSuffix=" cal"
             chartConfig={chartConfig}
             style={styles.chart}
           />

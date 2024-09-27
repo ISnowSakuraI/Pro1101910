@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   RefreshControl,
   Animated,
   TextInput,
+  Alert,
 } from "react-native";
 import { db, auth } from "../../../../firebase/Firebase";
 import { collection, getDocs, doc, getDoc, query, where, setDoc, deleteDoc } from "firebase/firestore";
@@ -32,6 +33,8 @@ export default function MenuList({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
+  const themeStyles = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
+
   const fetchMenus = useCallback(async () => {
     try {
       const user = auth.currentUser;
@@ -49,7 +52,7 @@ export default function MenuList({ navigation }) {
 
           // Fetch likes count
           const likesQuery = query(
-            collection(db, "Favorites"),
+            collection(db, "FavoriteMenus"),
             where("menuId", "==", menuDoc.id)
           );
           const likesSnapshot = await getDocs(likesQuery);
@@ -70,7 +73,7 @@ export default function MenuList({ navigation }) {
     if (user) {
       try {
         const q = query(
-          collection(db, "Favorites"),
+          collection(db, "FavoriteMenus"),
           where("userId", "==", user.uid)
         );
         const querySnapshot = await getDocs(q);
@@ -123,7 +126,7 @@ export default function MenuList({ navigation }) {
   const toggleFavoriteMenu = async (menuId) => {
     const user = auth.currentUser;
     if (user) {
-      const favoriteRef = doc(db, "Favorites", `${user.uid}_${menuId}`);
+      const favoriteRef = doc(db, "FavoriteMenus", `${user.uid}_${menuId}`);
       const isFavorite = favoriteMenus.includes(menuId);
 
       try {
@@ -165,13 +168,13 @@ export default function MenuList({ navigation }) {
     }
   };
 
-  const filteredMenus = menus.filter((menu) => {
-    const matchesSearch = menu.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const isFavorite = showFavoriteMenus ? favoriteMenus.includes(menu.id) : true;
-    return matchesSearch && isFavorite;
-  });
-
-  const themeStyles = isDarkTheme ? styles.dark : styles.light;
+  const filteredMenus = useMemo(() => {
+    return menus.filter((menu) => {
+      const matchesSearch = menu.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const isFavorite = showFavoriteMenus ? favoriteMenus.includes(menu.id) : true;
+      return matchesSearch && isFavorite;
+    });
+  }, [menus, searchQuery, showFavoriteMenus, favoriteMenus]);
 
   return (
     <View style={[styles.container, themeStyles.background]}>

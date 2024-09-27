@@ -5,7 +5,7 @@ const MenuContext = createContext();
 export const useMenu = () => useContext(MenuContext);
 
 export const MenuProvider = ({ children }) => {
-  const [onSelectMenu, setOnSelectMenu] = useState(() => () => {}); // Initialize as a function
+  const [onSelectMenu, setOnSelectMenu] = useState(() => () => {});
 
   return (
     <MenuContext.Provider value={{ onSelectMenu, setOnSelectMenu }}>

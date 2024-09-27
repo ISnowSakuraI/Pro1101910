@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useReducer } from "react";
 import {
   View,
   Text,
@@ -26,15 +26,44 @@ import { useLanguage } from "./LanguageContext";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import commitData from "../scripts/commit-sha.json";
 
+const StatusItem = React.memo(({ label, status, description, theme }) => (
+  <View style={[styles.statusItem, theme.cardBackground]}>
+    <View style={styles.statusHeader}>
+      <Text style={[styles.statusLabel, theme.text]}>{label}:</Text>
+      <Icon
+        name={getIconName(status)}
+        size={24}
+        color={getStatusColor(status)}
+        style={styles.statusIcon}
+      />
+      <Text style={[styles.statusValue, { color: getStatusColor(status) }]}>
+        {status}
+      </Text>
+    </View>
+    <Text style={[styles.statusDescription, theme.text]}>{description}</Text>
+  </View>
+));
+
+const initialState = {
+  auth: "Pending",
+  db: "Pending",
+  storage: "Pending",
+  network: "Pending",
+  dataExchange: "Pending",
+  updateCheck: "Pending",
+};
+
+function statusReducer(state, action) {
+  switch (action.type) {
+    case 'UPDATE_STATUS':
+      return { ...state, [action.key]: action.status };
+    default:
+      return state;
+  }
+}
+
 export default function SystemTest({ navigation }) {
-  const [statuses, setStatuses] = useState({
-    auth: "Pending",
-    db: "Pending",
-    storage: "Pending",
-    network: "Pending",
-    dataExchange: "Pending",
-    updateCheck: "Pending",
-  });
+  const [statuses, dispatch] = useReducer(statusReducer, initialState);
   const [loading, setLoading] = useState(false);
   const [dataExchangeTime, setDataExchangeTime] = useState(null);
   const { isDarkTheme } = useTheme();
@@ -42,28 +71,44 @@ export default function SystemTest({ navigation }) {
 
   const themeStyles = isDarkTheme ? styles.dark : styles.light;
 
-  const runTests = async () => {
-    setLoading(true);
-    try {
-      await testAuth();
-      await testFirestore();
-      await testStorage();
-      await testNetwork();
-      await testDataExchange();
-      await testUpdateCheck();
-    } catch (error) {
-      console.error("Error during tests:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const runTests = useCallback(async () => {
+    Alert.alert(
+      isThaiLanguage ? "ยืนยันการทดสอบ" : "Confirm Test",
+      isThaiLanguage
+        ? "คุณต้องการเริ่มการทดสอบระบบหรือไม่?"
+        : "Do you want to start the system test?",
+      [
+        {
+          text: isThaiLanguage ? "ยกเลิก" : "Cancel",
+          style: "cancel",
+        },
+        {
+          text: isThaiLanguage ? "ตกลง" : "OK",
+          onPress: async () => {
+            setLoading(true);
+            try {
+              await testAuth();
+              await testFirestore();
+              await testStorage();
+              await testNetwork();
+              await testDataExchange();
+              await testUpdateCheck();
+            } catch (error) {
+              console.error("Error during tests:", error);
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  }, [isThaiLanguage]);
 
   const updateStatus = (key, status) => {
-    setStatuses((prevStatuses) => ({ ...prevStatuses, [key]: status }));
+    dispatch({ type: 'UPDATE_STATUS', key, status });
   };
 
-  const testAuth = async () => {
-    const originalUser = auth.currentUser;
+  const testAuth = useCallback(async () => {
     const email = "testuser@example.com";
     const password = "testpassword";
 
@@ -89,24 +134,10 @@ export default function SystemTest({ navigation }) {
       );
     } finally {
       await auth.signOut();
-      if (originalUser) {
-        try {
-          const originalEmail = originalUser.email;
-          const originalPassword = "originalUserPassword"; // Replace with actual password
-          await signInWithEmailAndPassword(
-            auth,
-            originalEmail,
-            originalPassword
-          );
-          console.log("Signed back in with the original user.");
-        } catch (error) {
-          console.error("Error signing back in with the original user:", error);
-        }
-      }
     }
-  };
+  }, [isThaiLanguage]);
 
-  const testFirestore = async () => {
+  const testFirestore = useCallback(async () => {
     try {
       const collections = ["Users", "FoodDiary", "reports", "articles"];
       for (const collectionName of collections) {
@@ -142,9 +173,9 @@ export default function SystemTest({ navigation }) {
         }${error.message}`
       );
     }
-  };
+  }, [isThaiLanguage]);
 
-  const testStorage = async () => {
+  const testStorage = useCallback(async () => {
     try {
       const storageRef = ref(storage, "profilePictures/sample.png");
       await getDownloadURL(storageRef);
@@ -167,9 +198,9 @@ export default function SystemTest({ navigation }) {
         }${error.message}`
       );
     }
-  };
+  }, [isThaiLanguage]);
 
-  const testNetwork = async () => {
+  const testNetwork = useCallback(async () => {
     try {
       const state = await NetInfo.fetch();
       if (state.isConnected) {
@@ -199,9 +230,9 @@ export default function SystemTest({ navigation }) {
         }${error.message}`
       );
     }
-  };
+  }, [isThaiLanguage]);
 
-  const testDataExchange = async () => {
+  const testDataExchange = useCallback(async () => {
     const testDocRef = doc(db, "TestCollection", "TestDocument");
     const testData = { message: "Hello, Firestore!" };
 
@@ -250,9 +281,9 @@ export default function SystemTest({ navigation }) {
     } finally {
       await deleteDoc(testDocRef);
     }
-  };
+  }, [isThaiLanguage]);
 
-  const testUpdateCheck = async () => {
+  const testUpdateCheck = useCallback(async () => {
     try {
       const response = await fetch(
         "https://api.github.com/repos/ISnowSakuraI/Pro1101910/commits/main"
@@ -291,7 +322,7 @@ export default function SystemTest({ navigation }) {
         }${error.message}`
       );
     }
-  };
+  }, [isThaiLanguage]);
 
   return (
     <ScrollView contentContainerStyle={[styles.container, themeStyles.background]}>
@@ -373,24 +404,6 @@ const getDescription = (key, isThaiLanguage, dataExchangeTime) => {
   };
   return descriptions[key];
 };
-
-const StatusItem = ({ label, status, description, theme }) => (
-  <View style={[styles.statusItem, theme.cardBackground]}>
-    <View style={styles.statusHeader}>
-      <Text style={[styles.statusLabel, theme.text]}>{label}:</Text>
-      <Icon
-        name={getIconName(status)}
-        size={24}
-        color={getStatusColor(status)}
-        style={styles.statusIcon}
-      />
-      <Text style={[styles.statusValue, { color: getStatusColor(status) }]}>
-        {status}
-      </Text>
-    </View>
-    <Text style={[styles.statusDescription, theme.text]}>{description}</Text>
-  </View>
-);
 
 const getIconName = (status) => {
   switch (status) {

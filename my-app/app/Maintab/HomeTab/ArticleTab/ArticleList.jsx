@@ -66,7 +66,9 @@ export default function ArticleList({ navigation }) {
         querySnapshot.docs.map(async (docSnapshot) => {
           const data = docSnapshot.data();
           const userDoc = await getDoc(doc(db, "Users", data.userId));
-          const userName = userDoc.exists() ? userDoc.data().username : "Unknown";
+          const userName = userDoc.exists()
+            ? userDoc.data().username
+            : "Unknown";
 
           // Fetch likes count
           const likesQuery = query(
@@ -99,7 +101,9 @@ export default function ArticleList({ navigation }) {
           where("userId", "==", user.uid)
         );
         const querySnapshot = await getDocs(q);
-        const favoriteIds = querySnapshot.docs.map((doc) => doc.data().articleId);
+        const favoriteIds = querySnapshot.docs.map(
+          (doc) => doc.data().articleId
+        );
         setFavorites(favoriteIds);
       } catch (error) {
         console.error("Error fetching favorites: ", error);
@@ -121,48 +125,55 @@ export default function ArticleList({ navigation }) {
     setRefreshing(false);
   };
 
-  const toggleFavorite = useCallback(async (articleId) => {
-    const user = auth.currentUser;
-    if (user) {
-      try {
-        const favoriteDocRef = doc(
-          db,
-          "favoriteArticles",
-          `${user.uid}_${articleId}`
-        );
-        if (favorites.includes(articleId)) {
-          await deleteDoc(favoriteDocRef);
-          setFavorites(favorites.filter((id) => id !== articleId));
-        } else {
-          await setDoc(favoriteDocRef, { userId: user.uid, articleId });
-          setFavorites([...favorites, articleId]);
+  const toggleFavorite = useCallback(
+    async (articleId) => {
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const favoriteDocRef = doc(
+            db,
+            "favoriteArticles",
+            `${user.uid}_${articleId}`
+          );
+          if (favorites.includes(articleId)) {
+            await deleteDoc(favoriteDocRef);
+            setFavorites(favorites.filter((id) => id !== articleId));
+          } else {
+            await setDoc(favoriteDocRef, { userId: user.uid, articleId });
+            setFavorites([...favorites, articleId]);
+          }
+
+          // Animate the favorite icon
+          const animation =
+            favoriteAnimations[articleId] || new Animated.Value(1);
+          Animated.sequence([
+            Animated.timing(animation, {
+              toValue: 1.5,
+              duration: 200,
+              useNativeDriver: true,
+            }),
+            Animated.timing(animation, {
+              toValue: 1,
+              duration: 200,
+              useNativeDriver: true,
+            }),
+          ]).start();
+
+          setFavoriteAnimations((prev) => ({
+            ...prev,
+            [articleId]: animation,
+          }));
+
+          // Refresh articles and favorites after toggling
+          await fetchArticles();
+          await fetchFavorites();
+        } catch (error) {
+          console.error("Error toggling favorite: ", error);
         }
-
-        // Animate the favorite icon
-        const animation = favoriteAnimations[articleId] || new Animated.Value(1);
-        Animated.sequence([
-          Animated.timing(animation, {
-            toValue: 1.5,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-          Animated.timing(animation, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-        ]).start();
-
-        setFavoriteAnimations((prev) => ({ ...prev, [articleId]: animation }));
-
-        // Refresh articles and favorites after toggling
-        await fetchArticles();
-        await fetchFavorites();
-      } catch (error) {
-        console.error("Error toggling favorite: ", error);
       }
-    }
-  }, [favorites, fetchArticles, fetchFavorites, favoriteAnimations]);
+    },
+    [favorites, fetchArticles, fetchFavorites, favoriteAnimations]
+  );
 
   const openReportModal = (articleId) => {
     setSelectedArticleId(articleId);
@@ -172,15 +183,37 @@ export default function ArticleList({ navigation }) {
   const submitReport = async () => {
     const user = auth.currentUser;
     if (user && selectedArticleId) {
-      const reasons = [...predefinedReasons.filter(r => selectedReasons.includes(r.text)).map(r => r.text), customReason].filter(Boolean);
+      const reasons = [
+        ...predefinedReasons
+          .filter((r) => selectedReasons.includes(r.text))
+          .map((r) => r.text),
+        customReason,
+      ].filter(Boolean);
       if (reasons.length === 0) {
-        Alert.alert(isThaiLanguage ? "กรุณาเลือกหรือใส่เหตุผล" : "Please select or enter a reason");
+        Alert.alert(
+          isThaiLanguage
+            ? "กรุณาเลือกหรือใส่เหตุผล"
+            : "Please select or enter a reason"
+        );
         return;
       }
       try {
-        const reportDocRef = doc(db, "reports", `${user.uid}_${selectedArticleId}`);
-        await setDoc(reportDocRef, { userId: user.uid, articleId: selectedArticleId, reasons }, { merge: true });
-        Alert.alert(isThaiLanguage ? "รายงานสำเร็จ" : "Report Successful", isThaiLanguage ? "บทความนี้ถูกรีพอร์ตแล้ว" : "This article has been reported.");
+        const reportDocRef = doc(
+          db,
+          "reports",
+          `${user.uid}_${selectedArticleId}`
+        );
+        await setDoc(
+          reportDocRef,
+          { userId: user.uid, articleId: selectedArticleId, reasons },
+          { merge: true }
+        );
+        Alert.alert(
+          isThaiLanguage ? "รายงานสำเร็จ" : "Report Successful",
+          isThaiLanguage
+            ? "บทความนี้ถูกรีพอร์ตแล้ว"
+            : "This article has been reported."
+        );
         setReportModalVisible(false);
         setSelectedReasons([]);
         setCustomReason("");
@@ -204,9 +237,9 @@ export default function ArticleList({ navigation }) {
   };
 
   const toggleReasonSelection = (reasonText) => {
-    setSelectedReasons((prev) => 
-      prev.includes(reasonText) 
-        ? prev.filter(r => r !== reasonText) 
+    setSelectedReasons((prev) =>
+      prev.includes(reasonText)
+        ? prev.filter((r) => r !== reasonText)
         : [...prev, reasonText]
     );
   };
@@ -232,12 +265,7 @@ export default function ArticleList({ navigation }) {
 
   return (
     <Provider>
-      <View
-        style={[
-          styles.container,
-          themeStyles.background,
-        ]}
-      >
+      <View style={[styles.container, themeStyles.background]}>
         <Text style={[styles.header, themeStyles.text]}>
           {isThaiLanguage ? "บทความสุขภาพและอาหาร" : "Health and Food Articles"}
         </Text>
@@ -267,12 +295,7 @@ export default function ArticleList({ navigation }) {
           data={filteredArticles}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View
-              style={[
-                styles.card,
-                themeStyles.cardBackground,
-              ]}
-            >
+            <View style={[styles.card, themeStyles.cardBackground]}>
               <TouchableOpacity onPress={() => openImageViewer(item.images)}>
                 <View style={styles.imageContainer}>
                   {(item.images || []).slice(0, 4).map((image, index) => (
@@ -292,14 +315,7 @@ export default function ArticleList({ navigation }) {
                   )}
                 </View>
               </TouchableOpacity>
-              <Text
-                style={[
-                  styles.title,
-                  themeStyles.text,
-                ]}
-              >
-                {item.title}
-              </Text>
+              <Text style={[styles.title, themeStyles.text]}>{item.title}</Text>
               <Text
                 style={[
                   styles.description,
@@ -313,8 +329,12 @@ export default function ArticleList({ navigation }) {
                 <TouchableOpacity onPress={() => toggleDescription(item.id)}>
                   <Text style={styles.readMoreText}>
                     {expandedDescriptions[item.id]
-                      ? isThaiLanguage ? "ดูน้อยลง" : "Read Less"
-                      : isThaiLanguage ? "ดูเพิ่มเติม" : "Read More"}
+                      ? isThaiLanguage
+                        ? "ดูน้อยลง"
+                        : "Read Less"
+                      : isThaiLanguage
+                      ? "ดูเพิ่มเติม"
+                      : "Read More"}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -345,7 +365,9 @@ export default function ArticleList({ navigation }) {
                 >
                   <Menu.Item
                     onPress={() => {
-                      navigation.navigate("ArticleDetail", { articleId: item.id });
+                      navigation.navigate("ArticleDetail", {
+                        articleId: item.id,
+                      });
                       toggleMenu(item.id);
                     }}
                     title={isThaiLanguage ? "ดูรายละเอียด" : "View Details"}
@@ -366,7 +388,10 @@ export default function ArticleList({ navigation }) {
                 <Animated.View
                   style={{
                     transform: [
-                      { scale: favoriteAnimations[item.id] || new Animated.Value(1) },
+                      {
+                        scale:
+                          favoriteAnimations[item.id] || new Animated.Value(1),
+                      },
                     ],
                   }}
                 >
@@ -394,18 +419,8 @@ export default function ArticleList({ navigation }) {
           animationType="slide"
         >
           <View style={styles.modalContainer}>
-            <View
-              style={[
-                styles.modalContent,
-                themeStyles.cardBackground,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.modalTitle,
-                  themeStyles.text,
-                ]}
-              >
+            <View style={[styles.modalContent, themeStyles.cardBackground]}>
+              <Text style={[styles.modalTitle, themeStyles.text]}>
                 {isThaiLanguage
                   ? "เลือกเหตุผลในการรายงาน"
                   : "Select Report Reasons"}
@@ -416,18 +431,17 @@ export default function ArticleList({ navigation }) {
                   style={styles.reasonButton}
                   onPress={() => toggleReasonSelection(reason.text)}
                 >
-                  <Text
-                    style={[
-                      styles.reasonText,
-                      themeStyles.text,
-                    ]}
-                  >
+                  <Text style={[styles.reasonText, themeStyles.text]}>
                     {isThaiLanguage
                       ? translateReasonToThai(reason.text)
                       : reason.text}
                   </Text>
                   {selectedReasons.includes(reason.text) && (
-                    <Icon name="check" size={20} color={themeStyles.primaryColor.color} />
+                    <Icon
+                      name="check"
+                      size={20}
+                      color={themeStyles.primaryColor.color}
+                    />
                   )}
                 </TouchableOpacity>
               ))}

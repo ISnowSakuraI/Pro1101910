@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -42,8 +42,12 @@ export default function EditMenu({ route, navigation }) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [calories, setCalories] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [caloriesCalculated, setCaloriesCalculated] = useState(false);
+  const [ingredientsModified, setIngredientsModified] = useState(false);
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
+
+  const themeStyles = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
 
   useEffect(() => {
     const fetchMenu = async () => {
@@ -71,7 +75,7 @@ export default function EditMenu({ route, navigation }) {
     fetchMenu();
   }, [menuId, navigation]);
 
-  const pickImages = async () => {
+  const pickImages = useCallback(async () => {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -86,9 +90,9 @@ export default function EditMenu({ route, navigation }) {
       console.error("Error picking images: ", error);
       Alert.alert("Error", "Failed to pick images. Please try again.");
     }
-  };
+  }, []);
 
-  const fetchCalories = async (ingredient) => {
+  const fetchCalories = useCallback(async (ingredient) => {
     try {
       const response = await fetch(`https://api.edamam.com/api/nutrition-data?app_id=31ef3024&app_key=9e81114be629a33766a4d71739dfbad2&ingr=${encodeURIComponent(ingredient)}`);
       const data = await response.json();
@@ -97,9 +101,9 @@ export default function EditMenu({ route, navigation }) {
       console.error("Error fetching calorie data: ", error);
       return 0;
     }
-  };
+  }, []);
 
-  const calculateTotalCalories = async () => {
+  const calculateTotalCalories = useCallback(async () => {
     let totalCalories = 0;
     for (const ingredient of ingredients) {
       try {
@@ -112,23 +116,30 @@ export default function EditMenu({ route, navigation }) {
       }
     }
     setCalories(totalCalories);
+    setCaloriesCalculated(true);
     Alert.alert(
       isThaiLanguage ? "คำนวณแคลอรี่แล้ว" : "Calories Calculated",
       `${isThaiLanguage ? "แคลอรี่ทั้งหมด" : "Total Calories"}: ${totalCalories}`
     );
-  };
+  }, [ingredients, isThaiLanguage, fetchCalories]);
 
-  const handleSaveChanges = async () => {
+  const handleSaveChanges = useCallback(async () => {
     if (!name || !description || !instructions || ingredients.some(ing => !ing.name || !ing.amount)) {
       Alert.alert(isThaiLanguage ? "ข้อผิดพลาด" : "Error", isThaiLanguage ? "กรุณากรอกข้อมูลให้ครบทุกช่อง" : "Please fill in all fields.");
+      return;
+    }
+
+    if (ingredientsModified && !caloriesCalculated) {
+      Alert.alert(
+        isThaiLanguage ? "ข้อผิดพลาด" : "Error",
+        isThaiLanguage ? "กรุณาคำนวณแคลอรี่ก่อนบันทึก" : "Please calculate calories before saving."
+      );
       return;
     }
 
     setLoading(true);
 
     try {
-      await calculateTotalCalories();
-
       const imageUrls = [];
       for (const image of images) {
         if (image.startsWith("http")) {
@@ -160,140 +171,162 @@ export default function EditMenu({ route, navigation }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [name, description, instructions, ingredients, images, calories, isThaiLanguage, ingredientsModified, caloriesCalculated, menuId, navigation]);
 
-  const handleAddIngredient = () => {
+  const handleAddIngredient = useCallback(() => {
     setIngredients([...ingredients, { name: "", amount: "", unit: "g" }]);
-  };
+    setIngredientsModified(true);
+  }, [ingredients]);
 
-  const handleRemoveIngredient = (index) => {
-    const newIngredients = ingredients.filter((_, i) => i !== index);
-    setIngredients(newIngredients);
-  };
+  const handleRemoveIngredient = useCallback((index) => {
+    Alert.alert(
+      isThaiLanguage ? "ยืนยันการลบ" : "Confirm Deletion",
+      isThaiLanguage ? "คุณแน่ใจหรือไม่ว่าต้องการลบส่วนผสมนี้?" : "Are you sure you want to delete this ingredient?",
+      [
+        {
+          text: isThaiLanguage ? "ยกเลิก" : "Cancel",
+          style: "cancel",
+        },
+        {
+          text: isThaiLanguage ? "ลบ" : "Delete",
+          onPress: () => {
+            const newIngredients = ingredients.filter((_, i) => i !== index);
+            setIngredients(newIngredients);
+            setIngredientsModified(true);
+          },
+        },
+      ]
+    );
+  }, [ingredients, isThaiLanguage]);
 
-  const handleIngredientChange = (index, field, value) => {
+  const handleIngredientChange = useCallback((index, field, value) => {
     const newIngredients = [...ingredients];
     newIngredients[index][field] = value;
     setIngredients(newIngredients);
-  };
+    setIngredientsModified(true);
+  }, [ingredients]);
 
-  const handleImagePress = (imageUri) => {
+  const handleImagePress = useCallback((imageUri) => {
     setSelectedImage(imageUri);
     setIsModalVisible(true);
-  };
-
-  const themeStyles = isDarkTheme ? styles.dark : styles.light;
+  }, []);
 
   return (
-    <ScrollView style={[styles.container, themeStyles.background]}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Icon name="arrow-back" size={24} color={isDarkTheme ? "#fff" : "#000"} />
-      </TouchableOpacity>
-      <Text style={[styles.title, { color: isDarkTheme ? "#fff" : "#000" }]}>
-        {isThaiLanguage ? "แก้ไขเมนู" : "Edit Menu"}
-      </Text>
-      <TouchableOpacity onPress={pickImages} style={styles.addImageButton}>
-        <Icon name="add-photo-alternate" size={24} color="white" />
-        <Text style={styles.addImageText}>
-          {isThaiLanguage ? "เพิ่มรูปภาพ" : "Add Images"}
+    <View style={{ flex: 1 }}>
+      <ScrollView style={[styles.container, themeStyles.background]}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Icon name="arrow-back" size={24} color={isDarkTheme ? "#fff" : "#000"} />
+        </TouchableOpacity>
+        <Text style={[styles.title, { color: isDarkTheme ? "#fff" : "#000" }]}>
+          {isThaiLanguage ? "แก้ไขเมนู" : "Edit Menu"}
         </Text>
-      </TouchableOpacity>
-      <View style={styles.imageContainer}>
-        {images.map((img, index) => (
-          <TouchableOpacity key={index} onPress={() => handleImagePress(img)}>
-            <Image source={{ uri: img }} style={styles.image} />
-          </TouchableOpacity>
-        ))}
-      </View>
-      <TextInput
-        style={[styles.input, themeStyles.cardBackground, { color: isDarkTheme ? "#fff" : "#000" }]}
-        placeholder={isThaiLanguage ? "ชื่อเมนู" : "Menu Name"}
-        placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={[styles.input, themeStyles.cardBackground, { color: isDarkTheme ? "#fff" : "#000" }]}
-        placeholder={isThaiLanguage ? "คำอธิบาย" : "Description"}
-        placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
-        value={description}
-        onChangeText={setDescription}
-      />
-      <Text style={[styles.sectionTitle, { color: isDarkTheme ? "#fff" : "#000" }]}>
-        {isThaiLanguage ? "ส่วนผสม" : "Ingredients"}
-      </Text>
-      {ingredients.map((ingredient, index) => (
-        <View key={index} style={styles.ingredientRow}>
-          <TextInput
-            style={[styles.ingredientInput, themeStyles.cardBackground, { color: isDarkTheme ? "#fff" : "#000" }]}
-            placeholder={isThaiLanguage ? "ชื่อส่วนผสม" : "Ingredient Name"}
-            placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
-            value={ingredient.name}
-            onChangeText={(text) => handleIngredientChange(index, "name", text)}
-          />
-          <TextInput
-            style={[styles.ingredientInput, themeStyles.cardBackground, { color: isDarkTheme ? "#fff" : "#000" }]}
-            placeholder={isThaiLanguage ? "จำนวน" : "Amount"}
-            placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
-            value={ingredient.amount}
-            onChangeText={(text) => handleIngredientChange(index, "amount", text)}
-          />
-          <Picker
-            selectedValue={ingredient.unit}
-            style={[styles.unitPicker, { color: isDarkTheme ? "#fff" : "#000" }]}
-            onValueChange={(itemValue) => handleIngredientChange(index, "unit", itemValue)}
-          >
-            <Picker.Item label={isThaiLanguage ? "กรัม" : "g"} value="g" />
-            <Picker.Item label={isThaiLanguage ? "กิโลกรัม" : "kg"} value="kg" />
-            <Picker.Item label={isThaiLanguage ? "มิลลิลิตร" : "ml"} value="ml" />
-            <Picker.Item label={isThaiLanguage ? "ลิตร" : "l"} value="l" />
-            <Picker.Item label={isThaiLanguage ? "ถ้วย" : "cup"} value="cup" />
-            <Picker.Item label={isThaiLanguage ? "ช้อนโต๊ะ" : "tbsp"} value="tbsp" />
-            <Picker.Item label={isThaiLanguage ? "ช้อนชา" : "tsp"} value="tsp" />
-          </Picker>
-          <TouchableOpacity onPress={() => handleRemoveIngredient(index)}>
-            <Icon name="remove-circle" size={24} color="#F44336" />
-          </TouchableOpacity>
-        </View>
-      ))}
-      <TouchableOpacity onPress={handleAddIngredient} style={styles.addIngredientButton}>
-        <Icon name="add-circle" size={24} color="#00A047" />
-        <Text style={styles.addIngredientText}>
-          {isThaiLanguage ? "เพิ่มส่วนผสม" : "Add Ingredient"}
-        </Text>
-      </TouchableOpacity>
-      <TextInput
-        style={[styles.textArea, themeStyles.cardBackground, { color: isDarkTheme ? "#fff" : "#000" }]}
-        placeholder={isThaiLanguage ? "วิธีทำ" : "Instructions"}
-        placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
-        value={instructions}
-        onChangeText={setInstructions}
-        multiline
-      />
-      <View style={styles.calorieRow}>
-        <TouchableOpacity style={styles.calculateButton} onPress={calculateTotalCalories}>
-          <Text style={styles.calculateButtonText}>
-            {isThaiLanguage ? "คำนวณแคลอรี่" : "Calculate Calories"}
+        <TouchableOpacity onPress={pickImages} style={styles.addImageButton}>
+          <Icon name="add-photo-alternate" size={24} color="white" />
+          <Text style={styles.addImageText}>
+            {isThaiLanguage ? "เพิ่มรูปภาพ" : "Add Images"}
           </Text>
         </TouchableOpacity>
-        {calories !== null && (
-          <Text style={[styles.calorieText, { color: isDarkTheme ? "#fff" : "#000" }]}>
-            {isThaiLanguage ? `แคลอรี่: ${calories}` : `Calories: ${calories}`}
+        <View style={styles.imageContainer}>
+          {images.map((img, index) => (
+            <TouchableOpacity key={index} onPress={() => handleImagePress(img)}>
+              <Image source={{ uri: img }} style={styles.image} />
+            </TouchableOpacity>
+          ))}
+        </View>
+        <TextInput
+          style={[styles.input, themeStyles.cardBackground, { color: isDarkTheme ? "#fff" : "#000" }]}
+          placeholder={isThaiLanguage ? "ชื่อเมนู" : "Menu Name"}
+          placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+          value={name}
+          onChangeText={setName}
+        />
+        <TextInput
+          style={[styles.input, themeStyles.cardBackground, { color: isDarkTheme ? "#fff" : "#000" }]}
+          placeholder={isThaiLanguage ? "คำอธิบาย" : "Description"}
+          placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+          value={description}
+          onChangeText={setDescription}
+        />
+        <Text style={[styles.sectionTitle, { color: isDarkTheme ? "#fff" : "#000" }]}>
+          {isThaiLanguage ? "ส่วนผสม" : "Ingredients"}
+        </Text>
+        {ingredients.map((ingredient, index) => (
+          <View key={index} style={styles.ingredientRow}>
+            <TextInput
+              style={[styles.ingredientInput, themeStyles.cardBackground, { color: isDarkTheme ? "#fff" : "#000" }]}
+              placeholder={isThaiLanguage ? "ชื่อส่วนผสม" : "Ingredient Name"}
+              placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+              value={ingredient.name}
+              onChangeText={(text) => handleIngredientChange(index, "name", text)}
+            />
+            <TextInput
+              style={[styles.ingredientInput, themeStyles.cardBackground, { color: isDarkTheme ? "#fff" : "#000" }]}
+              placeholder={isThaiLanguage ? "จำนวน" : "Amount"}
+              placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+              value={ingredient.amount}
+              onChangeText={(text) => handleIngredientChange(index, "amount", text)}
+            />
+            <Picker
+              selectedValue={ingredient.unit}
+              style={[styles.unitPicker, { color: isDarkTheme ? "#fff" : "#000" }]}
+              onValueChange={(itemValue) => handleIngredientChange(index, "unit", itemValue)}
+            >
+              <Picker.Item label={isThaiLanguage ? "กรัม" : "g"} value="g" />
+              <Picker.Item label={isThaiLanguage ? "กิโลกรัม" : "kg"} value="kg" />
+              <Picker.Item label={isThaiLanguage ? "มิลลิลิตร" : "ml"} value="ml" />
+              <Picker.Item label={isThaiLanguage ? "ลิตร" : "l"} value="l" />
+              <Picker.Item label={isThaiLanguage ? "ถ้วย" : "cup"} value="cup" />
+              <Picker.Item label={isThaiLanguage ? "ช้อนโต๊ะ" : "tbsp"} value="tbsp" />
+              <Picker.Item label={isThaiLanguage ? "ช้อนชา" : "tsp"} value="tsp" />
+            </Picker>
+            <TouchableOpacity onPress={() => handleRemoveIngredient(index)}>
+              <Icon name="remove-circle" size={24} color="#F44336" />
+            </TouchableOpacity>
+          </View>
+        ))}
+        <TouchableOpacity onPress={handleAddIngredient} style={styles.addIngredientButton}>
+          <Icon name="add-circle" size={24} color="#00A047" />
+          <Text style={styles.addIngredientText}>
+            {isThaiLanguage ? "เพิ่มส่วนผสม" : "Add Ingredient"}
           </Text>
-        )}
-      </View>
-      <TouchableOpacity style={styles.saveButton} onPress={handleSaveChanges} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator size="small" color="#fff" />
-        ) : (
-          <Text style={styles.saveButtonText}>
-            {isThaiLanguage ? "บันทึกการเปลี่ยนแปลง" : "Save Changes"}
-          </Text>
-        )}
-      </TouchableOpacity>
+        </TouchableOpacity>
+        <TextInput
+          style={[styles.textArea, themeStyles.cardBackground, { color: isDarkTheme ? "#fff" : "#000" }]}
+          placeholder={isThaiLanguage ? "วิธีทำ" : "Instructions"}
+          placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+          value={instructions}
+          onChangeText={setInstructions}
+          multiline
+        />
+        <View style={styles.calorieRow}>
+          <TouchableOpacity style={styles.calculateButton} onPress={calculateTotalCalories}>
+            <Text style={styles.calculateButtonText}>
+              {isThaiLanguage ? "คำนวณแคลอรี่" : "Calculate Calories"}
+            </Text>
+          </TouchableOpacity>
+          {calories !== null && (
+            <Text style={[styles.calorieText, { color: isDarkTheme ? "#fff" : "#000" }]}>
+              {isThaiLanguage ? `แคลอรี่: ${calories}` : `Calories: ${calories}`}
+            </Text>
+          )}
+        </View>
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={handleSaveChanges}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.saveButtonText}>
+              {isThaiLanguage ? "บันทึกการเปลี่ยนแปลง" : "Save Changes"}
+            </Text>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
 
       <Modal visible={isModalVisible} transparent={true} animationType="fade">
         <View style={styles.modalContainer}>
@@ -308,7 +341,7 @@ export default function EditMenu({ route, navigation }) {
           )}
         </View>
       </Modal>
-    </ScrollView>
+    </View>
   );
 }
 
@@ -377,6 +410,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 5,
     alignItems: "center",
+    marginBottom: 20,
   },
   saveButtonText: {
     color: "white",
