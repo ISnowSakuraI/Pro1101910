@@ -26,7 +26,10 @@ export default function Register({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const themeStyles = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
+  const themeStyles = useMemo(
+    () => (isDarkTheme ? styles.dark : styles.light),
+    [isDarkTheme]
+  );
 
   const handleSubmit = useCallback(async () => {
     if (!email || !username || !password || !confirmPassword) {
@@ -111,7 +114,7 @@ export default function Register({ navigation }) {
           onChangeText={setPassword}
           autoCapitalize="none"
         />
-        <TouchableOpacity onPress={toggleShowPassword}>
+        <TouchableOpacity style={styles.eyeIcon} onPress={toggleShowPassword}>
           <Icon
             name={showPassword ? "visibility" : "visibility-off"}
             size={24}
@@ -129,9 +132,9 @@ export default function Register({ navigation }) {
           onChangeText={setConfirmPassword}
           autoCapitalize="none"
         />
-        <TouchableOpacity onPress={toggleShowConfirmPassword}>
+        <TouchableOpacity style={styles.eyeIcon} onPress={toggleShowPassword}>
           <Icon
-            name={showConfirmPassword ? "visibility" : "visibility-off"}
+            name={showPassword ? "visibility" : "visibility-off"}
             size={24}
             color={themeStyles.text.color}
           />
@@ -181,17 +184,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
+    marginBottom: 15,
+  },
+  passwordInput: {
+    flex: 1,
     height: 50,
     borderRadius: 12,
     paddingHorizontal: 15,
-    marginBottom: 15,
     borderColor: "#ddd",
     borderWidth: 1,
-  },
-  passwordInput: {
+    backgroundColor: "#2c2c2c",
+    color: "#ffffff",
     fontFamily: "NotoSansThai-Regular",
-    flex: 1,
-    height: "100%",
+  },
+  eyeIcon: {
+    position: "absolute",
+    right: 15,
   },
   button: {
     flexDirection: "row",

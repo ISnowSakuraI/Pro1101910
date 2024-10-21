@@ -186,7 +186,7 @@ export default function Profile({ navigation }) {
     backgroundGradientFrom: theme.backgroundColor,
     backgroundGradientTo: theme.cardBackgroundColor,
     decimalPlaces: 2,
-    color: (opacity = 1) => `rgba(255, 127, 80, ${opacity})`, // Coral
+    color: (opacity = 1) => `rgba(255, 127, 80, ${opacity})`,
     labelColor: (opacity = 1) => theme.textColor,
     style: {
       borderRadius: 16,
@@ -252,7 +252,7 @@ export default function Profile({ navigation }) {
           </Text>
         </View>
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#ff7f50" }]}
+          style={[styles.button, { backgroundColor: "#00A047" }]}
           onPress={() => navigation.navigate("EditProfile")}
         >
           <Icon name="edit" size={20} color="#fff" />
@@ -338,13 +338,13 @@ const styles = StyleSheet.create({
     height: 150,
     borderRadius: 75,
     borderWidth: 2,
-    borderColor: "#ff7f50", // Coral
+    borderColor: "#ff7f50",
   },
   cameraIcon: {
     position: "absolute",
     bottom: 0,
     right: 0,
-    backgroundColor: "#ff7f50", // Coral
+    backgroundColor: "#ff7f50",
     borderRadius: 15,
     padding: 5,
   },
@@ -444,24 +444,20 @@ const styles = StyleSheet.create({
   noDataText: {
     textAlign: "center",
     fontSize: 16,
-    color: "#777",
+    color: "#ffffff",
     marginTop: 20,
     fontFamily: "NotoSansThai-Regular",
   },
   light: {
     primaryColor: "#ff7f50",
-    secondaryColor: "#ffa07a",
     backgroundColor: "#f7f7f7",
     textColor: "#333333",
     cardBackgroundColor: "#ffffff",
-    borderColor: "#ddd",
   },
   dark: {
     primaryColor: "#ff7f50",
-    secondaryColor: "#ffa07a",
-    backgroundColor: "#1e1e1e",
+    backgroundColor: "#212121",
     textColor: "#ffffff",
     cardBackgroundColor: "#2c2c2c",
-    borderColor: "#444",
   },
 });

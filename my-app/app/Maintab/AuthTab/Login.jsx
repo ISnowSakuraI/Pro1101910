@@ -24,7 +24,10 @@ export default function Login({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const themeStyles = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
+  const themeStyles = useMemo(
+    () => (isDarkTheme ? styles.dark : styles.light),
+    [isDarkTheme]
+  );
 
   const handleLogin = useCallback(async () => {
     if (!input || !password) {
@@ -118,10 +121,7 @@ export default function Login({ navigation }) {
           autoCapitalize="none"
           autoCorrect={false}
         />
-        <TouchableOpacity
-          style={styles.eyeIcon}
-          onPress={toggleShowPassword}
-        >
+        <TouchableOpacity style={styles.eyeIcon} onPress={toggleShowPassword}>
           <Icon
             name={showPassword ? "visibility" : "visibility-off"}
             size={24}

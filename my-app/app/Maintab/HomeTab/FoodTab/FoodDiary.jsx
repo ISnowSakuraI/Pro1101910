@@ -497,6 +497,16 @@ export default function FoodDiary({ navigation }) {
                 </TouchableOpacity>
               </View>
             </View>
+
+            <View style={styles.progressContainer}>
+              <Text style={[styles.progressText, themeStyles.text]}>
+                {Math.round(
+                  (mealCalories / recommendedCalories[meal.key]) * 100
+                )}
+                %
+              </Text>
+            </View>
+
             <AnimatedProgressBar progress={mealProgress} />
             {meals[meal.key].map((item, idx) => (
               <MealItem
@@ -590,7 +600,7 @@ const AnimatedProgressBar = ({ progress }) => {
 
   const backgroundColor = animatedValue.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: ["#00FF00", "#FFFF00", "#FF0000"],
+    outputRange: ["#238f51", "#fec126", "#f05d4d"],
   });
 
   return (

@@ -58,7 +58,7 @@ export default function Home({ navigation }) {
   const theme = isDarkTheme ? styles.dark : styles.light;
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background.backgroundColor }]}>
       <SectionHeader title={isThaiLanguage ? "หมวดหมู่" : "Categories"} />
       <View style={styles.grid}>
         <CategoryItem
@@ -122,7 +122,7 @@ const SectionHeader = React.memo(({ title }) => {
   const { isDarkTheme } = useTheme();
   const theme = isDarkTheme ? styles.dark : styles.light;
   return (
-    <Text style={[styles.header, { color: theme.textColor }]}>
+    <Text style={[styles.header, { color: theme.text.color }]}>
       {title}
     </Text>
   );
@@ -133,11 +133,11 @@ const CategoryItem = React.memo(({ icon, label, onPress }) => {
   const theme = isDarkTheme ? styles.dark : styles.light;
   return (
     <TouchableOpacity
-      style={[styles.item, { backgroundColor: theme.cardBackgroundColor }]}
+      style={[styles.item, { backgroundColor: theme.cardBackground.backgroundColor }]}
       onPress={onPress}
     >
-      <Icon name={icon} size={40} color={theme.primaryColor} style={styles.icon} />
-      <Text style={[styles.label, { color: theme.textColor }]}>
+      <Icon name={icon} size={40} color={theme.primary.color} style={styles.icon} />
+      <Text style={[styles.label, { color: theme.text.color }]}>
         {label}
       </Text>
     </TouchableOpacity>
@@ -153,7 +153,7 @@ const ArticleItem = React.memo(({ article }) => {
     <TouchableOpacity
       style={[
         styles.articleItem,
-        { backgroundColor: theme.cardBackgroundColor },
+        { backgroundColor: theme.cardBackground.backgroundColor },
       ]}
       onPress={() =>
         navigation.navigate("ArticleDetail", { articleId: article.id })
@@ -184,7 +184,7 @@ const ArticleItem = React.memo(({ article }) => {
         )}
       </View>
       <Text
-        style={[styles.articleTitle, { color: theme.textColor }]}
+        style={[styles.articleTitle, { color: theme.text.color }]}
         numberOfLines={2}
       >
         {article.title}
@@ -280,19 +280,31 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   light: {
-    primaryColor: "#ff7f50",
-    secondaryColor: "#ffa07a",
-    backgroundColor: "#f0f0f0",
-    textColor: "#333333",
-    cardBackgroundColor: "#ffffff",
-    borderColor: "#ddd",
+    primary: {
+      color: "#ff7f50",
+    },
+    text: {
+      color: "#333333",
+    },
+    cardBackground: {
+      backgroundColor: "#ffffff",
+    },
+    background: {
+      backgroundColor: "#f0f0f0",
+    },
   },
   dark: {
-    primaryColor: "#ff7f50",
-    secondaryColor: "#ffa07a",
-    backgroundColor: "#212121",
-    textColor: "#ffffff",
-    cardBackgroundColor: "#2c2c2c",
-    borderColor: "#444",
+    primary: {
+      color: "#ff7f50",
+    },
+    text: {
+      color: "#ffffff",
+    },
+    cardBackground: {
+      backgroundColor: "#2c2c2c",
+    },
+    background: {
+      backgroundColor: "#212121",
+    },
   },
 });

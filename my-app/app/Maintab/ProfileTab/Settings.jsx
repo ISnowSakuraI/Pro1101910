@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useMemo } from "react";
+import React, { useRef, useCallback, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -20,9 +20,18 @@ export default function Settings({ navigation }) {
 
   const theme = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
 
-  const handleBackPress = useCallback(() => {
+  // Animate background color on mount
+  useEffect(() => {
     Animated.timing(animatedValue, {
       toValue: 1,
+      duration: 300,
+      useNativeDriver: false, // Not using native driver for background color animation
+    }).start();
+  }, [animatedValue]);
+
+  const handleBackPress = useCallback(() => {
+    Animated.timing(animatedValue, {
+      toValue: 0,
       duration: 200,
       useNativeDriver: true,
     }).start(() => {
@@ -36,8 +45,13 @@ export default function Settings({ navigation }) {
     toggleFunction();
   }, []);
 
+  const animatedBackgroundColor = animatedValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [theme.backgroundColor, theme.backgroundColor],
+  });
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.backgroundColor }]}>
+    <Animated.View style={[styles.container, { backgroundColor: animatedBackgroundColor }]}>
       <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
         <Icon name="arrow-back" size={28} color={theme.textColor} />
       </TouchableOpacity>
@@ -51,8 +65,8 @@ export default function Settings({ navigation }) {
         <Switch
           value={isDarkTheme}
           onValueChange={() => handleToggleSwitch(toggleTheme)}
-          trackColor={{ false: "#767577", true: theme.primaryColor }}
-          thumbColor={isDarkTheme ? theme.secondaryColor : "#f4f3f4"}
+          trackColor={{ false: "#BBBBBB", true: theme.primaryColor }}
+          thumbColor={isDarkTheme ? theme.secondaryColor : "#ff7f50"}
           style={styles.switch}
         />
       </View>
@@ -63,12 +77,12 @@ export default function Settings({ navigation }) {
         <Switch
           value={isThaiLanguage}
           onValueChange={() => handleToggleSwitch(toggleLanguage)}
-          trackColor={{ false: "#767577", true: theme.primaryColor }}
-          thumbColor={isThaiLanguage ? theme.secondaryColor : "#f4f3f4"}
+          trackColor={{ false: "#BBBBBB", true: theme.primaryColor }}
+          thumbColor={isThaiLanguage ? theme.secondaryColor : "#ff7f50"}
           style={styles.switch}
         />
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -90,9 +104,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 15,
     padding: 20,
-    borderRadius: 16, // Increased for a more modern look
+    borderRadius: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 }, // Softer shadow
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 6,
@@ -105,22 +119,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   switch: {
-    transform: [{ scale: 1.2 }], // Slightly larger for better touch targets
+    transform: [{ scale: 1.2 }],
   },
   light: {
-    primaryColor: "#ff7f50", // Coral
-    secondaryColor: "#ffa07a", // Light Coral
-    backgroundColor: "#f0f0f0", // Light Gray for a softer white
-    textColor: "#333333", // Dark Gray for text
-    cardBackgroundColor: "#ffffff", // Pure White for cards
-    borderColor: "#ddd", // Light Gray for borders
+    primaryColor: "#F3F3F3", // Primary color for light theme
+    secondaryColor: "#ff7f50", // Secondary color for light theme
+    backgroundColor: "#f0f0f0", 
+    textColor: "#333333",
+    cardBackgroundColor: "#ffffff",
   },
   dark: {
-    primaryColor: "#ff7f50", // Coral
-    secondaryColor: "#ffa07a", // Light Coral
-    backgroundColor: "#212121", // Dark Gray for a softer black
-    textColor: "#ffffff", // White for text
-    cardBackgroundColor: "#2c2c2c", // Darker Gray for cards
-    borderColor: "#444", // Dark Gray for borders
+    primaryColor: "#F3F3F3",
+    secondaryColor: "#ff7f50",
+    backgroundColor: "#212121",
+    textColor: "#ffffff",
+    cardBackgroundColor: "#2c2c2c",
   },
 });

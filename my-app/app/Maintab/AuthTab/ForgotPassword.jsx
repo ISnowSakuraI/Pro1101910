@@ -111,7 +111,10 @@ export default function ForgotPassword({ navigation }) {
       )}
       <TouchableOpacity onPress={() => navigation.navigate("LoginScreen")}>
         <Text style={styles.loginText}>
-          {isThaiLanguage ? "กลับไปที่เข้าสู่ระบบ!" : "Back to login!"}
+          {isThaiLanguage ? "กลับไปที่ " : "Already have an account? "}
+          <Text style={styles.loginLink}>
+            {isThaiLanguage ? "เข้าสู่ระบบ" : "Login"}
+          </Text>
         </Text>
       </TouchableOpacity>
     </View>
@@ -158,6 +161,10 @@ const styles = StyleSheet.create({
   },
   loginText: {
     color: "#888",
+    fontFamily: "NotoSansThai-Regular",
+  },
+  loginLink: {
+    color: "#ff7f50",
     fontFamily: "NotoSansThai-Regular",
   },
   resendButton: {

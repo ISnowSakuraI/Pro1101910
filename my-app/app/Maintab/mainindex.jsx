@@ -183,19 +183,13 @@ function ArticleStack() {
 
 const styles = StyleSheet.create({
   light: {
-    primaryColor: "#ff7f50", // Coral
-    secondaryColor: "#ffa07a", // Light Coral
-    backgroundColor: "#f0f0f0", // Light Gray for a softer white
-    textColor: "#333333", // Dark Gray for text
-    cardBackgroundColor: "#ffffff", // Pure White for cards
-    borderColor: "#ddd", // Light Gray for borders
+    primaryColor: "#ff7f50",
+    backgroundColor: "#f0f0f0",
+    textColor: "#333333",
   },
   dark: {
-    primaryColor: "#ff7f50", // Coral
-    secondaryColor: "#ffa07a", // Light Coral
-    backgroundColor: "#212121", // Dark Gray for a softer black
-    textColor: "#ffffff", // White for text
-    cardBackgroundColor: "#2c2c2c", // Darker Gray for cards
-    borderColor: "#444", // Dark Gray for borders
+    primaryColor: "#ff7f50",
+    backgroundColor: "#2c2c2c",
+    textColor: "#ffffff",
   },
 });
