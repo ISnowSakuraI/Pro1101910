@@ -93,12 +93,12 @@ export default function Login({ navigation }) {
         >
           <Icon name="settings" size={24} color={themeStyles.text.color} />
         </TouchableOpacity>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           style={styles.iconButton}
           onPress={() => navigation.navigate("SystemTest")}
         >
           <Icon name="build" size={24} color={themeStyles.text.color} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
       <Image style={styles.logo} source={logo} />
       <TextInput

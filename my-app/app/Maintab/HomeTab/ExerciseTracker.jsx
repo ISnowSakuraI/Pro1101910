@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   View,
   Text,
@@ -11,7 +17,13 @@ import * as Location from "expo-location";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db, auth } from "../../../firebase/Firebase";
-import { collection, doc, getDoc, addDoc, serverTimestamp } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import { useTheme } from "../../ThemeContext";
 import { useLanguage } from "../../LanguageContext";
 import { useFocusEffect } from "@react-navigation/native";
@@ -26,6 +38,7 @@ export default function ExerciseTracker({ navigation }) {
   const [tracking, setTracking] = useState(false);
   const [mode, setMode] = useState("walking");
   const [userWeight, setUserWeight] = useState(70); // Default weight
+  const [refreshing, setRefreshing] = useState(false); // Add refreshing state
   const mapRef = useRef(null);
   const startTimeRef = useRef(null);
   const locationSubscription = useRef(null);
@@ -33,8 +46,14 @@ export default function ExerciseTracker({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const theme = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
-  const iconColor = useMemo(() => (isDarkTheme ? "#ffffff" : "#333333"), [isDarkTheme]);
+  const theme = useMemo(
+    () => (isDarkTheme ? styles.dark : styles.light),
+    [isDarkTheme]
+  );
+  const iconColor = useMemo(
+    () => (isDarkTheme ? "#ffffff" : "#333333"),
+    [isDarkTheme]
+  );
 
   useEffect(() => {
     (async () => {
@@ -45,18 +64,7 @@ export default function ExerciseTracker({ navigation }) {
     })();
 
     // Fetch user weight from Firebase
-    const fetchUserWeight = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        const userDoc = await getDoc(doc(db, "Users", user.uid));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setUserWeight(parseFloat(userData.weight)); // Set user weight
-        }
-      }
-    };
-
-    fetchUserWeight();
+    fetchUserWeight(); // เรียกใช้เพียงครั้งเดียวใน useEffect
 
     // Cleanup function to stop tracking when component unmounts
     return () => {
@@ -92,21 +100,16 @@ export default function ExerciseTracker({ navigation }) {
     startTimeRef.current = new Date();
     setTracking(true);
 
-    if (locationSubscription.current) {
-      locationSubscription.current.remove();
-    }
-
     locationSubscription.current = await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.High, distanceInterval: 1 },
+      { accuracy: Location.Accuracy.High, distanceInterval: 0.1 },
       (newLocation) => {
         if (newLocation) {
-          setLocation(newLocation.coords);
-          setRoute((prevRoute) => [...prevRoute, newLocation.coords]);
-          calculateDistance(newLocation.coords);
-          centerMap(newLocation.coords);
+          setLocation(newLocation.coords); // อัปเดตตำแหน่งปัจจุบัน
+          calculateDistance(newLocation.coords); // คำนวณระยะทางจากตำแหน่งใหม่
+          centerMap(newLocation.coords); // ตั้งให้แผนที่เลื่อนไปยังตำแหน่งปัจจุบัน
         }
       }
-    );
+    );    
 
     intervalRef.current = setInterval(() => {
       updateTime();
@@ -149,26 +152,43 @@ export default function ExerciseTracker({ navigation }) {
 
   const calculateDistance = useCallback(
     (newCoords) => {
-      if (route.length > 0) {
-        const lastCoords = route[route.length - 1];
-        const dist = getDistance(
-          { latitude: lastCoords.latitude, longitude: lastCoords.longitude },
-          { latitude: newCoords.latitude, longitude: newCoords.longitude }
-        ) / 1000; // Convert meters to kilometers
-        setDistance((prevDistance) => prevDistance + dist);
-        updateCalories(dist);
-      }
+      console.log("New Coordinates:", newCoords); // แสดงค่าตำแหน่งใหม่
+  
+      // เพิ่มตำแหน่งใหม่ลงในเส้นทาง
+      setRoute((prevRoute) => {
+        const updatedRoute = [...prevRoute, newCoords];
+        
+        if (updatedRoute.length > 1) {
+          const lastCoords = updatedRoute[updatedRoute.length - 2]; // ค่าตำแหน่งล่าสุด
+          const dist =
+            getDistance(
+              { latitude: lastCoords.latitude, longitude: lastCoords.longitude },
+              { latitude: newCoords.latitude, longitude: newCoords.longitude }
+            ) / 1000; // แปลงระยะทางเป็นกิโลเมตร
+  
+          console.log("Calculated distance:", dist); // แสดงค่าระยะทางที่คำนวณได้
+  
+          if (dist > 0) {
+            setDistance((prevDistance) => prevDistance + dist); // เพิ่มระยะทางที่คำนวณได้
+            updateCalories(dist); // อัปเดตแคลอรี่จากระยะทาง
+          }
+        }
+  
+        return updatedRoute; // คืนค่าเส้นทางที่อัปเดตแล้ว
+      });
     },
-    [route, updateCalories]
+    [updateCalories]
   );
+  
 
   const updateCalories = useCallback(
     (dist) => {
-      const caloriesPerKmPerKg = {
-        walking: 0.035,
-        running: 0.075,
-        cycling: 0.045,
-      }[mode] || 0.035;
+      const caloriesPerKmPerKg =
+        {
+          walking: 0.035,
+          running: 0.075,
+          cycling: 0.045,
+        }[mode] || 0.035;
       const caloriesBurned = dist * userWeight * caloriesPerKmPerKg;
       setCalories((prevCalories) => prevCalories + caloriesBurned);
     },
@@ -195,6 +215,26 @@ export default function ExerciseTracker({ navigation }) {
     }
   }, []);
 
+  const fetchUserWeight = async () => {
+    const user = auth.currentUser;
+    if (user) {
+      const userDoc = await getDoc(doc(db, "Users", user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setUserWeight(parseFloat(userData.weight) || 70); // ตั้งค่าเป็น 70 ถ้าน้ำหนักไม่ถูกต้อง
+      } else {
+        setUserWeight(70); // ตั้งค่าน้ำหนักเริ่มต้นถ้าไม่มีข้อมูล
+      }
+    }
+  };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    resetTracking();
+    await fetchUserWeight();
+    setRefreshing(false);
+  }, [resetTracking]);
+
   return (
     <View style={[{ flex: 1 }, theme.background]}>
       <FlatList
@@ -206,9 +246,12 @@ export default function ExerciseTracker({ navigation }) {
             </Text>
             <View style={[styles.statsContainer, theme.cardBackground]}>
               <Text style={[styles.statText, theme.text]}>
-                {isThaiLanguage ? "ระยะทาง" : "Distance"}: {distance.toFixed(2)}{" "}
-                Km
+                {isThaiLanguage ? "ระยะทาง" : "Distance"}:{" "}
+                {distance < 1
+                  ? `${(distance * 1000).toFixed(0)} m`
+                  : `${distance.toFixed(2)} Km`}
               </Text>
+
               <Text style={[styles.statText, theme.text]}>
                 {isThaiLanguage ? "เวลา" : "Time"}: {time} sec
               </Text>
@@ -225,7 +268,11 @@ export default function ExerciseTracker({ navigation }) {
               />
               {location && (
                 <Marker coordinate={location}>
-                  <Icon name="person-pin-circle" size={40} color={theme.secondaryColor} />
+                  <Icon
+                    name="person-pin-circle"
+                    size={40}
+                    color={theme.secondaryColor}
+                  />
                 </Marker>
               )}
             </MapView>
@@ -260,10 +307,7 @@ export default function ExerciseTracker({ navigation }) {
               ))}
             </View>
             <TouchableOpacity
-              style={[
-                styles.locateButton,
-                { backgroundColor: "#008AFF" },
-              ]}
+              style={[styles.locateButton, { backgroundColor: "#008AFF" }]}
               onPress={() => centerMap(location)}
             >
               <Icon name="my-location" size={24} color={"#ffffff"} />
@@ -295,7 +339,8 @@ export default function ExerciseTracker({ navigation }) {
             </TouchableOpacity>
           </>
         }
-        keyExtractor={(item, index) => index.toString()}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
       />
     </View>
   );

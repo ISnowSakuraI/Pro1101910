@@ -19,6 +19,10 @@ import { useLanguage } from "../../LanguageContext";
 export default function Register({ navigation }) {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
+  const [gender, setGender] = useState("");
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [height, setHeight] = useState("");
+  const [weight, setWeight] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -58,6 +62,9 @@ export default function Register({ navigation }) {
         email,
         username,
         uid,
+        height,
+        weight,
+        gender,
       });
 
       Alert.alert(
@@ -84,6 +91,17 @@ export default function Register({ navigation }) {
     setShowConfirmPassword((prev) => !prev);
   }, []);
 
+  const getGenderDisplay = (gender) => {
+    if (!gender) return null;
+    return gender === "Male"
+      ? isThaiLanguage
+        ? "ชาย"
+        : "Male"
+      : isThaiLanguage
+      ? "หญิง"
+      : "Female";
+  };
+
   return (
     <View style={[styles.container, themeStyles.background]}>
       <Image style={styles.logo} source={logo} />
@@ -103,6 +121,64 @@ export default function Register({ navigation }) {
         value={username}
         onChangeText={setUsername}
         autoCapitalize="none"
+      />
+      <View style={styles.inputGroup}>
+        <Text style={[styles.label, { color: isDarkTheme ? "#aaa" : "#555" }]}>
+          {isThaiLanguage ? "เพศ" : "Gender"}
+        </Text>
+        <TouchableOpacity
+          onPress={() => setMenuVisible(true)}
+          style={[
+            styles.dropdownButton,
+            { backgroundColor: themeStyles.inputBackground.backgroundColor },
+          ]}
+        >
+          <Text
+            style={[styles.dropdownText, { color: isDarkTheme ? "#aaa" : "#555" }]}
+          >
+            {getGenderDisplay(gender) ||
+              (isThaiLanguage ? "เลือกเพศ" : "Select Gender")}
+          </Text>
+        </TouchableOpacity>
+        {menuVisible && (
+          <View style={styles.menu}>
+            <TouchableOpacity
+              onPress={() => {
+                setGender("Male");
+                setMenuVisible(false);
+              }}
+              style={styles.menuItem}
+            >
+              <Text>{isThaiLanguage ? "ชาย" : "Male"}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setGender("Female");
+                setMenuVisible(false);
+              }}
+              style={styles.menuItem}
+            >
+              <Text>{isThaiLanguage ? "หญิง" : "Female"}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
+      <TextInput
+        style={[styles.input, themeStyles.inputBackground]}
+        placeholder={isThaiLanguage ? "ส่วนสูง (cm)" : "Height (cm)"}
+        placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+        value={height}
+        onChangeText={setHeight}
+        keyboardType="numeric"
+      />
+      <TextInput
+        style={[styles.input, themeStyles.inputBackground]}
+        placeholder={isThaiLanguage ? "น้ำหนัก (kg)" : "Weight (kg)"}
+        placeholderTextColor={isDarkTheme ? "#aaa" : "#555"}
+        value={weight}
+        onChangeText={setWeight}
+        keyboardType="numeric"
       />
       <View style={styles.passwordContainer}>
         <TextInput
@@ -132,9 +208,12 @@ export default function Register({ navigation }) {
           onChangeText={setConfirmPassword}
           autoCapitalize="none"
         />
-        <TouchableOpacity style={styles.eyeIcon} onPress={toggleShowPassword}>
+        <TouchableOpacity
+          style={styles.eyeIcon}
+          onPress={toggleShowConfirmPassword}
+        >
           <Icon
-            name={showPassword ? "visibility" : "visibility-off"}
+            name={showConfirmPassword ? "visibility" : "visibility-off"}
             size={24}
             color={themeStyles.text.color}
           />
@@ -201,6 +280,33 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 15,
   },
+  inputGroup: {
+    width: "100%",
+    marginBottom: 15,
+  },
+  dropdownButton: {
+    padding: 15,
+    borderRadius: 12,
+    borderColor: "#ddd",
+    borderWidth: 1,
+    justifyContent: "center",
+  },
+  dropdownText: {
+    fontFamily: "NotoSansThai-Regular",
+  },
+  menu: {
+    position: "absolute",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    borderColor: "#ddd",
+    borderWidth: 1,
+    marginTop: 10,
+    width: "100%",
+    zIndex: 1000,
+  },
+  menuItem: {
+    padding: 10,
+  },  
   button: {
     flexDirection: "row",
     alignItems: "center",

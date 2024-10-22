@@ -219,50 +219,56 @@ export default function EditProfile({ navigation }) {
               <Text style={[styles.label, { color: theme.textColor }]}>
                 {isThaiLanguage ? "เพศ" : "Gender"}
               </Text>
-              <Menu
-                visible={menuVisible}
-                onDismiss={() => setMenuVisible(false)}
-                anchor={
-                  <Button
-                    onPress={() => setMenuVisible(true)}
-                    mode="outlined"
+              <TouchableOpacity
+                onPress={() => setMenuVisible(true)}
+                style={[
+                  styles.dropdownButton,
+                  { backgroundColor: theme.cardBackgroundColor },
+                ]}
+              >
+                <Text style={[styles.dropdownText, { color: theme.textColor }]}>
+                  {getGenderDisplay(userData.gender) ||
+                    (isThaiLanguage ? "เลือกเพศ" : "Select Gender")}
+                </Text>
+              </TouchableOpacity>
+              {menuVisible && (
+                <View style={styles.menu}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setUserData({
+                        ...userData,
+                        gender: "Male",
+                      });
+                      setMenuVisible(false);
+                    }}
                     style={[
-                      styles.dropdownButton,
+                      styles.menuItem,
                       { backgroundColor: theme.cardBackgroundColor },
                     ]}
                   >
-                    <Text
-                      style={[styles.dropdownText, { color: theme.textColor }]}
-                    >
-                      {getGenderDisplay(userData.gender) ||
-                        (isThaiLanguage ? "เลือกเพศ" : "Select Gender")}
+                    <Text style={{ color: theme.textColor }}>
+                      {isThaiLanguage ? "ชาย" : "Male"}
                     </Text>
-                  </Button>
-                }
-              >
-                <Menu.Item
-                  style={styles.menuItem}
-                  onPress={() => {
-                    setUserData({
-                      ...userData,
-                      gender: "Male",
-                    });
-                    setMenuVisible(false);
-                  }}
-                  title={isThaiLanguage ? "ชาย" : "Male"}
-                />
-                <Menu.Item
-                  style={styles.menuItem}
-                  onPress={() => {
-                    setUserData({
-                      ...userData,
-                      gender: "Female",
-                    });
-                    setMenuVisible(false);
-                  }}
-                  title={isThaiLanguage ? "หญิง" : "Female"}
-                />
-              </Menu>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setUserData({
+                        ...userData,
+                        gender: "Female",
+                      });
+                      setMenuVisible(false);
+                    }}
+                    style={[
+                      styles.menuItem,
+                      { backgroundColor: theme.cardBackgroundColor },
+                    ]}
+                  >
+                    <Text style={{ color: theme.textColor }}>
+                      {isThaiLanguage ? "หญิง" : "Female"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
 
             <View style={styles.inputGroup}>
@@ -432,6 +438,7 @@ const styles = StyleSheet.create({
   },
   dropdownButton: {
     width: "100%",
+    height: 40,
     justifyContent: "center",
     borderColor: "#ddd",
     borderWidth: 1,
@@ -439,10 +446,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 15,
   },
-  dropdownText: {
-    fontSize: 16,
-    fontFamily: "NotoSansThai-Regular",
+
+  menu: {
+    position: "absolute",
+    top: 50, // Adjust as necessary
+    width: "100%",
+    backgroundColor: theme.cardBackgroundColor,
+    borderRadius: 8,
+    elevation: 3, // Add shadow on Android
+    zIndex: 100, // Ensure it's above other components
   },
+
   menuItem: {
     paddingVertical: 10,
     paddingHorizontal: 15,

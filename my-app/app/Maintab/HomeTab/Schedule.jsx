@@ -275,7 +275,7 @@ export default function Schedule({ navigation }) {
               },
             ]}
             placeholder={isThaiLanguage ? "ระยะเวลา (นาที)" : "Duration (minutes)"}
-            placeholderTextColor={theme.borderColor}
+            placeholderTextColor={theme.textColor}
             value={duration}
             onChangeText={setDuration}
             keyboardType="numeric"
@@ -289,7 +289,7 @@ export default function Schedule({ navigation }) {
               },
             ]}
             placeholder={isThaiLanguage ? "การออกกำลังกาย" : "Exercise"}
-            placeholderTextColor={theme.borderColor}
+            placeholderTextColor={theme.textColor}
             value={newExercise}
             onChangeText={setNewExercise}
           />
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     primaryColor: "#ff7f50",
     secondaryColor: "#ffa07a",
     backgroundColor: "#f0f0f0",
-    textColor: "#333333",
+    textColor: "#000",
     cardBackgroundColor: "#ffffff",
     borderColor: "#ddd",
   },
