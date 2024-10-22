@@ -32,7 +32,10 @@ export default function EditProfile({ navigation }) {
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
-  const theme = useMemo(() => (isDarkTheme ? styles.dark : styles.light), [isDarkTheme]);
+  const theme = useMemo(
+    () => (isDarkTheme ? styles.dark : styles.light),
+    [isDarkTheme]
+  );
 
   const fetchUserData = useCallback(async (currentUser) => {
     if (currentUser) {
@@ -311,7 +314,10 @@ export default function EditProfile({ navigation }) {
                   placeholderTextColor={theme.textColor}
                   value={userData.weight || ""}
                   onChangeText={(text) =>
-                    setUserData({ ...userData, weight: text.replace(/[^0-9]/g, '') })
+                    setUserData({
+                      ...userData,
+                      weight: text.replace(/[^0-9]/g, ""),
+                    })
                   }
                   keyboardType="numeric"
                 />
@@ -332,7 +338,10 @@ export default function EditProfile({ navigation }) {
                   placeholderTextColor={theme.textColor}
                   value={userData.height || ""}
                   onChangeText={(text) =>
-                    setUserData({ ...userData, height: text.replace(/[^0-9]/g, '') })
+                    setUserData({
+                      ...userData,
+                      height: text.replace(/[^0-9]/g, ""),
+                    })
                   }
                   keyboardType="numeric"
                 />
