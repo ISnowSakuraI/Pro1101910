@@ -112,6 +112,7 @@ export default function FoodDiary({ navigation }) {
     afternoon: [],
     evening: [],
   });
+  const [showAllMeals, setShowAllMeals] = useState({});
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [favorites, setFavorites] = useState([]);
@@ -453,7 +454,8 @@ export default function FoodDiary({ navigation }) {
       <View style={styles.totalCaloriesContainer}>
         <Text style={styles.totalCaloriesText}>
           {isThaiLanguage ? "แคลอรี่รวมของวันนี้" : "Total Calories Today"}:{" "}
-          {totalCalories} / {totalRecommendedCalories}
+          {totalCalories} / {totalRecommendedCalories} (
+          {Math.round((totalCalories / totalRecommendedCalories) * 100)}%)
         </Text>
       </View>
 
@@ -480,6 +482,11 @@ export default function FoodDiary({ navigation }) {
           recommendedCalories[meal.key] > 0
             ? mealCalories / recommendedCalories[meal.key]
             : 0;
+
+        const mealsToShow = showAllMeals[meal.key]
+          ? meals[meal.key]
+          : meals[meal.key].slice(0, 3);
+
         return (
           <View key={meal.key} style={styles.mealContainer}>
             <View style={styles.mealHeader}>
@@ -490,7 +497,11 @@ export default function FoodDiary({ navigation }) {
               <View style={styles.caloriesInfo}>
                 <Text style={[styles.mealCalories, themeStyles.text]}>
                   {isThaiLanguage ? "แคลอรี่รวม" : "Total Calories"}:{" "}
-                  {mealCalories} / {Math.round(recommendedCalories[meal.key])}
+                  {mealCalories} / {Math.round(recommendedCalories[meal.key])} (
+                  {Math.round(
+                    (mealCalories / recommendedCalories[meal.key]) * 100
+                  )}
+                  %)
                 </Text>
                 <TouchableOpacity onPress={() => setInfoModalVisible(true)}>
                   <Icon name="information-outline" size={20} color="#ff7f50" />
@@ -498,17 +509,9 @@ export default function FoodDiary({ navigation }) {
               </View>
             </View>
 
-            <View style={styles.progressContainer}>
-              <Text style={[styles.progressText, themeStyles.text]}>
-                {Math.round(
-                  (mealCalories / recommendedCalories[meal.key]) * 100
-                )}
-                %
-              </Text>
-            </View>
-
             <AnimatedProgressBar progress={mealProgress} />
-            {meals[meal.key].map((item, idx) => (
+
+            {mealsToShow.map((item, idx) => (
               <MealItem
                 key={idx}
                 item={item}
@@ -523,17 +526,47 @@ export default function FoodDiary({ navigation }) {
                 navigation={navigation}
               />
             ))}
+
+            {/* Show more button */}
+            {meals[meal.key].length > 3 && (
+              <TouchableOpacity
+                style={styles.showMoreButton}
+                onPress={() =>
+                  setShowAllMeals((prev) => ({
+                    ...prev,
+                    [meal.key]: !prev[meal.key],
+                  }))
+                }
+              >
+                <Icon
+                  name={showAllMeals[meal.key] ? "chevron-up" : "chevron-down"}
+                  size={16}
+                  color="#fff"
+                  style={{ marginRight: 5 }}
+                />
+                <Text style={styles.showMoreText}>
+                  {showAllMeals[meal.key]
+                    ? isThaiLanguage
+                      ? "ซ่อนเพิ่มเติม"
+                      : "Hide More"
+                    : isThaiLanguage
+                    ? "ดูเพิ่มเติม"
+                    : "Show More"}
+                </Text>
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity
-              style={styles.button}
+              style={styles.addMenuButton}
               onPress={() => handleAddMenu(meal.key)}
             >
               <Icon
                 name="plus-circle-outline"
-                size={16}
+                size={20}
                 color="#fff"
-                style={{ marginRight: 5 }}
+                style={{ marginRight: 10 }}
               />
-              <Text style={styles.buttonText}>
+              <Text style={styles.addMenuText}>
                 {isThaiLanguage ? "เพิ่มเมนู" : "Add Menu"}
               </Text>
             </TouchableOpacity>
@@ -600,7 +633,7 @@ const AnimatedProgressBar = ({ progress }) => {
 
   const backgroundColor = animatedValue.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: ["#238f51", "#fec126", "#f05d4d"],
+    outputRange: ["#4caf50", "#ffeb3b", "#f44336"],
   });
 
   return (
@@ -843,7 +876,43 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     marginTop: 10,
-    width: "100%", // Ensure the progress bar takes full width
+    width: "100%",
+  },
+  showMoreButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#6c757d",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    marginTop: 10,
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  showMoreText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  addMenuButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#ff7f50",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 25,
+    marginTop: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  addMenuText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+    fontFamily: "NotoSansThai-Regular",
   },
   light: {
     background: {
