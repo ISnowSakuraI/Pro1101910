@@ -267,7 +267,7 @@ export default function Profile({ navigation }) {
           >
             <Icon name="grid-on" size={20} color="#fff" />
             <Text style={styles.buttonText}>
-              {isThaiLanguage ? "โพสต์ของฉัน" : "My Posts"}
+              {isThaiLanguage ? "บทความของฉัน" : "My Articles"}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
