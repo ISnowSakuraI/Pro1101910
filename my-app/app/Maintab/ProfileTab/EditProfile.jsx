@@ -446,17 +446,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 15,
   },
-
-  menu: {
-    position: "absolute",
-    top: 50, // Adjust as necessary
-    width: "100%",
-    backgroundColor: theme.cardBackgroundColor,
-    borderRadius: 8,
-    elevation: 3, // Add shadow on Android
-    zIndex: 100, // Ensure it's above other components
+  dropdownText: {
+    fontSize: 16,
+    fontFamily: "NotoSansThai-Regular",
   },
-
   menuItem: {
     paddingVertical: 10,
     paddingHorizontal: 15,
