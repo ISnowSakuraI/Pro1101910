@@ -2,6 +2,7 @@ import React from "react";
 import { ThemeProvider } from "../app/ThemeContext";
 import { LanguageProvider } from "../app/LanguageContext";
 import { MenuProvider } from "../app/MenuContext";
+import { NavigationContainer } from "@react-navigation/native";
 import MainNavigator from "../app/Maintab/MainIndex";
 import { useFonts } from "expo-font";
 
@@ -14,12 +15,14 @@ export default function App() {
   }
 
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <MenuProvider>
-          <MainNavigator />
-        </MenuProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+    <NavigationContainer>
+      <ThemeProvider>
+        <LanguageProvider>
+          <MenuProvider>
+            <MainNavigator />
+          </MenuProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </NavigationContainer>
   );
 }

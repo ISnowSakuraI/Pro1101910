@@ -1,10 +1,10 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState } from "react";
 
 const MenuContext = createContext();
 
-export const useMenu = () => useContext(MenuContext);
+const useMenu = () => useContext(MenuContext);
 
-export const MenuProvider = ({ children }) => {
+const MenuProvider = ({ children }) => {
   const [onSelectMenu, setOnSelectMenu] = useState(() => () => {});
 
   return (
@@ -13,3 +13,5 @@ export const MenuProvider = ({ children }) => {
     </MenuContext.Provider>
   );
 };
+
+export { MenuProvider, useMenu };

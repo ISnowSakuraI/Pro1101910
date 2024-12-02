@@ -15,6 +15,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import logo from "../../../assets/images/icon.png";
 import { useTheme } from "../../ThemeContext";
 import { useLanguage } from "../../LanguageContext";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 export default function Register({ navigation }) {
   const [email, setEmail] = useState("");
@@ -27,6 +28,8 @@ export default function Register({ navigation }) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [birthday, setBirthday] = useState(new Date()); // Add birthday state
+  const [showDatePicker, setShowDatePicker] = useState(false); // Control DateTimePicker visibility
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
@@ -36,7 +39,7 @@ export default function Register({ navigation }) {
   );
 
   const handleSubmit = useCallback(async () => {
-    if (!email || !username || !password || !confirmPassword) {
+    if (!email || !username || !password || !confirmPassword || !birthday) {
       Alert.alert(
         isThaiLanguage ? "ข้อผิดพลาด" : "Error",
         isThaiLanguage
@@ -65,6 +68,7 @@ export default function Register({ navigation }) {
         height,
         weight,
         gender,
+        birthday,
       });
 
       Alert.alert(
@@ -81,7 +85,15 @@ export default function Register({ navigation }) {
           : "An error occurred while creating the account"
       );
     }
-  }, [email, username, password, confirmPassword, isThaiLanguage, navigation]);
+  }, [
+    email,
+    username,
+    password,
+    confirmPassword,
+    birthday,
+    isThaiLanguage,
+    navigation,
+  ]);
 
   const toggleShowPassword = useCallback(() => {
     setShowPassword((prev) => !prev);
@@ -100,6 +112,12 @@ export default function Register({ navigation }) {
       : isThaiLanguage
       ? "หญิง"
       : "Female";
+  };
+
+  const handleDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || birthday;  // Use 'birthday' instead of 'userData.birthday'
+    setShowDatePicker(false);
+    setBirthday(currentDate.toISOString().split("T")[0]);  // Format date to 'YYYY-MM-DD'
   };
 
   return (
@@ -134,7 +152,10 @@ export default function Register({ navigation }) {
           ]}
         >
           <Text
-            style={[styles.dropdownText, { color: isDarkTheme ? "#aaa" : "#555" }]}
+            style={[
+              styles.dropdownText,
+              { color: isDarkTheme ? "#aaa" : "#555" },
+            ]}
           >
             {getGenderDisplay(gender) ||
               (isThaiLanguage ? "เลือกเพศ" : "Select Gender")}
@@ -163,6 +184,38 @@ export default function Register({ navigation }) {
           </View>
         )}
       </View>
+       <View style={styles.inputGroup}>
+      <Text style={[styles.label, { color: themeStyles.text.color }]}>
+        {isThaiLanguage ? "วันเกิด" : "Birthday"}
+      </Text>
+      <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: themeStyles.inputBackground.backgroundColor,
+              color: themeStyles.text.color,
+            },
+          ]}
+          placeholder={
+            isThaiLanguage ? "วันเกิด (YYYY-MM-DD)" : "Birthday (YYYY-MM-DD)"
+          }
+          placeholderTextColor={themeStyles.text.color}
+          value={birthday || ""}
+          editable={false}
+        />
+      </TouchableOpacity>
+    </View>
+
+    {showDatePicker && (
+      <DateTimePicker
+        testID="dateTimePicker"
+        value={new Date(birthday)}  // Ensure that 'birthday' is a valid Date object
+        mode="date"
+        display="default"
+        onChange={handleDateChange}
+      />
+    )}
 
       <TextInput
         style={[styles.input, themeStyles.inputBackground]}
@@ -306,7 +359,7 @@ const styles = StyleSheet.create({
   },
   menuItem: {
     padding: 10,
-  },  
+  },
   button: {
     flexDirection: "row",
     alignItems: "center",

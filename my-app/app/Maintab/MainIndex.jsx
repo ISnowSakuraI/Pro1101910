@@ -4,7 +4,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import AntDesign from "react-native-vector-icons/AntDesign";
 import { StyleSheet } from "react-native";
 import { useTheme } from "../ThemeContext";
-import { useLanguage } from "../LanguageContext";
+import { useLanguage } from "../LanguageContext"
 
 // Import screens
 import Login from "./AuthTab/Login";
@@ -33,7 +33,6 @@ import MenuDetail from "./HomeTab/FoodTab/MenuDetail";
 import MyMenus from "./HomeTab/FoodTab/MyMenus";
 import EditMenu from "./HomeTab/FoodTab/EditMenu";
 import FavoriteMenus from "./HomeTab/FoodTab/FavoriteMenus";
-import SystemTest from "../SystemTest";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -44,7 +43,6 @@ export default function MainNavigator() {
       <Stack.Screen name="AuthStack" component={AuthStack} options={{ headerShown: false }} />
       <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
       <Stack.Screen name="Settings" component={Settings} options={{ headerShown: false }} />
-      <Stack.Screen name="SystemTest" component={SystemTest} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
@@ -122,7 +120,6 @@ function HomeStack() {
       <Stack.Screen name="AdminStack" component={AdminStack} options={{ headerShown: false }} />
       <Stack.Screen name="ManageContent" component={ManageContent} options={{ headerShown: false }} />
       <Stack.Screen name="ReportedArticles" component={ReportedArticles} options={{ headerShown: false }} />
-      <Stack.Screen name="SystemTest" component={SystemTest} options={{ headerShown: false }} />
       <Stack.Screen name="HealthCalculator" component={HealthCalculator} options={{ headerShown: false }} />
       <Stack.Screen name="FoodStack" component={FoodStack} options={{ headerShown: false }} />
     </Stack.Navigator>
@@ -139,6 +136,7 @@ function ProfileStack() {
       <Stack.Screen name="ArticleDetail" component={ArticleDetail} options={{ headerShown: false }} />
       <Stack.Screen name="EditArticle" component={EditArticle} options={{ headerShown: false }} />
       <Stack.Screen name="Settings" component={Settings} options={{ headerShown: false }} />
+      <Stack.Screen name="LoginScreen" component={Login} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

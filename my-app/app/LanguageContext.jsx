@@ -2,11 +2,13 @@ import React, { createContext, useContext, useState } from "react";
 
 const LanguageContext = createContext();
 
-export const LanguageProvider = ({ children }) => {
-  const [isThaiLanguage, setIsThaiLanguage] = useState(false);
+const useLanguage = () => useContext(LanguageContext);
+
+const LanguageProvider = ({ children }) => {
+  const [isThaiLanguage, setIsThaiLanguage] = useState(true);
 
   const toggleLanguage = () => {
-    setIsThaiLanguage((prev) => !prev);
+    setIsThaiLanguage((prevState) => !prevState);
   };
 
   return (
@@ -16,4 +18,4 @@ export const LanguageProvider = ({ children }) => {
   );
 };
 
-export const useLanguage = () => useContext(LanguageContext);
+export { LanguageProvider, useLanguage };

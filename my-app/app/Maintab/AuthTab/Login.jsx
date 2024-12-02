@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   Text,
   View,
@@ -9,6 +9,7 @@ import {
   Alert,
   StatusBar,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { auth, db } from "../../../firebase/Firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { collection, query, where, getDocs } from "firebase/firestore";
@@ -21,6 +22,8 @@ export default function Login({ navigation }) {
   const [input, setInput] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+
   const { isDarkTheme } = useTheme();
   const { isThaiLanguage } = useLanguage();
 
@@ -29,6 +32,43 @@ export default function Login({ navigation }) {
     [isDarkTheme]
   );
 
+  // ฟังก์ชันสำหรับบันทึก Credentials
+  const saveCredentials = useCallback(async () => {
+    if (rememberMe) {
+      try {
+        await AsyncStorage.setItem(
+          "credentials",
+          JSON.stringify({ input, password })
+        );
+      } catch (error) {
+        console.error("Error saving credentials: ", error);
+      }
+    } else {
+      await AsyncStorage.removeItem("credentials");
+    }
+  }, [rememberMe, input, password]);
+
+  // ฟังก์ชันสำหรับโหลด Credentials
+  const loadCredentials = useCallback(async () => {
+    try {
+      const storedCredentials = await AsyncStorage.getItem("credentials");
+      if (storedCredentials) {
+        const { input, password } = JSON.parse(storedCredentials);
+        setInput(input);
+        setPassword(password);
+        setRememberMe(true);
+      }
+    } catch (error) {
+      console.error("Error loading credentials: ", error);
+    }
+  }, []);
+
+  // เรียก loadCredentials เมื่อเริ่มต้น
+  useEffect(() => {
+    loadCredentials();
+  }, [loadCredentials]);
+
+  // ฟังก์ชันสำหรับเข้าสู่ระบบ
   const handleLogin = useCallback(async () => {
     if (!input || !password) {
       Alert.alert(
@@ -61,8 +101,20 @@ export default function Login({ navigation }) {
         emailToLogin = userDoc.data().email;
       }
 
+      // เข้าสู่ระบบ
       await signInWithEmailAndPassword(auth, emailToLogin, password);
-      navigation.navigate("MainTabs");
+
+      // จัดการข้อมูล Remember Me
+      if (rememberMe) {
+        await AsyncStorage.setItem(
+          "credentials",
+          JSON.stringify({ input, password })
+        );
+      } else {
+        await AsyncStorage.removeItem("credentials"); // ลบข้อมูลเก่า
+      }
+
+      navigation.navigate("MainTabs"); // นำทางไปยังหน้าหลัก
       setInput("");
       setPassword("");
     } catch (error) {
@@ -74,7 +126,7 @@ export default function Login({ navigation }) {
           : "Please enter correct email/username and password"
       );
     }
-  }, [input, password, isThaiLanguage, navigation]);
+  }, [input, password, isThaiLanguage, navigation, rememberMe]);
 
   const toggleShowPassword = useCallback(() => {
     setShowPassword((prev) => !prev);
@@ -93,12 +145,6 @@ export default function Login({ navigation }) {
         >
           <Icon name="settings" size={24} color={themeStyles.text.color} />
         </TouchableOpacity>
-        {/* <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => navigation.navigate("SystemTest")}
-        >
-          <Icon name="build" size={24} color={themeStyles.text.color} />
-        </TouchableOpacity> */}
       </View>
       <Image style={styles.logo} source={logo} />
       <TextInput
@@ -127,6 +173,21 @@ export default function Login({ navigation }) {
             size={24}
             color={themeStyles.text.color}
           />
+        </TouchableOpacity>
+      </View>
+      <View style={styles.rememberMeContainer}>
+        <TouchableOpacity
+          style={styles.checkboxContainer}
+          onPress={() => setRememberMe((prev) => !prev)} // Toggle rememberMe
+        >
+          <Icon
+            name={rememberMe ? "check-box" : "check-box-outline-blank"}
+            size={24}
+            color={themeStyles.text.color}
+          />
+          <Text style={[styles.rememberMeText, themeStyles.text]}>
+            {isThaiLanguage ? "จดจำรหัสผ่าน" : "Remember me"}
+          </Text>
         </TouchableOpacity>
       </View>
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
@@ -237,28 +298,31 @@ const styles = StyleSheet.create({
     color: "#ff7f50",
     fontFamily: "NotoSansThai-Regular",
   },
-  light: {
-    background: {
-      backgroundColor: "#f0f0f0",
-    },
-    text: {
-      color: "#333333",
-    },
-    inputBackground: {
-      backgroundColor: "#ffffff",
-      color: "#333333",
-    },
+  rememberMeContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-start", // Align checkbox to the left
+    alignItems: "center", // Center the checkbox vertically with text
+    width: "100%", // Ensure it spans the full width
+    marginBottom: 10, // Adjust margin for better spacing
+  },
+  checkboxContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  rememberMeText: {
+    marginLeft: 10, // Add space between checkbox and text
+    fontFamily: "NotoSansThai-Regular",
+    fontSize: 14, // Adjust font size for better readability
+    color: "#555", // Use a color that fits with the theme
   },
   dark: {
-    background: {
-      backgroundColor: "#212121",
-    },
-    text: {
-      color: "#ffffff",
-    },
-    inputBackground: {
-      backgroundColor: "#2c2c2c",
-      color: "#ffffff",
-    },
+    background: { backgroundColor: "#2c2c2c" },
+    text: { color: "#fff" },
+    inputBackground: { backgroundColor: "#2c2c2c", color: "#fff" },
+  },
+  light: {
+    background: { backgroundColor: "#f9f9f9" },
+    text: { color: "#000" },
+    inputBackground: { backgroundColor: "#fff", color: "#000" },
   },
 });
