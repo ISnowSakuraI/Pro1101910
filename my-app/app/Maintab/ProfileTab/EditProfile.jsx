@@ -142,7 +142,10 @@ export default function EditProfile({ navigation }) {
     try {
       await signOut(auth);
       Alert.alert("Logged out", "You have been logged out successfully.");
-      navigation.navigate("LoginScreen");
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "AuthStack" }],
+      });
     } catch (error) {
       console.error("Error logging out: ", error);
       Alert.alert("Error", "Failed to log out.");
